@@ -25,10 +25,9 @@ Branch `wp6-render` (from `contracts-v1`), worktree `/Users/me/Projects/hk-wp6`.
   `GazeCamera` (+ pure `GazeFilter`, worldLocked mode) and `GlyphBoard` (cap 32, `release()` without GL, allocation-free hot path).
 - **Docs**: `docs/wiring/WP6.md`, `docs/requests/WP0.md`.
 
-## Tests (all green, 2026-09-22)
+## Tests (all green, 2026-09-22, after merging main: contracts-v1.1, WP11 fixtures, WP7 MeshBuilder)
 
-`tools/gw :core:test :app:testDebugUnitTest :app:assembleRelease`: 76 tests in the repo, 0 failures, 2 skipped (both WP6
-@Ignore for other WPs' deliverables). WP6's own:
+`tools/gw :core:test :app:testDebugUnitTest :app:assembleRelease`: 104 tests, 0 failures, 0 skipped. No @Ignore remains. WP6's own:
 - core `StereoRigTest` (T6.1: zero parallax, crossed/uncrossed disparity, right = forward × up for every framing of every
   instrument, mono, gaze, SinTable accuracy, rigid inverse = Placement), `CameraDirectorTest` (T6.2: 250/250 ms, cut at the
   midpoint, queue depth 1, scene-swap dip, no dip after rest, follow ≤ 0.6 m/s, x_cut dead band, no overshoot, gaze scaling,
@@ -37,15 +36,16 @@ Branch `wp6-render` (from `contracts-v1`), worktree `/Users/me/Projects/hk-wp6`.
   `ShadersTest` (every program compiles as GLSL ES 1.00 with glslangValidator; uniform budget ≤ 68 vec4; reserved words),
   `StereoRendererSlotsTest`, `StereoRendererFrameTest` (headless frames on android.jar's no-op GL: budget, **zero allocation per
   frame after warm-up**, view dip, instrument swap under the cut, instant swap after display rest, context loss recovery).
-- Ignored: `SceneAssemblerTest.realScenesWithinBudget` (needs WP7/WP8 scenes), `UniformPackerTest.actionSetDecodeAgreesWithWp7Pack`
-  (needs WP7 `packActionSet`; the decode is already checked against an independent §5.8 reference packer).
+- Pairing tests (formerly @Ignore): `SceneAssemblerTest.realScenesWithinBudget` and `UniformPackerTest.actionSetDecodeAgreesWithWp7Pack`
+  run through the test helper `RealScenes`, which loads WP7's `instrument.Instruments` and WP8's `venue.VenueSceneImpl` by name
+  when merged and otherwise the contract stubs; they run (and pass) today on the stubs and switch to the real scenes automatically.
 
 ## Remaining
 
 - Device checks (no adb in this task): M-GL, T-FPS, T-GLRESET, T-Q3SWITCH, EGL/uniform-vector logs, draws ≤ 28 logged,
   `glAllocs` = 0 in a debug build, display rest pauses GL, `--ez mono true`.
 - On-glasses tuning of the lighting constants (ambient 0.45, light attenuation 1/(1+d²), swell 2.5 px) once WP7/WP8 meshes exist.
-- The two ignored pairing tests when WP7/WP8 merge.
+- Re-run the suite once WP7/WP8 merge (the pairing tests then exercise the real scenes; no code change needed).
 
 ## Decisions and deviations
 
@@ -68,3 +68,4 @@ Branch `wp6-render` (from `contracts-v1`), worktree `/Users/me/Projects/hk-wp6`.
 7. `GlKit.skipStatusChecks` exists only so the frame logic runs headless in JVM tests.
 8. The allocation test takes the least of three 300-frame windows: HotSpot shows one-off JIT/OSR transients even in a pure
    spin loop; a per-frame allocation would appear in every window.
+9. Pairing tests find WP7/WP8 classes by reflection (test-only `RealScenes`) so no test is ignored and WP6 edits no file it does not own.

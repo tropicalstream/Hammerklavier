@@ -8,7 +8,7 @@ import com.tropicalstream.hammerklavier.contract.VertexLayout
 import com.tropicalstream.hammerklavier.contract.stub.StubInstrumentScene
 import com.tropicalstream.hammerklavier.testutil.AllocProbe
 import org.junit.Assert.assertEquals
-import org.junit.Ignore
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** T6.4 (PLAN §7.2 WP6): key k → lane k − lowKey; the ACTION_SET decode agrees with the §5.8 layout. */
@@ -102,8 +102,40 @@ class UniformPackerTest {
         for (i in 132 until 136) assertEquals(0f, block[i], 0f)
     }
 
-    @Ignore("needs WP7 InstrumentScene.packActionSet: decode WP7's packed known pose with actionAngle/actionHeader (pair of T7.7)")
-    @Test fun actionSetDecodeAgreesWithWp7Pack() {}
+    /**
+     * Pair of T7.7: decode the real scene's packed known pose (WP7's Instruments when merged, else the stub) with
+     * actionHeader/actionAngle: shown slots name a key inside the compass near xCutKey, angles are finite and bounded,
+     * the spare vec4 stays zero, and packing is deterministic.
+     */
+    @Test fun actionSetDecodeAgreesWithWp7Pack() {
+        val f = RealScenes.factory()
+        for (id in InstrumentId.entries) {
+            val prof = InstrumentProfile.of(id)
+            val scene = f.instrument(id, com.tropicalstream.hammerklavier.contract.InstrumentLook(
+                com.tropicalstream.hammerklavier.contract.UprightFinish.WALNUT, false), 88)
+            val pose = MechanismPose()
+            for (k in 0 until 128) { pose.keyDip[k] = (k % 7) / 7f; pose.hammer[k] = (k % 5) / 5f; pose.damper[k] = (k % 3) / 3f }
+            val xCut = (prof.lowKey + prof.highKey) / 2f
+            val a = FloatArray(136); val b = FloatArray(136) { 9f }
+            scene.packActionSet(pose, xCut, a); scene.packActionSet(pose, xCut, b)
+            for (i in 0 until 136) assertEquals("deterministic $id [$i]", a[i], b[i], 0f)
+            val h = FloatArray(4)
+            for (s in 0 until 13) {
+                UniformPacker.actionHeader(a, s, h)
+                assertTrue(h[1] in 0f..1f)
+                if (h[1] > 0f) {
+                    val key = h[2].toInt()
+                    assertTrue("$id slot $s key $key", key in prof.lowKey..prof.highKey)
+                    assertTrue(kotlin.math.abs(key - xCut) <= 13f)
+                }
+                for (p in 0 until 6) {
+                    val ang = UniformPacker.actionAngle(a, s, p)
+                    assertTrue(ang.isFinite() && kotlin.math.abs(ang) <= 3.2f)
+                }
+            }
+            for (i in 132 until 136) assertEquals(0f, a[i], 0f)
+        }
+    }
 
     @Test fun packAllocatesNothing() {
         val scene = StubInstrumentScene(InstrumentId.GRAND)

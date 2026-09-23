@@ -15,7 +15,6 @@ import com.tropicalstream.hammerklavier.contract.stub.StubScenes
 import com.tropicalstream.hammerklavier.mesh.MeshBuilder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Test
 
 /** T6.3 (PLAN §7.2 WP6): merge by the §2.3 key; every framing's draw list from StubScenes within 28 draws per eye, in drawSlot order. */
@@ -96,6 +95,29 @@ class SceneAssemblerTest {
         }
     }
 
-    @Ignore("needs WP7/WP8 scenes: the same budget check over the real instruments and venue (T7.8/T8.8 pair)")
-    @Test fun realScenesWithinBudget() {}
+    /**
+     * T7.8/T8.8 pair: the same budget over the real instruments and venue. Uses WP7's `instrument.Instruments` and WP8's
+     * `venue.VenueSceneImpl` when they are on the classpath (found by name so this file compiles before they merge),
+     * otherwise the contract stubs, so the check always runs.
+     */
+    @Test fun realScenesWithinBudget() {
+        val f = RealScenes.factory()
+        for (id in InstrumentId.entries) for (lastDamper in intArrayOf(88, 66)) {
+            val inst = f.instrument(id, InstrumentLook(UprightFinish.WALNUT, false), lastDamper)
+            for (pal in Palette.entries) {
+                val s = SceneAssembler.assemble(inst.meshes(), f.venue().meshes(pal))
+                assertTrue(s.items.isNotEmpty())
+                for (it in s.items) assertTrue(it.vertexCount <= 65_535)
+                for (v in ViewId.entries) for (fr in 0..1) for (lv in RoomLevel.entries) {
+                    val vc = v.ordinal * 2 + fr
+                    val list = s.list(vc, lv.ordinal)
+                    val slots = list.map { s.items[it].key.drawSlot }
+                    assertEquals("drawSlot order", slots.sorted(), slots)
+                    val draws = list.size + SceneAssembler.overheadDraws(vc, lv.ordinal, 3, true)
+                    assertTrue("${RealScenes.label} $id $pal $v/$fr $lv: $draws draws", draws <= 28)
+                    assertTrue(s.triangles(vc, lv.ordinal) <= 45_000)
+                }
+            }
+        }
+    }
 }
