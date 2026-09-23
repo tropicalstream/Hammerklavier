@@ -165,6 +165,8 @@ class AudioOutput internal constructor(
     private val headroom = HeadroomGuard()
     /** The last accepted timestamp (absolute output frame, nanos); -1 = none this session. */
     private var tsFrame = -1L; private var tsNanos = 0L
+    /** Render time / block period, smoothed; and the underrun count at the last headroom sample. */
+    private var loadEma = 0f; private var urAtSample = 0
     private val tuner = LatencyTuner()
     private val wakeLock = Object()
     @Volatile private var wakeFlag = false
@@ -495,7 +497,13 @@ class AudioOutput internal constructor(
         // pull although ~16k frames are in the pipe). Client queue only until the first timestamp.
         val queued = if (gotTs && tsFrame >= 0) (framesAccepted - (tsFrame + (clockSource.now() - tsNanos) * HK.SR / 1_000_000_000L)).toInt()
             else (framesAccepted - (trackBaseFrame + s.playbackHeadPosition())).toInt()
-        when (if (gotTs) headroom.sample(framesAccepted, queued, baseCap) else 0) {       // warm-up: from the first timestamp
+        // Overload shows as underruns or render time near the block period even while the DAC-side
+        // measure stays high (the server fills with silence and the timestamp stalls; M1 storm64):
+        // either counts as no headroom for the guard.
+        val stressed = underruns > urAtSample || loadEma > OVERLOAD_LOAD
+        urAtSample = underruns
+        val q = if (stressed) 0 else queued
+        when (if (gotTs) headroom.sample(framesAccepted, q, baseCap) else 0) {       // warm-up: from the first timestamp
             1 -> { val cap = headroom.cap(baseCap); core.on(Cmd.VOICE_CAP, cap.toLong(), 0f, null); overloadPayload = cap; post(overloadRunnable) }
             -1 -> core.on(Cmd.VOICE_CAP, headroom.cap(baseCap).toLong(), 0f, null)
         }
@@ -579,6 +587,7 @@ class AudioOutput internal constructor(
     }
 
     private fun noteRenderTime(ns: Long) {
+        loadEma += (ns.toFloat() / BLOCK_NS - loadEma) * (1f / 64f)          // ≈ 0.34 s
         val us = (ns / 1000).toInt()
         if (ns > renderMaxNs) renderMaxNs = ns
         renderSumNs += ns; renderCount++
@@ -646,6 +655,7 @@ class AudioOutput internal constructor(
         private const val HIST = 256
         private const val HIST_US = 50
         private const val BLOCK_NS = HK.BLOCK * 1_000_000_000L / HK.SR
+        private const val OVERLOAD_LOAD = 0.92f
 
         private const val S_VOICES = 0; private const val S_PEAK = 1; private const val S_NOISE = 2; private const val S_STOLEN = 3
         private const val S_DROPPED = 4; private const val S_COMBS = 5; private const val S_P50 = 6; private const val S_P99 = 7

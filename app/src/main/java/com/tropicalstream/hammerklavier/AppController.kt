@@ -219,7 +219,9 @@ class AppController(private val ctx: Context, private val w: Wiring) {
 
     private fun logGcStats() {
         val keys = listOf("art.gc.gc-count", "art.gc.gc-time", "art.gc.bytes-allocated", "art.gc.blocking-gc-count")
-        Log.i(HK.TAG_PERF, keys.joinToString(" ") { "$it=${runCatching { android.os.Debug.getRuntimeStat(it) }.getOrNull()}" })
+        val rt = Runtime.getRuntime()
+        Log.i(HK.TAG_PERF, keys.joinToString(" ") { "$it=${runCatching { android.os.Debug.getRuntimeStat(it) }.getOrNull()}" } +
+            " heapUsedKiB=${(rt.totalMemory() - rt.freeMemory()) / 1024} heapTotalKiB=${rt.totalMemory() / 1024}")
     }
 
     private fun dump() {

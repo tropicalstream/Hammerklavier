@@ -55,7 +55,8 @@ class AudioOutputTest {
             out[0] = f; out[1] = t0 + f * 1_000_000_000L / 48_000L; return true
         }
         override fun playbackHeadPosition(): Long = maxOf(0L, written - lag)
-        override fun underrunCount(): Int = 0
+        @Volatile var underruns = 0
+        override fun underrunCount(): Int = underruns
         override val bufferFrames: Int get() = 4096
         override val fast: Boolean get() = false
     }
@@ -159,6 +160,20 @@ class AudioOutputTest {
         assertTrue("queued never negative: ${st.headroomMinFrames}", st.headroomMinFrames >= 0)
         assertEquals("no VOICE_CAP step-down", 0, rec.overloads.get())
         assertEquals(1, sinks.size)
+    }
+
+    /** M1: an overrunning engine stalls the DAC timestamp, so the DAC-side headroom stays high; underruns must still step the cap down. */
+    @Test fun underrunsStepTheVoiceCapDown() {
+        val rec = Recorder()
+        val a = output()
+        a.setListener(rec)
+        loadScale(a)
+        a.start()
+        val c = com.tropicalstream.hammerklavier.contract.ClockStats()
+        waitFor(10_000, "timestamps") { a.clockStats(c); c.tsAccepted > 3 }
+        val w0 = sinks[0].written
+        while (sinks[0].written - w0 < 12 * 48_000L) { sinks[0].underruns++; Thread.sleep(2) }
+        waitFor(10_000, "overload") { rec.overloads.get() > 0 }
     }
 
     @Test fun permanentFocusLossParksAtOnce() {
