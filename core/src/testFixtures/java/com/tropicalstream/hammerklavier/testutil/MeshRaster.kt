@@ -25,7 +25,13 @@ object MeshRaster {
     /** Light direction (towards the light), normalised inside. */
     var light = floatArrayOf(0.35f, 0.8f, -0.45f)
 
-    fun render(meshes: List<BakedMesh>, view: View, width: Int = 640, height: Int = 480, cull: Boolean = true): BufferedImage {
+    /**
+     * [clipX] (the Action cutaway's cut plane, NaN = none): triangles of `clipped` meshes lying
+     * wholly at x > clipX are dropped (a triangle-level approximation of the shader's discard), and
+     * SECTION_CAP / ACTION_SET meshes, built at x = 0, are drawn shifted to x = clipX.
+     */
+    fun render(meshes: List<BakedMesh>, view: View, width: Int = 640, height: Int = 480, cull: Boolean = true,
+               clipX: Float = Float.NaN): BufferedImage {
         val img = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
         val zbuf = FloatArray(width * height) { Float.POSITIVE_INFINITY }
         val cam = Camera(view, width, height)
@@ -37,9 +43,12 @@ object MeshRaster {
             val col = IntArray(n)
             val tmp = FloatArray(3)
             val lines = m.layout == VertexLayout.STRING || isRibbon(m)
+            val shift = if (!clipX.isNaN() && (m.program == com.tropicalstream.hammerklavier.contract.ProgramId.SECTION_CAP ||
+                    m.skin == com.tropicalstream.hammerklavier.contract.SkinKind.ACTION_SET)) clipX else 0f
+            val cut = !clipX.isNaN() && m.clipped
             for (i in 0 until n) {
                 val o = i * f
-                cam.project(m.vertices[o], m.vertices[o + 1], m.vertices[o + 2], tmp)
+                cam.project(m.vertices[o] + shift, m.vertices[o + 1], m.vertices[o + 2], tmp)
                 sx[i] = tmp[0]; sy[i] = tmp[1]; sz[i] = tmp[2]
                 val (r, g, b) = when (m.layout) {
                     VertexLayout.STRING -> Triple(m.vertices[o + 13], m.vertices[o + 14], m.vertices[o + 15])
@@ -57,6 +66,7 @@ object MeshRaster {
                 val a = ix[t].toInt() and 0xFFFF; val b = ix[t + 1].toInt() and 0xFFFF; val c = ix[t + 2].toInt() and 0xFFFF
                 t += 3
                 if (sz[a] <= 0f || sz[b] <= 0f || sz[c] <= 0f) continue
+                if (cut && m.vertices[a * f] > clipX && m.vertices[b * f] > clipX && m.vertices[c * f] > clipX) continue
                 if (lines) { line(img, zbuf, sx, sy, sz, col, a, b); line(img, zbuf, sx, sy, sz, col, b, c); continue }
                 val area = (sx[b] - sx[a]) * (sy[c] - sy[a]) - (sy[b] - sy[a]) * (sx[c] - sx[a])
                 // Screen y grows downward, so a CCW-from-the-front triangle has negative screen area.
