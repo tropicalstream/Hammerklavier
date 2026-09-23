@@ -202,4 +202,18 @@ class TransportTest {
         h.cmd(Cmd.PAUSE, 60L); h.renderBlocks(20); h.core.clockState(st)
         assertTrue(st.idle)
     }
+
+    /** M1: a pause in the middle of held notes freezes them silently; the engine must go idle (skip DSP, park). */
+    @Test fun pausedWithFrozenVoicesIsIdle() {
+        val h = Harness()
+        h.play(perfSong(listOf(N(100.0, 20_000.0, 60, 100), N(100.0, 20_000.0, 64, 100))))
+        h.renderTo(48_000)
+        val st = CoreClockState(); h.core.clockState(st)
+        assertFalse(st.idle)
+        h.cmd(Cmd.PAUSE, 60L); h.renderBlocks(400); h.core.clockState(st)   // 60 ms fade, then the room tail (~2 s)
+        assertTrue(h.core.pool.anyActive())                                 // frozen, kept for resume
+        assertTrue(st.idle)
+        h.cmd(Cmd.PLAY); h.renderBlocks(1); h.core.clockState(st)
+        assertFalse(st.idle)
+    }
 }

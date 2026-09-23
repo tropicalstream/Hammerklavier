@@ -491,7 +491,7 @@ class EngineCore(private val dsp: DspSet, private val cursors: VoiceCursorBoard,
             }
         }
         state.endedGeneration = endedGeneration
-        state.idle = (!playing || p == null) && !pool.anyActive() && !dsp.room.tailActive
+        state.idle = (!playing || p == null) && !pool.anyAudible() && !dsp.room.tailActive && !bench.running   // the bench steps inside render()
 
         if (bench.running) {
             if (!bench.step(BENCH_SLICE_NS)) {

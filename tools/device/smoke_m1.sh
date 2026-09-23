@@ -15,6 +15,7 @@ fail=0
 ctl() { $A shell am broadcast -a $PKG.CONTROL "$@" >/dev/null; }
 shot() { $A exec-out screencap -p > "$OUT/$1.png"; }
 L="$OUT/logcat.txt"
+waitfor() { for _ in $(seq 1 "$2"); do grep -Eq "$1" "$L" && return 0; sleep 1; done; return 1; }
 expect() { if grep -Eq "$2" "$L"; then echo "[smoke] PASS $1"; else echo "[smoke] FAIL $1 (no /$2/)"; fail=1; fi; }
 trap '$A shell settings put global device_wearing 0 >/dev/null 2>&1' EXIT
 $A shell settings put global device_wearing 1; $A shell input keyevent KEYCODE_WAKEUP; $A shell wm dismiss-keyguard
@@ -25,13 +26,14 @@ $A shell am start -S -n $PKG/.MainActivity >/dev/null; sleep 6
 shot 01_title
 ctl --es echo launched
 ctl --ez debug true
-ctl --ez bench true; sleep 20
+ctl --ez bench true; waitfor 'HKPerf.*bench cpuMhz=' 90; sleep 2          # the bench runs in 2 ms slices (~25 s)
 ctl --es play synth:scale; sleep 12; shot 02_scale_debug; sleep 14
-# The clock cycle.
+# The clock cycle. §8.3 uses pause → KEYCODE_HOME → return → play, but the RayNeo launcher
+# force-stops a backgrounded app ~1 s after HOME (Mercury BackgroundAppManager, M1 finding), so
+# the park is reached through the idle timer instead (IDLE_PARK_MS) and the un-park is measured.
 ctl --es play synth:scale; sleep 4
-ctl --ez pause true; sleep 1
-$A shell input keyevent KEYCODE_HOME; sleep 3
-$A shell am start -n $PKG/.MainActivity >/dev/null; sleep 2
+ctl --ez pause true; sleep 13
+ctl --ez stats true; ctl --es echo parked; sleep 1
 ctl --ez resume true; sleep 3
 ctl --es play synth:pedalhalf; sleep 12; shot 03_pedalhalf; sleep 10
 ctl --es play synth:storm64; sleep 25; shot 04_storm64
@@ -54,6 +56,8 @@ expect "synth:pedalhalf compiled"      'HKLoader.*play synth:pedalhalf gen='
 expect "synth:storm64 compiled"        'HKLoader.*play synth:storm64 gen='
 expect "scale ended"                   'HKAudio.*ended gen=.*synth:scale'
 expect "clock: fromTimestamp on play"  'HKClock.*play fromTimestamp=true'
+expect "parked after the idle timer"    'CONTROL echo=parked' 
+if awk '/CONTROL echo=parked/{exit} /HKAudio.*stats /{l=$0} END{exit !(l ~ /parked=true/)}' "$L"; then echo "[smoke] PASS parked=true before resume"; else echo "[smoke] FAIL not parked before resume"; fail=1; fi
 expect "clock: fromTimestamp on resume" 'HKClock.*resume fromTimestamp=true .*playing=true'
 expect "selftest done"                 'HKSelfTest.*done pass='
 # Audio kept playing asleep: a stats line between echo=asleep and echo=awake with voices > 0 and not parked.

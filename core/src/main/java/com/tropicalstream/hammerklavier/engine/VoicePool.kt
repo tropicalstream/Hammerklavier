@@ -274,6 +274,23 @@ internal class VoicePool(private val sampleRate: Int, private val cursors: Voice
 
     fun anyActive(): Boolean = mainActive + killActive + noiseActive > 0
 
+    /**
+     * True if any voice can still be heard: active and not frozen by a pause (a frozen voice has
+     * faded to 0 and is skipped by [render] until PLAY). Used for CoreClockState.idle, so a paused
+     * engine with frozen voices skips its DSP and parks (M1: it rendered silence at ~27% CPU).
+     */
+    fun anyAudible(): Boolean {
+        if (!anyActive()) return false
+        for (i in 0 until TOTAL) {
+            val v = voices[i]
+            val st = v.state
+            if (st == Voice.IDLE || st == Voice.PENDING) continue
+            if (v.tFade == 0f && v.tTarget == 0f) continue
+            return true
+        }
+        return false
+    }
+
     companion object {
         const val TOTAL = HK.VOICE_CAP_MAX + 64 + HK.NOISE_SLOTS      // 204
         const val KILL_FRAMES = 240                                     // 5 ms
