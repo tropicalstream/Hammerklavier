@@ -9,7 +9,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 
@@ -76,7 +75,6 @@ class CatalogCodecTest {
         assertEquals(4, o.getJSONArray("shelves").length()); assertEquals(5, o.getJSONArray("movements").length())
     }
 
-    @Ignore("needs wp11 fixture")
     @Test fun wp11FixtureParses() {
         val text = res("wp11/catalog_fixture.json")!!
         val m = CatalogCodec.parse(text)
@@ -90,9 +88,10 @@ class CatalogCodecTest {
         assertTrue(m.shelves.all { s -> s.workIds.all(m.works::containsKey) })
     }
 
-    @Ignore("needs the full catalog.json (WP11, M6)")
     @Test fun fullCatalogueHas70Works() {
         val f = File("../app/src/main/assets/catalog.json")
+        // WP11 delivers the full catalog.json at M6; until then this check is skipped, not ignored.
+        org.junit.Assume.assumeTrue("catalog.json not delivered yet (WP11, M6)", f.isFile)
         val m = CatalogCodec.parse(f.readText()) { File("../app/src/main/assets", it).isFile }
         assertTrue(m.works.size in 67..70)
         assertEquals(13, m.startHere.size.coerceAtMost(13))

@@ -14,10 +14,10 @@
 - Wiring note `docs/wiring/WP9.md`; requests `docs/requests/WP9.md`.
 
 ## Tests
-- T9.1 `CatalogCodecTest` 8 (6 green, 2 @Ignore: wp11 fixture, full catalog.json). T9.2 `ImportStoreTest` 18 green,
+- T9.1 `CatalogCodecTest` 8: 7 green incl. the wp11 `catalog_fixture.json`; `fullCatalogueHas70Works` runs via `Assume` and skips until WP11's `assets/catalog.json` (M6), no @Ignore left. T9.2 `ImportStoreTest` 18 green,
   `ImportRulesTest` 3, `LibraryIndexTest` 2. T9.3 in `ImportRulesTest.defaultInstrumentRule` + `ImportStoreTest.harpsichordDefaultFromFolderName`.
 - T9.4 `CompanionServerTest` 14 green (app JVM unit tests on 127.0.0.1).
-- `StubContractTest.sineCoreLevelsEnergyAndAllocation` (WP0's contracts-v1 stub) fails in this worktree; not WP9 code.
+- After merging main (contracts-v1.1): `:core:test` 96 tests, 0 failures, 1 skipped (the full catalogue); `:app:testDebugUnitTest` 14/14.
 - Device checks (phone upload, curl, push_scores.sh + rescan, no-Wi-Fi, /api/state < 50 ms) remain for M6.
 
 ## Decisions / deviations
@@ -35,4 +35,4 @@
 - `ImportedFacts` (core interface) gives the server the note count without changing the contract.
 
 ## Remaining
-- Un-ignore T9.1's wp11 test when `catalog_fixture.json` lands; the full-catalogue test at M6.
+- None in code. The full-catalogue assertion turns on automatically when `assets/catalog.json` lands (M6); device checks run by the integrator.
