@@ -79,7 +79,7 @@ class AudioClockTest {
         assertEquals(2_000_000L, out.songUs)                                                    // no anchor: the newest record
         c.publishEstimate(B, 6_720, 10_000_000L)
         c.sample(10_000_000L, out); assertEquals(2_000_000L, out.songUs)                       // H before the only record → oldest
-        val stats = ClockStats(); c.stats(stats); assertEquals(1, stats.clockMiss)
+        val stats = ClockStats(); c.stats(stats); assertEquals(0, stats.clockMiss)                 // before a new session's first record: not a miss (M1)
         assertTrue(c.publishTimestamp(10, 20_000_000L))                                          // first timestamp of the session accepted
     }
 
@@ -105,9 +105,10 @@ class AudioClockTest {
         assertFalse(c.publishTimestamp(48_000, 1_100_000_000L))                                 // frame did not advance
         assertFalse(c.publishTimestamp(48_000 + 48_480, 2_000_000_000L))                        // rate 1% high
         assertTrue(c.publishTimestamp(48_000 + 48_010, 2_000_000_000L))                         // 0.02%: accepted
+        assertTrue(c.publishTimestamp(48_000 + 2 * 48_010, 3_000_000_000L))
         val s = ClockStats(); c.stats(s)
-        assertEquals(2, s.tsAccepted); assertEquals(3, s.tsRejected)
-        assertEquals(48_010f, s.fsFit, 1f)
+        assertEquals(3, s.tsAccepted); assertEquals(3, s.tsRejected)
+        assertEquals(48_010f, s.fsFit, 1f)                                                        // the session's first pair anchors only; two in-fit pairs
         c.sample(2_000_000_000L, out); assertEquals(96_010L, out.heardFrame)
     }
 

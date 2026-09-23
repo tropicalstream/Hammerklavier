@@ -44,7 +44,8 @@ class ClockStats { @JvmField var tsAccepted = 0; @JvmField var tsRejected = 0; @
  * Timestamps are accepted only if the frame advanced, the nanos are newer and the rate implied
  * against the oldest pair in the fit window lies within ±0.5% of `fs_fit` (least squares over
  * the last 32 accepted pairs, seeded with [sampleRate], kept across resets). The first
- * timestamp of a session replaces the estimate unconditionally. After [RESEED_AFTER] consecutive
+ * timestamp of a session replaces the estimate unconditionally (anchor only: it is kept out of
+ * the fit and the drift statistics). After [RESEED_AFTER] consecutive
  * rate rejections the fit window is dropped and the pair accepted (M1: the AR1's start-up
  * timestamp lies off the line and otherwise blocked every later one).
  */
@@ -106,12 +107,26 @@ class AudioClock(sampleRate: Int = HK.SR, records: Int = HK.CLOCK_RECORDS) : Son
     /** HKAudio, every 16 blocks and while idle; false = rejected. */
     fun publishTimestamp(frame: Long, nanoTime: Long): Boolean {
         val fit = fsFitV
-        if (wFromTs) {
+        if (!wFromTs) {
+            // The first timestamp of a session anchors the clock, but a fresh or un-parked track's
+            // first report lies off the line (M1, AR1 speaker: 3,840 frames early), so it enters
+            // neither the fit nor the drift statistics.
+            if (wHead > 0) latFrames = (wNewestF + HK.BLOCK - frame).toInt()
+            wAnchored = true; wFromTs = true; wAnchorF = frame; wAnchorN = nanoTime
+            writeAnchor(frame, nanoTime, fsFitV, FLAG_ANCHORED or FLAG_TS)
+            rateRejects = 0
+            accepted++
+            return true
+        }
+        run {
             if (frame <= wAnchorF || nanoTime <= wAnchorN) { rejected++; return false }
-            if (fitCount > 0) {
+            run {
+                // Against the oldest pair in the fit window, or the session's anchor while it is empty.
                 val o = (fitNext - fitCount + FIT) % FIT
-                val dn = (nanoTime - fitN[o]).toDouble()
-                val implied = (frame - fitF[o]).toDouble() * 1e9 / dn
+                val f0 = if (fitCount > 0) fitF[o] else wAnchorF
+                val n0 = if (fitCount > 0) fitN[o] else wAnchorN
+                val dn = (nanoTime - n0).toDouble()
+                val implied = (frame - f0).toDouble() * 1e9 / dn
                 if (dn <= 0.0 || implied < fit * (1 - RATE_TOL) || implied > fit * (1 + RATE_TOL)) {
                     // A bad pair in the window (typically the start-up timestamp) would otherwise
                     // reject every later, consistent one: after RESEED_AFTER in a row, drop the window.
@@ -194,7 +209,7 @@ class AudioClock(sampleRate: Int = HK.SR, records: Int = HK.CLOCK_RECORDS) : Son
             if (!found) { idx = oldestIdx; h = fK }        // older than the oldest record: the oldest, at its start
             if (head.get() - n > idx) continue            // the chosen slot may have been overwritten meanwhile
             if (sessionA.get() != s1) continue
-            if (!found) clockMissA.incrementAndGet()
+            if (!found && h0 > n) clockMissA.incrementAndGet()   // a miss = overwritten; before a new session's first record is not
             val rate = Float.fromBits((m1 and 0xFFFFFFFFL).toInt())
             val playing = (m1 ushr 32) and 1L != 0L
             out.songUs = if (playing) sK + Math.floor((h - fK).toDouble() * rate * 1e6 / fs).toLong() else sK

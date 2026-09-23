@@ -36,7 +36,8 @@ ctl --ez pause true; sleep 13
 ctl --ez stats true; ctl --es echo parked; sleep 1
 ctl --ez resume true; sleep 3
 ctl --es play synth:pedalhalf; sleep 12; shot 03_pedalhalf; sleep 10
-ctl --es play synth:storm64; sleep 25; shot 04_storm64
+ctl --es play synth:storm64; sleep 20
+$A shell top -H -b -n 1 -m 12 -p $($A shell pidof $PKG) > "$OUT/top_storm64.txt" 2>&1; sleep 5; shot 04_storm64
 # Display asleep: audio continues.
 $A shell input keyevent KEYCODE_SLEEP; sleep 2
 ctl --es echo asleep; sleep 22
