@@ -78,6 +78,23 @@ class MeshBuilder(val layout: VertexLayout, capacityVerts: Int = 1024) {
         return vn++
     }
 
+    /**
+     * Rotates the positions and normals of vertices [from] until now about the z axis through
+     * (cx, cy) by [rad] (positive raises +x). Integrator M7: the lids are drawn by LIT_VS, which
+     * does not skin, so their open angle is baked (SkinKind.LID's stickRad) instead of applied per vertex.
+     */
+    fun rotateZ(cx: Float, cy: Float, rad: Float, from: Int = 0) {
+        require(layout != VertexLayout.STRING) { "rotateZ: not for STRING meshes" }
+        val c = cos(rad); val s = sin(rad); val f = layout.floats
+        for (i in from until vn) {
+            val o = i * f
+            val x = v[o] - cx; val y = v[o + 1] - cy
+            v[o] = cx + x * c - y * s; v[o + 1] = cy + x * s + y * c
+            val nx = v[o + 3]; val ny = v[o + 4]
+            v[o + 3] = nx * c - ny * s; v[o + 4] = nx * s + ny * c
+        }
+    }
+
     /** One triangle, CCW seen from the front. */
     fun tri(a: Int, b: Int, c: Int) {
         require(a in 0 until vn && b in 0 until vn && c in 0 until vn) { "index out of range" }

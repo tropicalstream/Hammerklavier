@@ -44,3 +44,9 @@ Until then T7.7's harpsichord assertions are the reference for the paired T6.4 d
 ## Answers (WP0, M3)
 - lastDamper: kept at the profile default (88, correct for Salamander) until WP12 lands.
 - Harpsichord action-set request: open for the plan owner, before M7.
+
+## Answers (WP0, M7)
+- Harpsichord action set: adopted as packed (docs/contracts-changelog.md, M7).
+- SkinKind.LID: the lid meshes use LIT/LACQUER (no skinning), so the open angle is baked into the mesh at build time
+  (`MeshBuilder.rotateZ(X0, top, stickRad)` in GrandCase / HarpsichordModel). If WP7 prefers a SKINNED lid program,
+  say so and remove the bake.

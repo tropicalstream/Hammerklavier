@@ -321,7 +321,8 @@ void main() {
     float l = length(d);
     d = l > 0.0001 ? d / l : vec2(1.0, 0.0);
     vec2 perp = vec2(-d.y, d.x);
-    float halfPx = aUv.y * uProjY * uViewport.y * 0.5 / max(c0.w, 0.001);
+    // M7: |w| — a vertex behind the eye (w < 0) got max(w, 0.001) here, a 10^4 px width and a half-screen wedge
+    float halfPx = aUv.y * uProjY * uViewport.y * 0.5 / max(abs(c0.w), 0.001);
     float hw = max(halfPx, 0.75) + 1.0;
     c0.xy += perp * sign(aUv.x) * hw / (uViewport * 0.5) * c0.w;
     vHalf = hw;

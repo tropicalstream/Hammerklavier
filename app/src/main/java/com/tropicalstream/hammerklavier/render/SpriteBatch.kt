@@ -30,8 +30,13 @@ class SpriteBatch(val maxSprites: Int) {
                 // M5: a 3 cm flame 5–8 m away is 2–4 px on the waveguide; hold every sprite to a minimum angular
                 // half-size and trade the growth for weight (a × (s/s′)^¼), so far candles read as flames.
                 val dx = x - eye[0]; val dy = y - eye[1]; val dz = z - eye[2]
-                val minS = kotlin.math.sqrt(dx * dx + dy * dy + dz * dz) * MIN_HALF_ANGLE
+                val dist = kotlin.math.sqrt(dx * dx + dy * dy + dz * dz)
+                val minS = dist * MIN_HALF_ANGLE
                 if (s < minS) { a *= kotlin.math.sqrt(kotlin.math.sqrt(s / minS)); s = minS }
+                // M7: fade by the sprite centre's distance too (the per-corner depth fade in SPRITE_VS leaves a hard
+                // diagonal where a halo straddles the eye plane; seen in the upright's Hall life-size framing).
+                val t = ((dist - s - NEAR_FADE0) / (NEAR_FADE1 - NEAR_FADE0)).coerceIn(0f, 1f)
+                a *= t * t * (3f - 2f * t)
             }
             o = corner(d, o, x, y, z, s, right, up, -1f, -1f, r, g, bl, a)
             o = corner(d, o, x, y, z, s, right, up, 1f, -1f, r, g, bl, a)
@@ -76,5 +81,7 @@ class SpriteBatch(val maxSprites: Int) {
     companion object {
         /** Minimum sprite half-extent in radians (≈ 7 px on the 40° Hall view). */
         const val MIN_HALF_ANGLE = 0.010f
+        /** Sprites whose nearest point is closer than this (m) are faded out (smoothstep 0.5 → 1.2 m). */
+        const val NEAR_FADE0 = 0.5f; const val NEAR_FADE1 = 1.2f
     }
 }

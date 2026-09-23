@@ -22,7 +22,7 @@ $A logcat -v time -s HKRender HKUi HKInput HKLoader HKAudio AndroidRuntime > "$L
 $A shell am start -S -n $PKG/.MainActivity >/dev/null; sleep 8
 g tap; sleep 3
 ctl --ei quality 0
-ctl --es play asset:midi/krueger/bach/bach_846.mid; sleep 10
+ctl --es play asset:midi/krueger/bach/bach_846.mid; sleep 1; ctl --es instrument ${HK_M5_INSTRUMENT:-grand}; sleep 9   # M7: the instrument persists across launches
 shot m5_player_toast; sleep 3; shot m5_player
 g fwd; sleep 4; shot m5_action_cutaway
 g down; sleep 4; shot m5_action_overhead

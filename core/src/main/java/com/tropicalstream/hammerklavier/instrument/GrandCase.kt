@@ -131,6 +131,7 @@ object GrandCase {
         val lid = MeshBuilder(VertexLayout.STATIC, 512)
         lid.color(lac)
         lid.extrude(rim, g.RIM_TOP, g.RIM_TOP + g.LID_T, capTop = true, capBottom = true)
+        lid.rotateZ(g.X0, g.RIM_TOP, g.LID_STICK_RAD)     // baked open (integrator M7: LIT_VS does not skin LID)
         out += lid.build("grand.lid", MaterialId.LACQUER, SkinKind.LID, VM.LEVELS_ALL, VM.NO_OVER, true, ProgramId.LACQUER, 8)
         val stick = MeshBuilder(VertexLayout.STATIC, 32)
         stick.color(lac)

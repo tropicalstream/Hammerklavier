@@ -173,6 +173,18 @@ class KitDecoder {
 
         private fun put(src: ByteBuffer, frame: Int, n: Int, channels: Int, filePos: Long) {
             var i = 0
+            if (channels == 2) {                          // same layout as the cache: bulk copy (integrator M7, T-DEC)
+                while (i < n) {
+                    if (out.remaining() < 4 || (pendingPos >= 0 && pendingPos + out.position() != filePos + i.toLong() * 4)) flush()
+                    if (pendingPos < 0) pendingPos = filePos + i.toLong() * 4
+                    val m = minOf(n - i, out.remaining() / 4)
+                    val from = (frame + i) * 4
+                    val view = src.duplicate(); view.limit(from + m * 4); view.position(from)
+                    out.put(view)
+                    i += m
+                }
+                return
+            }
             while (i < n) {
                 if (out.remaining() < 4 || (pendingPos >= 0 && pendingPos + out.position() != filePos + i.toLong() * 4)) flush()
                 if (pendingPos < 0) pendingPos = filePos + i.toLong() * 4
@@ -199,13 +211,17 @@ class KitDecoder {
                 ch.force(false)
                 val spent = writeNs + (System.nanoTime() - t1)
                 sinceForce = 0; writeNs = 0
-                val sleepMs = 2 * spent / 1_000_000
-                if (sleepMs > 0) runCatching { Thread.sleep(sleepMs.coerceAtMost(2_000)) }
+                val sleepMs = (sleepFactor * spent / 1_000_000).toLong()
+                if (sleepMs > 0) { runCatching { Thread.sleep(sleepMs.coerceAtMost(2_000)) }; sleptMs += sleepMs.coerceAtMost(2_000) }
             }
         }
     }
 
     companion object {
+        /** Sleep after each force, × the write+force time (§3.3: 2). CONTROL `decodesleep` (integrator M7 experiment). */
+        @Volatile @JvmStatic var sleepFactor: Float = 2f
+        /** Total throttle sleep since start (ms), for the HKKit unit line. */
+        @Volatile @JvmStatic var sleptMs: Long = 0L
         const val PREFERRED = "c2.android.opus.decoder"
         const val MIME = MediaFormat.MIMETYPE_AUDIO_OPUS
         const val CHUNK = 64 * 1024

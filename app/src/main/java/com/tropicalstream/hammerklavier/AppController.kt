@@ -83,6 +83,8 @@ class AppController(private val ctx: Context, private val w: Wiring) {
     private var sessionCap = -1f
 
     // ── RenderControl forwarder: the GlHost attaches after construction and can detach (WP12 wiring 1) ──
+    /** §7.4 M7: uptime of the last instrument switch request, 0 = none pending. */
+    private var switchT0 = 0L
     private var rInstrument: Triple<InstrumentId, InstrumentLook, Int>? = null
     private var rView: Pair<ViewId, Int>? = null
     private var rSettings: RenderSettings? = null
@@ -91,7 +93,14 @@ class AppController(private val ctx: Context, private val w: Wiring) {
     private var rOverrides: RenderOverrides? = null
     private val renderFwd = object : RenderControl {
         override fun bind(clock: SongClock, energy: EnergyRing, mech: MechanicsEvaluator, scenes: SceneFactory) { gl?.bind(clock, energy, mech, scenes) }
-        override fun setPerformance(p: Performance?, profile: InstrumentProfile) { rPerf = p to profile; gl?.setPerformance(p, profile) }
+        override fun setPerformance(p: Performance?, profile: InstrumentProfile) {
+            rPerf = p to profile; gl?.setPerformance(p, profile)
+            if (switchT0 != 0L && p != null) {                     // §7.4 M7: instrument switch → the new Performance at the audio
+                val ms = SystemClock.uptimeMillis() - switchT0; val key = profile.id.key
+                switchT0 = 0L
+                w.main.postDelayed({ Log.i(HK.TAG_UI, "switch to=$key perf ms=$ms playing=${session.isPlaying()} (600 ms later)") }, 600)   // the clock reports playing once the track runs
+            }
+        }
         override fun setInstrument(id: InstrumentId, look: InstrumentLook, lastDamper: Int) { rInstrument = Triple(id, look, lastDamper); gl?.setInstrument(id, look, lastDamper) }
         override fun setView(v: ViewId, framing: Int) {
             rView = v to framing; gl?.setView(v, framing)
@@ -337,6 +346,7 @@ class AppController(private val ctx: Context, private val w: Wiring) {
         when (a) {
             UiAction.Leave -> { fadeAndPause("Back at the root"); onLeave?.invoke() }
             UiAction.PlayPause -> { session.onAction(a); media?.setPlaying(session.isPlaying(), positionMs()) }
+            is UiAction.SetInstrument -> { if (a.id != session.instrument) switchT0 = SystemClock.uptimeMillis(); session.onAction(a) }
             else -> session.onAction(a)
         }
     }
@@ -366,7 +376,7 @@ class AppController(private val ctx: Context, private val w: Wiring) {
                 "gesture" -> gestureOf(b.getString(k))?.let { onGesture(it, "control") } ?: unknown(k, b)
                 "view" -> viewOf(b, k)?.let { session.view(it, if (b.containsKey("framing")) b.getInt("framing", 0).coerceIn(0, 1) else session.framing); refreshOverlay() } ?: unknown(k, b)
                 "framing" -> if (!b.containsKey("view")) { session.view(session.view, b.getInt(k, 0).coerceIn(0, 1)); refreshOverlay() }
-                "instrument" -> b.getString(k)?.let { s -> (InstrumentId.of(s) ?: runCatching { InstrumentId.valueOf(s.uppercase()) }.getOrNull())?.let { session.instrument(it) } } ?: unknown(k, b)
+                "instrument" -> b.getString(k)?.let { s -> (InstrumentId.of(s) ?: runCatching { InstrumentId.valueOf(s.uppercase()) }.getOrNull())?.let { if (it != session.instrument) switchT0 = SystemClock.uptimeMillis(); session.instrument(it) } } ?: unknown(k, b)
                 "pause" -> if (b.getBoolean(k) && session.isPlaying()) session.toggle()
                 "resume" -> if (b.getBoolean(k)) { if (!session.isPlaying()) session.toggle(); w.main.postDelayed({ playback.logClock("resume") }, 1000) }
                 "seek" -> { @Suppress("DEPRECATION") val v = b.get(k); session.controlSeekDisplayMs((v as? Number)?.toLong() ?: v?.toString()?.toLongOrNull() ?: 0L); refreshOverlay() }
@@ -394,6 +404,18 @@ class AppController(private val ctx: Context, private val w: Wiring) {
                 "sync" -> session.onAction(UiAction.SyncTest(b.getBoolean(k)))
                 "glreset" -> if (b.getBoolean(k)) (gl as? com.tropicalstream.hammerklavier.render.HkGlView)?.resetContext()
                 "selftestsecs", "benchsecs", "soakplan", "mono", "echo", "n" -> {}
+                "decodesleep" -> com.tropicalstream.hammerklavier.audio.KitDecoder.sleepFactor = b.getFloat(k, 2f).coerceIn(0f, 4f)
+                "voicerprio" -> com.tropicalstream.hammerklavier.audio.KitManager.voicerPriority = b.getInt(k, 10).coerceIn(-8, 19)
+                "fov" -> b.getFloat(k, -1f).let { f -> val o = com.tropicalstream.hammerklavier.contract.RenderOverrides(vFovDeg = if (f > 0f) f else null); rOverrides = o; gl?.setOverrides(o) }
+                "aplcap" -> com.tropicalstream.hammerklavier.render.StereoRenderer.aplOff = !b.getBoolean(k, true)
+                "registration" -> session.onAction(UiAction.SetRegistration(b.getInt(k, 3).coerceIn(1, 3)))
+                "temperament", "pitch" -> {
+                    val id = session.instrument
+                    val cur = facts().settings.tuning[id] ?: InstrumentProfile.of(id).defaultTuning
+                    val t = if (k == "temperament") (runCatching { com.tropicalstream.hammerklavier.contract.Temperament.valueOf(b.getString(k)!!.uppercase()) }.getOrNull() ?: cur.temperament) else cur.temperament
+                    val a = if (k == "pitch") b.getFloat(k, cur.aHz).coerceIn(400f, 466f) else cur.aHz
+                    session.onAction(UiAction.SetTuning(id, com.tropicalstream.hammerklavier.contract.TuningSpec(a, t)))
+                }
                 "gcstats" -> if (b.getBoolean(k)) logGcStats()
                 "dump" -> if (b.getBoolean(k)) dump()
                 "companion" -> if (b.getBoolean(k)) { Log.i(HK.TAG_UI, "companion url=${session.companionUrl} token=${token()}") }

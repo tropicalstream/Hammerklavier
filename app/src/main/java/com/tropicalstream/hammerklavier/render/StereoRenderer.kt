@@ -356,7 +356,7 @@ class StereoRenderer(private val loader: ExecutorService?,
             var n = 0
             if (!d.stageHidden) {
                 for (i in list) { drawer.draw(scn.assembled.items[i], frame, gen); n++ }
-                if (director.view != ViewId.HALL) n += fader.draw(programs.fade, 1f - aplGain(director.view, director.framing, level))   // APL cap: surfaces only, flames stay full
+                if (director.view != ViewId.HALL) n += fader.draw(programs.fade, 1f - aplGain(director.view, director.framing, level, scn.profile.id))   // APL cap: surfaces only, flames stay full
                 n += sprites.draw(programs.sprite, eye.viewProj)
                 n += drawLabels(d, scn, eye.view, eye.proj)
                 if (viewCode == INSET_VIEW) { n += inset.draw(scn.assembled, frame, gen, ex, 0, ew); GLES20.glViewport(ex, 0, ew, height) }
@@ -364,7 +364,7 @@ class StereoRenderer(private val loader: ExecutorService?,
             val sd = sync.draw(programs.fade, pose, ex, 0, ew, height)
             if (sd > 0 && e == 0) { syncFrames++; if (syncFrames % 8 == 1) Log.i(HK.TAG_RENDER, "sync flash frame n=" + syncFrames) }
             n += sd
-            n += fader.draw(programs.fade, if (director.view == ViewId.HALL) 1f - (1f - director.fade) * aplGain(director.view, director.framing, level) else director.fade)   // Hall: cap folded into the fade (28-draw budget)
+            n += fader.draw(programs.fade, if (director.view == ViewId.HALL) 1f - (1f - director.fade) * aplGain(director.view, director.framing, level, scn.profile.id) else director.fade)   // Hall: cap folded into the fade (28-draw budget)
             if (e == 0) draws = n
         }
         drawsPerEye = draws
@@ -380,12 +380,20 @@ class StereoRenderer(private val loader: ExecutorService?,
      * before the flame sprites, glyphs and inset (in the Hall, folded into the fade quad: no draw to spare), so the average picture level stays ≤ 9% (Stage views)
      * and ≤ 12% (Hall) with the M5 materials. Gains are the measured M5 APL scaled to ≈ 8.5% / 11.5%.
      */
-    private fun aplGain(view: ViewId, framing: Int, level: Int): Float = when {
-        level == RoomLevel.PASSTHROUGH.ordinal -> 1f
-        view == ViewId.HALL -> APL_GAIN_HALL
-        view == ViewId.ACTION && framing == 1 -> APL_GAIN_OVERHEAD
-        view == ViewId.ACTION -> APL_GAIN_CUTAWAY
-        else -> APL_GAIN_PLAYER
+    private fun aplGain(view: ViewId, framing: Int, level: Int, id: com.tropicalstream.hammerklavier.contract.InstrumentId): Float = when {
+        level == RoomLevel.PASSTHROUGH.ordinal || aplOff -> 1f
+        view == ViewId.HALL -> APL_GAIN_HALL * instrumentApl(id, 3)
+        view == ViewId.ACTION && framing == 1 -> APL_GAIN_OVERHEAD * instrumentApl(id, 2)
+        view == ViewId.ACTION -> APL_GAIN_CUTAWAY * instrumentApl(id, 1)
+        else -> APL_GAIN_PLAYER * instrumentApl(id, 0)
+    }
+
+    /** M7: the bone keys and light case of the harpsichord and the upright's walnut read brighter than the grand's
+     *  black lacquer; per-instrument trims of the cap (Player, cutaway, overhead, Hall), measured with apl.sh. */
+    private fun instrumentApl(id: com.tropicalstream.hammerklavier.contract.InstrumentId, v: Int): Float = when (id) {
+        com.tropicalstream.hammerklavier.contract.InstrumentId.HARPSICHORD -> APL_TRIM_HARPSICHORD[v]
+        com.tropicalstream.hammerklavier.contract.InstrumentId.UPRIGHT -> APL_TRIM_UPRIGHT[v]
+        else -> 1f
     }
 
     private fun finish(t0: Long, lateNs: Long) {
@@ -635,8 +643,12 @@ class StereoRenderer(private val loader: ExecutorService?,
     }
 
     companion object {
+        /** Debug (CONTROL `aplcap false`): no APL cap. */
+        @Volatile @JvmStatic var aplOff = false
         const val APL_GAIN_PLAYER = 0.35f; const val APL_GAIN_CUTAWAY = 0.28f   // M6: -5% for the HUD (credit, pills) now live
         const val APL_GAIN_OVERHEAD = 0.245f; const val APL_GAIN_HALL = 0.70f
+        private val APL_TRIM_HARPSICHORD = floatArrayOf(0.74f, 0.70f, 0.85f, 0.80f)
+        private val APL_TRIM_UPRIGHT = floatArrayOf(0.94f, 1f, 1f, 0.93f)
         private val NOTE = arrayOf("C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B")
         /** §5.9: the thermal cap overrides Auto; an explicit user choice overrides both. */
         internal fun levelFor(userOverride: RoomLevel?, view: ViewId, cap: RoomLevel): Int {

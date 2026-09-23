@@ -159,6 +159,7 @@ object HarpsichordModel {
         val lid = MeshBuilder(VertexLayout.STATIC, 512)
         lid.color(case)
         lid.extrude(rim, CASE_TOP, CASE_TOP + LID_T, capTop = true, capBottom = true)
+        lid.rotateZ(X0, CASE_TOP, LID_OPEN_RAD)           // baked open (integrator M7: LIT_VS does not skin LID)
         out += lid.build("harpsichord.lid", MaterialId.FLEMISH_CASE, SkinKind.LID, VM.LEVELS_ALL, VM.NO_OVER, true, ProgramId.LIT, 8)
         val motto = MeshBuilder(VertexLayout.STATIC, 8)
         motto.color(intArrayOf(255, 255, 255))
@@ -169,6 +170,7 @@ object HarpsichordModel {
             val cc = motto.vertex(x1, y, z1, 0f, -1f, 0f, 1f, 0f); val d = motto.vertex(x0, y, z1, 0f, -1f, 0f, 1f, 1f)
             motto.triOutward(a, b, cc); motto.triOutward(a, cc, d)
         }
+        motto.rotateZ(X0, CASE_TOP, LID_OPEN_RAD)
         out += motto.build("harpsichord.lid.motto", MaterialId.PAPER, SkinKind.LID, VM.LEVELS_ALL, VM.NO_OVER, true, ProgramId.LIT, 8,
             texture = InstrumentTextures.HARPSI_LID)
         // ── Soundboard with rose (slot 9, textured), bridges, nuts, wrestplank, register slides, pins ──

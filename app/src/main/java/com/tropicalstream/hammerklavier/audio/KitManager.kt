@@ -1,5 +1,6 @@
 package com.tropicalstream.hammerklavier.audio
 
+import kotlin.math.ln
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Handler
@@ -112,10 +113,27 @@ class KitManager(ctx: Context, private val voicer: ExecutorService, private val 
     }
 
     override fun keyMap(bank: LoadedBank, tuning: TuningSpec): KeyMap = when (bank) {
-        is MappedBank -> KeyMapBuilder.build(bank.index, tuning, bank.readyMask)
+        is MappedBank -> KeyMapBuilder.build(bank.index, tuning, bank.readyMask).also { logRemap(bank, tuning, it) }
         is SynthBank -> bank.keyMap(tuning)
         is SineBank -> KeyMapFixtures.forSineBank(bank.layers, KeyMapFixtures.Mode.HARD, bank.stops, bank.readyMask)
         else -> KeyMapFixtures.forSineBank(bank.info.layers, KeyMapFixtures.Mode.HARD, bank.info.stops, bank.readyMask)
+    }
+
+    /** §7.4 M7: the remap of key 69 (every ready layer of stop 0), root, shift and output pitch vs target. */
+    private fun logRemap(bank: MappedBank, tuning: TuningSpec, km: KeyMap) {
+        val ix = bank.index; val k = 69
+        val target = KeyMapBuilder.targetCents(ix, tuning, k)
+        val temp = tuning.temperament.offsetCents(9); val std = tuning.keyCents(k) - temp
+        for (layer in 0 until km.layers) {
+            val sk = layer * HK.KEYS + k
+            val rid = km.region[sk]; if (rid < 0) continue
+            val r = ix.regions.firstOrNull { it.id == rid } ?: continue
+            val shift = 1200.0 * ln(km.rate[sk].toDouble()) / ln(2.0)
+            val out = r.nativeCents + shift
+            Log.i(HK.TAG_KIT, "remap ${ix.instrument} ${tuning.aHz}Hz ${tuning.temperament.name} key=$k layer=$layer root=${r.root} " +
+                "native=${"%.2f".format(r.nativeCents)} std=${"%.2f".format(std)} temp=${"%.2f".format(temp)} shape=${"%.2f".format(ix.stretchCents[k])} " +
+                "target=${"%.2f".format(target)} shift=${"%.2f".format(shift)} out=${"%.2f".format(out)} err=${"%.3f".format(out - target)} f0=${"%.2f".format(km.f0Hz[k])}")
+        }
     }
 
     override fun setPlaybackHint(playing: Boolean, activeId: InstrumentId?, q: QualityProfile, batteryTenths: Int) {
@@ -340,7 +358,10 @@ class KitManager(ctx: Context, private val voicer: ExecutorService, private val 
     private fun activeComplete(except: InstrumentId): Boolean {
         val a = scheduler.activeId ?: return true
         if (a == except) return true
-        return synchronized(kits) { kits[a] }?.plan?.complete ?: true
+        // An active kit that is still opening counts as incomplete (else the previous kit keeps voicing
+        // ahead of it after a switch); one that failed to open (no plan, not opening) does not block.
+        val ka = synchronized(kits) { kits[a] } ?: return false
+        return ka.plan?.complete ?: !ka.opening
     }
 
     /** Voices pending units in order while the scheduler allows. HKVoicer. */
@@ -358,20 +379,38 @@ class KitManager(ctx: Context, private val voicer: ExecutorService, private val 
                 if (k.id != scheduler.activeId) idleQueue.add(k.id)
                 return
             }
-            // The first playable set: two codecs in parallel (the second on a helper thread).
-            var helper: Thread? = null
-            val helperUnits = if (!playable) plan.playableSet.filter { it >= 62 && !k.ready.has(it) } else emptyList()
-            val unit = plan.pending.firstOrNull { it !in helperUnits } ?: plan.next
-            if (helperUnits.isNotEmpty() && unit !in helperUnits) {
-                helper = Thread({
-                    val d2 = KitDecoder()
-                    try { for (u in helperUnits) if (!voiceUnit(k, idx, assetDir, d2, u, layout, ch, offset, readyF)) break }
-                    finally { d2.release() }
-                }, "HKVoicer2").also { it.priority = Thread.MIN_PRIORITY; it.start() }
+            // Two codecs in parallel (integrator M7, T-DEC): the main lane takes the plan's order; the helper
+            // lane first takes the playable set's releases and pedals, then the least urgent pending unit
+            // (from the end of the plan), so the playable set keeps its priority and the rest halves.
+            val taken = HashSet<Int>()
+            val helperFirst = ArrayDeque(if (!playable) plan.playableSet.filter { it >= 62 && !k.ready.has(it) } else emptyList())
+            fun take(helperLane: Boolean): Int? = synchronized(taken) {
+                val pend = (k.plan ?: return null).pending.filter { it !in taken && !k.ready.has(it) }
+                val u = if (helperLane) (helperFirst.removeFirstOrNull()?.takeIf { it in pend } ?: pend.lastOrNull())
+                        else pend.firstOrNull { it !in helperFirst }
+                u?.also { taken.add(it) }
             }
-            val ok = voiceUnit(k, idx, assetDir, decoder, unit, layout, ch, offset, readyF)
-            helper?.join()
-            if (!ok) return
+            val stop = java.util.concurrent.atomic.AtomicBoolean(false)
+            fun lane(d: KitDecoder, helperLane: Boolean) {
+                while (!stop.get() && !k.released) {
+                    val pl = k.plan ?: return
+                    if (!scheduler.mayVoice(k.id, pl.playable(k.ready.mask), activeComplete(k.id))) return
+                    val u = take(helperLane) ?: return
+                    if (!voiceUnit(k, idx, assetDir, d, u, layout, ch, offset, readyF)) { stop.set(true); return }
+                }
+            }
+            val helper = Thread({
+                val d2 = KitDecoder()
+                try { lane(d2, true) } catch (t: Throwable) { Log.e(HK.TAG_KIT, "voicing lane 2 ${k.id.key}", t) } finally { d2.release() }
+            }, "HKVoicer2").also { it.priority = Thread.MIN_PRIORITY; it.start() }
+            lane(decoder, false)
+            helper.join()
+            if (stop.get()) return
+            val after = k.plan ?: return
+            if (!after.complete && !scheduler.mayVoice(k.id, after.playable(k.ready.mask), activeComplete(k.id))) {
+                if (k.id != scheduler.activeId) idleQueue.add(k.id)
+                return
+            }
         }
     }
 
@@ -384,6 +423,8 @@ class KitManager(ctx: Context, private val voicer: ExecutorService, private val 
         val afd = try { app.assets.openFd("instruments/$assetDir/${u.file}") } catch (e: Exception) {
             Log.e(HK.TAG_KIT, "${k.id.key}: ${u.file} unreadable", e); return false
         }
+        val slept0 = KitDecoder.sleptMs
+        runCatching { Process.setThreadPriority(voicerPriority) }
         val res = afd.use { d.decodeUnit(it, regions, layout, ch, offset) { (scheduler.shouldYield() && k.plan?.playable(k.ready.mask) != false) || k.released } }
         when (res) {
             is DecodeResult.Done -> {
@@ -396,7 +437,7 @@ class KitManager(ctx: Context, private val voicer: ExecutorService, private val 
                 }
                 val audioS = u.frames.toDouble() / HK.SR
                 Log.i(HK.TAG_KIT, "${k.id.key}: unit $unit (${u.label}) voiced, ${"%.1f".format(audioS)} s audio in ${res.wallMs} ms " +
-                    "(${"%.0f".format(audioS * 1000 / res.wallMs.coerceAtLeast(1))}× real time)")
+                    "(${"%.0f".format(audioS * 1000 / res.wallMs.coerceAtLeast(1))}× real time, throttle ${KitDecoder.sleptMs - slept0} ms at ×${KitDecoder.sleepFactor})")
                 publishState(k, idx)
                 val p = k.plan
                 if (bank != null && p != null && p.playable(k.ready.mask)) announcePlayable(k, bank)
@@ -436,6 +477,8 @@ class KitManager(ctx: Context, private val voicer: ExecutorService, private val 
         const val PREFS = "hk_kits"
         const val HEAD_FRAMES = HK.SR * 150 / 1000
         const val PRELOAD_MAX = 96L * 1024 * 1024
+        /** HKVoicer's priority while a unit decodes (§3.3: background). CONTROL `voicerprio` (integrator M7 experiment). */
+        @Volatile @JvmStatic var voicerPriority: Int = Process.THREAD_PRIORITY_BACKGROUND
         const val BENCH_ASSET = "instruments/stub/u/bench.opus"
     }
 }

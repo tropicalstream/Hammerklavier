@@ -437,3 +437,61 @@ Import panel's `Last import:` stays "none" until a status arrives in this sessio
 - One FRAME HITCH seen once at Enter (idle 10 fps → play) in an M5 run; not reproduced in 4 later runs.
 - WP10 requests 1, 5, 6 open (SetSight Auto edge, BT A/V default in facts, sessions semantics).
 - Carried from M5: unplugged T-THERM, T12.8, T-CPU with combs, L-2/L-7, look-around.
+
+## USER FEEDBACK (2026-09-23, from wearing the build)
+- Likes the progress. Problem: colour saturation looks wrong on the waveguide. Colours must be re-graded for the X3 waveguide (Pal / section 5.9 colour tokens, gamma lift). RESOLVED: saturation was the user's minimum brightness setting, not a bug. REAL ISSUE: the black keys (sharps) look BROWN on the glasses. Fix at M8 (or sooner): sharps' (and ebony lacquer's) lifted dark must be NEUTRAL/slightly cool charcoal (e.g. RGB ~34,34,38 base) with a cool-white specular/rim highlight, not the warm dark floor used for wood and the room. Harpsichord's black naturals likewise. Verify on a screencap.
+- USER CLARIFICATION: mostly the BROWNS (wood, walnut, parquet, panelling, harpsichord case) wash out to ORANGE-brown on the waveguide. M8 palette pass (Pal / 5.9 tokens): reduce saturation of every brown ~35-45%, shift hue from ~25-30 deg toward ~18-22 deg with more green-blue balance (e.g. walnut ~ (92,70,58) rather than (120,70,35)), keep gilding the only saturated warm accent; black keys neutral charcoal as above. Compare before/after screencaps.
+
+## M7 Three instruments (2026-09-23, integrator) — PASS (device gate); L-4 needs the user
+Merged: WP2, WP5, WP7, WP10, WP11 were already on main (0 commits ahead); M7 is wiring, measurement and fixes.
+
+Wired / fixed
+- `HKKit remap …` line for key 69 on every KeyMap build (`KitManager.keyMap`), `HKUi switch to=… perf ms=` for every
+  instrument switch (CONTROL and menu), CONTROL `registration`, `temperament`, `pitch`, `fov` (contracts-changelog M7).
+- **Lids were closed on every instrument** (LIT_VS never skinned SkinKind.LID): now baked open; the grand in the
+  Hall shows its raised lid on the stick, the harpsichord its lid and motto (m7_*_hall_*.png).
+- **Upright Hall life-size: a half-screen gold wedge** (m7_bug_upright_hall1_ribbon_wedge_before.png): RIBBON_VS's
+  width for vertices behind the eye; fixed with |w|. Sprites also fade near the eye.
+- **T-DEC:** `activeComplete` let the grand keep voicing ahead of a just-selected kit; voicing now runs two
+  decoders in parallel for every unit (was: releases/pedals only). Decode itself runs at 14–18× real time
+  (M1 bench 23× in this session's slow state); the throttle sleep (2× write+force) left unchanged.
+- **T-APL** regressed on the new instruments (harpsichord Player 11.5 %, cutaway 12.2 %, Hall 14.5 %; upright
+  Player 9.1 %, Hall 12.4 %): per-instrument cap trims; `smoke_m5.sh` now pins its instrument (`HK_M5_INSTRUMENT`,
+  default grand — the instrument persists across launches, so M5 had silently run on the harpsichord).
+- `RealKitMapsTest` (core JVM): T4.2's properties on the shipped maps.
+
+Gate (release md5 6436d2c640929eef488979b5b371e7c0, `tools/ci.sh` PASS; `smoke.sh M7` PASS twice, once with
+`HK_M7_TDEC=1` (pm clear) before the last fixes and once after; `smoke.sh M5` PASS on all three instruments; `smoke.sh M6` PASS)
+| Check | Result |
+|---|---|
+| T-DEC harpsichord | complete **9.5 s** (≤ 12; 10.4 s in an earlier run), playable 9.2 s; units 15/18/16× real time |
+| T-DEC upright | complete **29.8 s** (≤ 30; 29.0 s earlier; **no margin**), playable 10.3 s; units 14–18× real time; media.swcodec 44 % while decoding two streams |
+| T-DEC single-lane (before) | harpsichord 14.2 s, upright ≈ 46 s idle time (FAIL) |
+| A415 remap key 69 | `remap harpsichord 415.0Hz WERCKMEISTER_III key=69 root=68 native=6797.06 std=−101.27 temp=0.00 shape=0.00 target=6798.73 shift=+1.67 out=6798.73 err=0.000 f0=415.00` (the region's own −2.94 c detune makes the shift +1.67 rather than −1.27) |
+| T4.2 on the real maps | 4 JVM tests PASS at A440/A415 × Equal/Werckmeister III/¼-comma: every (key, vel) → covering region, output within 0.5 c. Exceptions measured, not hidden: harpsichord (recorded at A440) key 29 at A415 shifts −1.98 semitones (no root below 30); grand keys 107–108 up to 1.9 semitones (Salamander C8 sounds +95 c, WP11) |
+| Temperament / registration | Equal ↔ Werckmeister III rebuild the key map at once; registration 1 / 3 by CONTROL and the Sound menu (Temperament, Pitch, Registration rows present) |
+| Goldberg / K. 545 | bwv988.1 on the harpsichord, k545.1 on the upright (dump instrument=…) |
+| Switch mid-piece, cached | 6 switches: harpsichord 471–476 ms, grand 289–297 ms, upright 229–235 ms to the new Performance, playing=true (≤ 2 s) |
+| T-Q3SWITCH | Q3 rest → switch: perf 459 ms, playing=true; `scene harpsichord` is the first render line after the rest |
+| Self-test / logs | no FAIL, 0 AndroidRuntime, 0 FRAME HITCH (cached launch → self-test), underruns 0 after warm-up |
+| T-APL (M5 smoke) | grand 7.75 / 8.59 / 7.67 / 11.24 %; harpsichord 8.52 / 8.77 / 8.65 / 11.69 %; upright 8.51 / 8.90 / 8.15 / 11.57 % (Player / cutaway / overhead / Hall) |
+
+Screencaps: `docs/shots/m7_<instrument>_<player|action|hall>_<framing>.png` (18), `m7_harpsichord_reg8_*`,
+`m7_harpsichord_reg84_cutaway`, `m7_menu_transport`, `m7_menu_sound`, `m7_q3switch_after_rest`, `m7_after_switches`.
+Honest look: the grand is the best of the three; its raised lid finally reads in the Hall. The harpsichord Player
+view shows the bone keyboard with the open lid across the top-left; Overhead (both choirs, jack rows, rose) reads
+well; the **cutaway is dark and busy**: jacks are visible but the 8′-only vs 8′+4′ difference is hard to see at this
+size. The upright's Player and cutaway (hammers, dampers, red felt rail) read; its Hall life-size framing has a
+floor candelabrum's post standing in front of the case (camera/placement, WP8/WP12).
+
+### Open issues (M7)
+- **L-4** (Werckmeister III vs Equal, 8′+4′ vs 8′, keys 84–89 seam) needs the user's ears.
+- T-DEC upright has no margin (29.0–29.8 s vs 30); the codec is at 14–18× vs the plan's ≥ 60× assumption. Next levers:
+  throttle factor 2 → 0.5 (measured −2.5 s/unit on the grand), or Concentus (needs approval).
+- Grand T-DEC (M2 item) not re-measured with two lanes (the grand's units are 15 s each; expected ≈ 120 s).
+- One FRAME HITCH at the first scene upload after `pm clear` (T-DEC phase); none on a cached launch.
+- M6 smoke once failed `push_scores.sh` right after a `pm clear` (`secure_mkdirs … Operation not permitted`), PASS on re-run.
+- Voice stealing: `stolen=339` over the smoke (Goldberg/K. 545 with switches) at cap 96: check it is not the 4′ doubling.
+- Harpsichord cutaway legibility (WP7/WP6 lighting), upright Hall/1 candelabrum occlusion.
+- USER FEEDBACK above (browns wash out orange, black keys brown): palette pass scheduled for M8, not done here.
+- WP8 contact-pool request (the upright has no pool) still open.

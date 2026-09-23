@@ -286,3 +286,25 @@ Recorded by the integrator while merging WP1, WP2, WP3, WP4 and WP11 for M1 (doc
 - APL cap gains −5 % (Player 0.35, cutaway 0.28, overhead 0.245, Hall 0.70): the live HUD (credit, pills) adds luma.
 - HUD: title/movement ellipsize at 400 px (ran under the tuning line); pills one row above the credit; menu rows ellipsize.
 - `tools/device/push_scores.sh`: `HK_LOCK_HELD=1` skips lock.sh; chmods the pushed entries, not the app-owned Scores dir.
+
+## M7 (2026-09-23, integrator) — no `contract/**` signature change
+- **§5.8 harpsichord ACTION_SET** (WP7 request, open since M3): adopted as WP7 packs it — six parts (0 8′ jack lift m,
+  1 8′ tongue rad, 2 8′ register offset m, 3 key lever, 4 4′ jack lift, 5 4′ tongue), axisSign 0 = translate +y,
+  2 = translate +x, ±1 = rotate about +x; T7.7 and the paired T6.4 decode are the reference.
+- **SkinKind.LID**: the lids are drawn with LIT/LACQUER (LIT_VS, which does not skin), so the per-vertex rotation
+  WP6 wrote in SKINNED_VS never ran and every lid lay closed with its stick standing through it. The open angle
+  (`stickRad`: grand 38°, harpsichord 50°) is now **baked** into the lid (and motto) mesh (`MeshBuilder.rotateZ`);
+  SkinParams[LID] is kept for the record; Overhead still drops the lid by its view mask.
+- **RIBBON_VS**: the pixel half-width divides by `max(|w|, 0.001)` (was `max(w, 0.001)`): a ribbon vertex behind the
+  eye (a wall ribbon passing the Hall seat) was extruded 10⁴ px into a half-screen gold wedge.
+- **SpriteBatch**: sprites also fade by their centre's distance (smoothstep 0.5 → 1.2 m from the eye).
+- **APL cap per instrument** (render only): Player/cutaway/overhead/Hall gains × harpsichord (0.74, 0.70, 0.85, 0.80),
+  upright (0.94, 1, 1, 0.93).
+- **KitManager voicing**: two decoders in parallel for every unit (the helper lane first takes the playable set's
+  releases/pedals, then the least urgent unit from the end of the plan); an active kit still opening counts as
+  incomplete in `activeComplete` (else the previous kit kept voicing ahead of it after a switch). §3.3's single
+  stream "after the playable set" is superseded (T-DEC needs it: the codec runs at 15–18× real time, not ≥ 60×).
+- CONTROL keys (§8.2 additions): `registration` 1|2|3, `temperament` <Temperament name>, `pitch` <aHz>, `fov` <deg>
+  (RenderOverrides; −1 clears), `aplcap false` (debug), `decodesleep` <factor> and `voicerprio` <nice> (T-DEC experiments,
+  defaults 2 and background). Log lines: `HKKit remap <kit> <aHz> <temperament> key=69 layer=… root native std temp
+  shape target shift out err f0`; `HKUi switch to=<id> perf ms=<n> playing=<b>` (600 ms after the new Performance).
