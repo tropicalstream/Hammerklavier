@@ -209,5 +209,16 @@ class ResonanceBankTest {
         assertEquals(0f, DspTables.send(InstrumentId.GRAND, ResonanceMode.OFF))
         val ratio = DspTables.send(InstrumentId.GRAND, ResonanceMode.RICH) / DspTables.send(InstrumentId.GRAND, ResonanceMode.NATURAL)
         assertEquals(6.0, db(ratio.toDouble()), 0.01)
+        // Effective linear sends actually applied (SEND + COMB_INPUT_TRIM −37 dB; una corda + trim −14 dB),
+        // as recorded in docs/progress/WP3.md deviation 13 and docs/requests/WP3.md.
+        assertEquals(-67.0, db(DspTables.send(InstrumentId.GRAND, ResonanceMode.NATURAL).toDouble()), 0.01)
+        assertEquals(-61.0, db(DspTables.send(InstrumentId.GRAND, ResonanceMode.RICH).toDouble()), 0.01)
+        assertEquals(-69.0, db(DspTables.send(InstrumentId.UPRIGHT, ResonanceMode.NATURAL).toDouble()), 0.01)
+        assertEquals(-63.0, db(DspTables.send(InstrumentId.UPRIGHT, ResonanceMode.RICH).toDouble()), 0.01)
+        assertEquals(-71.0, db(DspTables.send(InstrumentId.HARPSICHORD, ResonanceMode.NATURAL).toDouble()), 0.01)
+        assertEquals(-62.0, db(DspTables.UNA_CORDA_SEND.toDouble()), 0.01)
+        assertEquals(0.0, db(DspTables.COMB_TILT[60 - 21].toDouble()), 0.01)
+        assertEquals(-6.0, db(DspTables.COMB_TILT[70 - 21].toDouble()), 0.01)
+        assertEquals(-12.0, db(DspTables.COMB_TILT[108 - 21].toDouble()), 0.01)
     }
 }

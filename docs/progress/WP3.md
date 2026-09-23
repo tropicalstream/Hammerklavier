@@ -88,8 +88,36 @@ After merging main: `tools/gw :core:test`: BUILD SUCCESSFUL, 108 tests, 0 failed
    without either it is an assumption skip (not `@Ignore`). Target 4 on real regions runs over the 4 s the
    export holds (a truncated recording's comb tail beats after the cut), not 10 s.
 
+15. **Review fixes (2026-09-22).**
+   - *Late feed (major)*: the FDN was fed from the ER line, which holds `mono` × directGain, so the late
+     level was directGain × reverbGain. DirectPath now also writes `monoRev = mono / directGain` (glide
+     value, ≥ 0.25), EarlyReflections pre-delays it in a second 8192-sample line (+32 KiB) for the FDN.
+     `DirectPath.process` and `EarlyReflections.process` gained that argument (WP3-internal classes).
+     New `RoomChainTest.renderedDrrFollowsTheSeatNotTheDirectGain`: rendered direct/late power under
+     800 Hz low-passed noise, with the embedded-room factor (erGain = emb) taken out: player −0.8 dB
+     (design −1.3), action 3.2 (2.8), hall row 3 −10.7 (−11.2), all ± 1 dB. (White noise reads ≈ 2 dB
+     high because the 8 kHz T60 is shorter; the piano band is the relevant one.)
+   - `drrInTheHallIsMinus11` now also asserts the design's own gains: 20·log10(directGain·erGain/reverbGain) = −11.2 ± 1.
+   - *T60 glide*: `FdnReverb.setT60(…, glideFrames)` glides gMid/gLow/hiA/norm linearly per block;
+     RoomChain passes the design glide.
+   - *Effective sends*: `sendValuesAreThePlans` now asserts the applied linear sends (−67/−61/−69/−63/−71 dB,
+     una corda −62 dB) and the tilt; request 1 stays open for the plan owner.
+   - *Allpass mi-step transient*: measured, not changed. New test `modulatedLinesAddNoHighFrequencyResidue`
+     (800 Hz LP noise, 10 s) reads −117 dBFS above 12 kHz (limit −60); with d ∈ [0.5, 1.5) η stays in
+     (−0.2, 0.33] and the step is inaudible, so no crossfade/Thiran read. Criterion change: request 3, open.
+   - *SpeakerEnhancer.setRoute resets filters*: accepted, not changed. A route change (Bluetooth connect /
+     disconnect) already comes with an OS audio-device switch and the engine's output restart, which
+     glitches far more than a filter reset; keeping two chains running doubles its cost for no audible gain.
+     WP wiring should apply the route at the device-change point.
+   - *Memory / comb budget*: requests 8 and 9 filed. **M1 gate**: measure the 88-comb ResonanceBank in
+     EngineBench on the A55 against §3.16's 22 cycles/comb before M1 sign-off.
+   - Note: `StubContractTest.sineCoreLevelsEnergyAndAllocation` (not WP3's) failed once under a busy
+     build and passed on rerun (timing-sensitive).
+
 ## Remaining
 
 - None in WP3's JVM scope. WP11 should commit the `export_test_regions.py` output to `wp11/real/` so the
   real-region pass runs in every clone (requested).
+- **M1 gate**: EngineBench comb measurement on the A55 (§3.16 budget), request 9.
+- Plan-owner confirmations: requests 1, 3, 4, 8, 10.
 - Device checks at M1/M2/M5 (T-CPU via EngineBench, L-2, L-7) belong to the integrator.

@@ -69,6 +69,10 @@ class RoomAcousticsTest {
         val r = dist(hall, room(src))
         assertEquals(4.93, r, 0.01)
         assertEquals(-11.2, RoomAcoustics.drrDb(g, r), 0.5)
+        // The design's own gains must produce that DRR before the embedded-room factor (erGain = emb;
+        // Room mode is 0 dB): directGain · emb / reverbGain = r_c / r.
+        val d = RoomAcoustics.design(g, grand, src, ListenerPose(hall, 0f, true, 0.4f), ReverbMode.ROOM, 1.579f, 30f)
+        assertEquals(-11.2, 20 * Math.log10((d.directGain * d.erGain / d.reverbGain).toDouble()), 1.0)
     }
 
     @Test fun changingAMaterialChangesT60() {

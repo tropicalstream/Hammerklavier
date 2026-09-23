@@ -25,6 +25,11 @@ class FdnReverb(sampleRate: Int = HK.SR) {
     private val gMid = FloatArray(LINES)
     private val gLow = FloatArray(LINES)
     private val hiA = FloatArray(LINES)
+    private val tMid = FloatArray(LINES)      // glide targets of gMid / gLow / hiA / norm
+    private val tLow = FloatArray(LINES)
+    private val tHi = FloatArray(LINES)
+    private var tNorm = 0f
+    private var glideLeft = 0
     private val loS = FloatArray(LINES)       // low-split one-pole state
     private val hiS = FloatArray(LINES)       // high-loss one-pole state
     private val r = FloatArray(LINES)
@@ -39,8 +44,12 @@ class FdnReverb(sampleRate: Int = HK.SR) {
 
     init { setT60(1.65f, 1.65f, 1.0f) }
 
-    /** Per-line gains and filters for the three band T60s (s). */
-    fun setT60(t60Low: Float, t60Mid: Float, t60High: Float) {
+    /**
+     * Per-line gains and filters for the three band T60s (s). With [glideFrames] > 0 the loop
+     * gains and filters glide linearly (per block) to the new values, so a mode or venue change
+     * does not step the ringing tail. Call off the audio thread or between blocks.
+     */
+    fun setT60(t60Low: Float, t60Mid: Float, t60High: Float, glideFrames: Int = 0) {
         var sumLoss = 0f
         for (i in 0 until LINES) {
             val d = DELAYS[i].toFloat()
@@ -55,10 +64,24 @@ class FdnReverb(sampleRate: Int = HK.SR) {
                 a = if (m >= 0.9999f) 0f else solveOnePole(m, cosHigh)
                 gm = (gm0 / onePoleMag(a, cosMid)).coerceAtMost(0.99999f)
             }
-            gMid[i] = gm; gLow[i] = gl; hiA[i] = a
+            tMid[i] = gm; tLow[i] = gl; tHi[i] = a
             if (i < lines) sumLoss += 1f - gm * gm
         }
-        norm = sqrt(sumLoss / (lines / 2))
+        tNorm = sqrt(sumLoss / (lines / 2))
+        if (glideFrames <= 0) {
+            System.arraycopy(tMid, 0, gMid, 0, LINES); System.arraycopy(tLow, 0, gLow, 0, LINES)
+            System.arraycopy(tHi, 0, hiA, 0, LINES); norm = tNorm; glideLeft = 0
+        } else glideLeft = glideFrames
+    }
+
+    /** Advances the T60 glide by one block of [n] frames. */
+    private fun stepGlide(n: Int) {
+        val f = if (n >= glideLeft) 1f else n.toFloat() / glideLeft
+        for (i in 0 until LINES) {
+            gMid[i] += f * (tMid[i] - gMid[i]); gLow[i] += f * (tLow[i] - gLow[i]); hiA[i] += f * (tHi[i] - hiA[i])
+        }
+        norm += f * (tNorm - norm)
+        glideLeft = if (n >= glideLeft) 0 else glideLeft - n
     }
 
     fun setLines(n: Int) {
@@ -67,8 +90,9 @@ class FdnReverb(sampleRate: Int = HK.SR) {
         lines = nl
         for (i in 4 until LINES) { java.util.Arrays.fill(buf, i * LEN, (i + 1) * LEN, 0f); loS[i] = 0f; hiS[i] = 0f }
         var sumLoss = 0f
-        for (i in 0 until lines) sumLoss += 1f - gMid[i] * gMid[i]
-        norm = sqrt(sumLoss / (lines / 2))
+        var tLoss = 0f
+        for (i in 0 until lines) { sumLoss += 1f - gMid[i] * gMid[i]; tLoss += 1f - tMid[i] * tMid[i] }
+        norm = sqrt(sumLoss / (lines / 2)); tNorm = sqrt(tLoss / (lines / 2))
     }
 
     val lineCount: Int get() = lines
@@ -79,6 +103,7 @@ class FdnReverb(sampleRate: Int = HK.SR) {
 
     /** Adds the reverb of [input] × [inGain] (per frame) into [outL]/[outR]. */
     fun process(input: FloatArray, inGain: FloatArray, outL: FloatArray, outR: FloatArray, n: Int) {
+        if (glideLeft > 0) stepGlide(n)
         val nl = lines
         val b = if (nl == 8) INV_SQRT8 else 0.5f
         val hScale = if (nl == 8) INV_SQRT8 else 0.5f

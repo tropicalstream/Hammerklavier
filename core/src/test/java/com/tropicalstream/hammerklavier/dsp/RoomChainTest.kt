@@ -196,4 +196,70 @@ class RoomChainTest {
         // Head turned right → the piano is heard to the left.
         assertTrue(room.direct.balL[B - 1] > room.direct.balR[B - 1])
     }
+
+    /**
+     * Rendered direct-to-late power ratio (dB) of a design, from the chain's own components under
+     * steady noise: direct = DirectPath output (before the ERs are added), late = FDN output.
+     */
+    private fun renderedDrr(d: RoomDesign): Double {
+        val room = RoomChain(); room.setDesign(d, 0)
+        val n = 12 * fs
+        // Piano-like band (800 Hz low-passed noise), so the shorter 8 kHz T60 does not bias the late power.
+        val lp = BiquadCoefs.lowPass(800.0, 0.707, 48000.0)
+        val inp = DspTestUtil.filter(DspTestUtil.noise(n, 0.1, 5), lp, lp, lp, lp)
+        val gIn = FloatArray(B) { 1f }; val gRev = FloatArray(B) { d.reverbGain }
+        val x = FloatArray(B); val dL = FloatArray(B); val dR = FloatArray(B)
+        val mono = FloatArray(B); val monoRev = FloatArray(B); val fin = FloatArray(B)
+        val lL = FloatArray(B); val lR = FloatArray(B); val eL = FloatArray(B); val eR = FloatArray(B)
+        var pd = 0.0; var pl = 0.0
+        for (b in 0 until n / B) {
+            System.arraycopy(inp, b * B, x, 0, B)
+            room.direct.process(x, x, gIn, dL, dR, mono, monoRev, B, 0f)
+            java.util.Arrays.fill(eL, 0f); java.util.Arrays.fill(eR, 0f)
+            room.early.process(mono, monoRev, eL, eR, fin, B)
+            java.util.Arrays.fill(lL, 0f); java.util.Arrays.fill(lR, 0f)
+            room.fdn.process(fin, gRev, lL, lR, B)
+            if (b >= 4 * fs / B) for (i in 0 until B) {
+                pd += dL[i].toDouble() * dL[i] + dR[i].toDouble() * dR[i]
+                pl += lL[i].toDouble() * lL[i] + lR[i].toDouble() * lR[i]
+            }
+        }
+        return 10 * Math.log10(pd / pl)
+    }
+
+    @Test fun renderedDrrFollowsTheSeatNotTheDirectGain() {
+        val player = designFor(floatArrayOf(0f, 1.2f, 0.55f), null, 1f, false)
+        val action = designFor(floatArrayOf(0.30f, 1.00f, -0.30f), null, 0.8f, false)
+        val hall = designFor(null, floatArrayOf(0.4f, 1.2f, 3.0f), 1f, false)
+        val got = HashMap<String, Double>()
+        for ((name, d) in listOf("player" to player, "action" to action, "hall" to hall)) {
+            // Geometric DRR r_c/r, with the embedded-room factor (erGain = emb) taken out.
+            val want = 20 * Math.log10((d.directGain * d.erGain / d.reverbGain).toDouble())
+            val r = renderedDrr(d) + 20 * Math.log10(d.erGain.toDouble())
+            got[name] = r
+            println("T3.2 rendered DRR $name: %.1f dB (design %.1f dB)".format(r, want))
+            assertEquals(name, want, r, 1.0)
+        }
+        assertEquals(-1.3, got.getValue("player"), 1.0)
+        assertEquals(-11.2, got.getValue("hall"), 1.0)
+    }
+
+    /** The modulated (allpass-interpolated) lines add no > 12 kHz residue when the integer tap steps. */
+    @Test fun modulatedLinesAddNoHighFrequencyResidue() {
+        val f = FdnReverb(); f.setT60(2.0f, 2.0f, 2.0f)
+        val n = 10 * fs
+        val lp = BiquadCoefs.lowPass(800.0, 0.707, 48000.0)
+        val inp = DspTestUtil.filter(DspTestUtil.noise(n, 0.3, 11), lp, lp, lp, lp)
+        val g = FloatArray(B) { 1f }; val l = FloatArray(B); val r = FloatArray(B); val x = FloatArray(B)
+        val out = FloatArray(n)
+        for (b in 0 until n / B) {
+            System.arraycopy(inp, b * B, x, 0, B); java.util.Arrays.fill(l, 0f); java.util.Arrays.fill(r, 0f)
+            f.process(x, g, l, r, B); System.arraycopy(l, 0, out, b * B, B)
+        }
+        val hp = BiquadCoefs.highPass(12000.0, 0.707, 48000.0)
+        val res = DspTestUtil.filter(out, hp, hp, hp, hp)
+        val peak = db(DspTestUtil.peakAbs(res, 2 * fs, n))
+        println("T3.3 modulated-line > 12 kHz residue: %.1f dBFS".format(peak))
+        assertTrue("residue $peak dBFS", peak <= -60.0)
+    }
 }

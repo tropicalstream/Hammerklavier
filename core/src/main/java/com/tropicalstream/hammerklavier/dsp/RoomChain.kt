@@ -25,6 +25,7 @@ class RoomChain(sampleRate: Int = HK.SR) : RoomProcessor {
     private val gRev = FloatArray(HK.BLOCK)
     private val dL = FloatArray(HK.BLOCK); private val dR = FloatArray(HK.BLOCK)
     private val mono = FloatArray(HK.BLOCK)
+    private val monoRev = FloatArray(HK.BLOCK)
     private val fdnIn = FloatArray(HK.BLOCK)
     private val lateL = FloatArray(HK.BLOCK); private val lateR = FloatArray(HK.BLOCK)
     private var tail = false
@@ -33,7 +34,7 @@ class RoomChain(sampleRate: Int = HK.SR) : RoomProcessor {
         val frames = if (hasDesign) (glideMs.toLong() * fs / 1000).toInt() else 0
         direct.setTarget(d.directGain, d.airLpHz, d.width, d.worldLocked, d.sourceAzimuthRad, frames)
         early.setDesign(d, frames)
-        fdn.setT60(d.t60Low, d.t60Mid, d.t60High)
+        fdn.setT60(d.t60Low, d.t60Mid, d.t60High, frames)
         revGain.set(d.reverbGain, frames)
         hasDesign = true
     }
@@ -49,13 +50,13 @@ class RoomChain(sampleRate: Int = HK.SR) : RoomProcessor {
             val m = minOf(HK.BLOCK, n - off)
             for (i in 0 until m) { gIn[i] = inGain.next(); gRev[i] = revGain.next() }
             if (off == 0) {
-                direct.process(inL, inR, gIn, dL, dR, mono, m, headYawRad)
+                direct.process(inL, inR, gIn, dL, dR, mono, monoRev, m, headYawRad)
             } else {
                 // Rare path (n > BLOCK): copy the chunk to the front of the scratch buffers.
                 System.arraycopy(inL, off, lateL, 0, m); System.arraycopy(inR, off, lateR, 0, m)
-                direct.process(lateL, lateR, gIn, dL, dR, mono, m, headYawRad)
+                direct.process(lateL, lateR, gIn, dL, dR, mono, monoRev, m, headYawRad)
             }
-            early.process(mono, dL, dR, fdnIn, m)
+            early.process(mono, monoRev, dL, dR, fdnIn, m)
             java.util.Arrays.fill(lateL, 0, m, 0f); java.util.Arrays.fill(lateR, 0, m, 0f)
             fdn.process(fdnIn, gRev, lateL, lateR, m)
             val bl = direct.balL; val br = direct.balR

@@ -68,20 +68,24 @@ class DirectPath(sampleRate: Int = HK.SR) {
 
     /**
      * Direct output (width applied, balance NOT applied) into [outL]/[outR]; the mono of the
-     * gained, air-filtered input into [mono] (the early-reflection and FDN feed). n ≤ BLOCK.
+     * gained, air-filtered input into [mono] (the early-reflection feed); the same mono without
+     * `directGain` into [monoRev] (the FDN feed: §3.12 reverbGain is the same at every seat, so the
+     * late level must not follow the direct distance law). n ≤ BLOCK.
      */
-    fun process(inL: FloatArray, inR: FloatArray, inGain: FloatArray, outL: FloatArray, outR: FloatArray, mono: FloatArray, n: Int, headYawRad: Float) {
+    fun process(inL: FloatArray, inR: FloatArray, inGain: FloatArray, outL: FloatArray, outR: FloatArray, mono: FloatArray, monoRev: FloatArray, n: Int, headYawRad: Float) {
         val a = air.skip(n)
         lpL.setHz(a, fs); lpR.setHz(a, fs)
         val ca = lpL.a
         var sl = lpL.y1; var sr = lpR.y1
         for (i in 0 until n) {
-            val g = gain.next() * inGain[i]
+            val gd = gain.next()
+            val g = gd * inGain[i]
             val w = width.next()
             val xl = inL[i] * g; val xr = inR[i] * g
             sl = xl + ca * (sl - xl); sr = xr + ca * (sr - xr)
             val m = 0.5f * (sl + sr); val s = 0.5f * (sl - sr) * w
             mono[i] = m
+            monoRev[i] = m / gd                   // gd ≥ 0.25 (directGain clamp)
             outL[i] = m + s; outR[i] = m - s
         }
         lpL.y1 = if (sl > -1e-20f && sl < 1e-20f) 0f else sl
