@@ -78,7 +78,7 @@ class ResonanceBank(sampleRate: Int = HK.SR) : ResonanceProcessor {
         lines = FloatArray(total)
     }
 
-    /** Floats in the packed delay array (≈ 250 KiB at 48 kHz × 4 B). */
+    /** Floats in the packed delay array (88,576 = 346 KiB at 48 kHz). */
     val delayFloats: Int get() = lines.size
 
     // ── Per-comb run-time state ──

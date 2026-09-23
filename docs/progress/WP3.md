@@ -9,8 +9,8 @@ All files of the §2.2 WP3 rows, package `com.tropicalstream.hammerklavier.dsp` 
 - `DspTables` — SEND / UNA_CORDA_SEND (plan dB values) plus calibration trims, 1024-entry sine
   table, dB↔linear tables, one-pole coefficient table, Padé `softClip`.
 - `Biquad` (`BiquadCoefs` RBJ designs + TDF-II state), `OnePole`, `DcBlocker`.
-- `ResonanceBank : ResonanceProcessor` — 88 combs, packed power-of-two delay lines (≈ 1.0 MB
-  float array at 48 kHz, see deviations), fraction allpass + two dispersion allpasses + loop
+- `ResonanceBank : ResonanceProcessor` — 88 combs, packed power-of-two delay lines (88,576 floats
+  = 346 KiB at 48 kHz, see deviations), fraction allpass + two dispersion allpasses + loop
   low-pass, gain table G[88][33] per variant, 200 ms retune glide, active set with `maxActive`
   (held keys first, then loudest), 4-way kernel (`processFour`) + scalar reference, energy lanes
   (every 8th sample, halved, added as mean-square).
@@ -57,7 +57,7 @@ Private helpers `DspTestUtil`, `CombRig`.
    as the plan says; variant 1 (Q2 / `dispersion = false`) caps the loop low-pass at n_max·f0.
    The comb's M, η and dispersion coefficient are fitted numerically on the exact loop phase.
 5. **Delay-line budget**: segments are sized for A392 with −100 cents of stretch plus a block of
-   headroom (safe for A415 and stretched bass), which is ≈ 1 MB of floats, not the §3.11 ≈ 250 KiB
+   headroom (safe for A415 and stretched bass), which is 346 KiB, not the §3.11 ≈ 250 KiB
    (that figure assumed ≈ N + 256 per comb at A440).
 6. **FDN modulated reads use a first-order allpass interpolator**, not linear interpolation: linear
    interpolation lost up to 3 dB per pass at high frequency, which biased the energy normalisation
