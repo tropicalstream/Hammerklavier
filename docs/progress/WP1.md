@@ -16,9 +16,18 @@ Branch `wp1-midi` (from `contracts-v1`), worktree `/Users/me/Projects/hk-wp1`. P
   60 ms; 10,000 mutations of every test file (1,000 for the 280 KB storm twin) never throw, slowest parse < 50 ms.
 
 ## Remaining
-- Remove the four `@Ignore`s once WP11 lands `midi_facts_golden.json`, the test twins, `catalog.json` and the
-  corpus (see docs/requests/WP1.md for the golden schema WP1 reads).
-- None of WP1's tests needs contracts-v1.1: PerfFixtures/SyntheticSpecs/PedalCurve were already working in v1.
+- None for the JVM scope: WP1 is complete per 7.2 (device checks run by the integrator at milestones).
+- When WP11 bundles `catalog.json` and op. 106 iv, the two tests that fall back to fixtures pick them up automatically.
+
+## Status after merging main (contracts-v1.1, WP11 fixtures, WP7 MeshBuilder)
+- All four `@Ignore("needs wp11 fixture")` removed. `tools/gw :core:test` -> 129 tests, 0 failures, 0 skipped;
+  `tools/check_purity.sh` OK.
+- T1.7 reads WP11's actual golden shape (`files` is an object keyed by asset; `pedalMode` upper case;
+  `folds` per instrument, all three checked). Every field matches on all 13 twins.
+- T1.8 WP11 twins: all compile to exactly the synthetic arrays.
+- Catalogue voice-demand report uses `assets/catalog.json` when present, else `wp11/catalog_fixture.json`.
+- op. 106 iv speed test uses the op. 106 asset when present, else `midi/test/storm64.mid` (46,080 notes) -> < 60 ms.
+- Wiring instructions: docs/wiring/WP1.md.
 
 ## Decisions and deviations (with reasons)
 1. **Switch-mode partial values:** a CC64/66/67 value 1–63 in a switch-mode file targets value/127 rather than 0
@@ -45,3 +54,7 @@ Branch `wp1-midi` (from `contracts-v1`), worktree `/Users/me/Projects/hk-wp1`. P
 9. **T1.8 tolerances** as documented in `SyntheticParityTest` (crossings ± 1 ms, values ± 0.02 away from ramps,
    speed classes ignored).
 10. `ScoreFacts` from `inspect` use the raw (unfolded) key range and note count; `durationSec` excludes the pre-roll.
+11. **`ScoreFacts.durationSec` changed** to exclude the 1.5 s tail (last key-up, rounded to 1 ms), matching
+    WP11's golden facts and `catalog.json` so imported and bundled movements report the same number.
+12. Unpaired note-ons end at last event + 1 s here; `smf_stats.py` ends them at their track end. None of the twins
+    has one; revisit if a corpus file disagrees in T1.7.

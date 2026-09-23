@@ -24,7 +24,7 @@ class ScoreCompilerImpl : ScoreCompiler {
                 channels = 0, warnings = emptyList())
             is Outcome.Ok -> {
                 val p = r.perf; val raw = r.raw
-                ScoreFacts(ok = true, error = null, title = p.info.title, durationSec = (p.durationUs - HK.PRE_ROLL_US) / 1e6f,
+                ScoreFacts(ok = true, error = null, title = p.info.title, durationSec = Math.round((p.durationUs - HK.PRE_ROLL_US - PerformanceBuilder.TAIL_US) / 1000.0) / 1000f,
                     lowKey = raw.lowKey, highKey = raw.highKey, noteCount = raw.noteCount, hasSustain = raw.hasSustain,
                     hasSoft = raw.hasSoft, hasSostenuto = raw.hasSostenuto, pedalMode = raw.sustainMode,
                     channels = raw.channels, warnings = p.info.warnings)

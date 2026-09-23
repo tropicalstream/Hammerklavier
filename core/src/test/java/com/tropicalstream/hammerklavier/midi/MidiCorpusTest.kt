@@ -1,11 +1,11 @@
 package com.tropicalstream.hammerklavier.midi
 
+import com.tropicalstream.hammerklavier.contract.InstrumentId
 import com.tropicalstream.hammerklavier.contract.InstrumentProfile
 import com.tropicalstream.hammerklavier.contract.PedalMode
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 
@@ -16,29 +16,35 @@ import java.io.File
  * "highKey", "notes", "hasSustain", "hasSoft", "hasSostenuto", "pedalMode", "harpsichordFolds"?}]}`.
  */
 class MidiCorpusTest {
-    @Ignore("needs wp11 fixture") @Test fun everyAssetMatchesTheGoldenFacts() {
+    @Test fun everyAssetMatchesTheGoldenFacts() {
         val golden = File("src/test/resources/wp11/midi_facts_golden.json")
-        val files = JSONObject(golden.readText()).getJSONArray("files")
+        val files = JSONObject(golden.readText()).getJSONObject("files")
         val c = ScoreCompilerImpl()
         assertTrue(files.length() > 0)
-        for (i in 0 until files.length()) {
-            val g = files.getJSONObject(i)
-            val asset = g.getString("asset")
+        val failures = ArrayList<String>()
+        for (asset in files.keys()) {
+            val g = files.getJSONObject(asset)
             val bytes = File("../app/src/main/assets/$asset").readBytes()
             val f = c.inspect(bytes)
             assertTrue("$asset: ${f.error}", f.ok)
-            assertEquals("$asset duration", g.getDouble("durationSec"), f.durationSec.toDouble(), 0.001)
-            assertEquals("$asset lowKey", g.getInt("lowKey"), f.lowKey)
-            assertEquals("$asset highKey", g.getInt("highKey"), f.highKey)
-            assertEquals("$asset notes", g.getInt("notes"), f.noteCount)
-            assertEquals("$asset hasSustain", g.getBoolean("hasSustain"), f.hasSustain)
-            assertEquals("$asset hasSoft", g.getBoolean("hasSoft"), f.hasSoft)
-            assertEquals("$asset hasSostenuto", g.getBoolean("hasSostenuto"), f.hasSostenuto)
-            assertEquals("$asset pedalMode", PedalMode.valueOf(g.getString("pedalMode").uppercase()), f.pedalMode)
-            if (g.has("harpsichordFolds")) {
-                val p = MidiTestUtil.perf(bytes, InstrumentProfile.HARPSICHORD)
-                assertEquals("$asset folds", g.getInt("harpsichordFolds"), p.info.folded)
+            fun chk(what: String, ok: Boolean, a: Any, b: Any) { if (!ok) failures.add("$asset $what: golden $a, mine $b") }
+            val dur = g.getDouble("durationSec")
+            chk("durationSec", Math.abs(dur - f.durationSec) <= 0.001 + 1e-6, dur, f.durationSec)
+            chk("lowKey", g.getInt("lowKey") == f.lowKey, g.getInt("lowKey"), f.lowKey)
+            chk("highKey", g.getInt("highKey") == f.highKey, g.getInt("highKey"), f.highKey)
+            chk("notes", g.getInt("notes") == f.noteCount, g.getInt("notes"), f.noteCount)
+            chk("hasSustain", g.getBoolean("hasSustain") == f.hasSustain, g.getBoolean("hasSustain"), f.hasSustain)
+            chk("hasSoft", g.getBoolean("hasSoft") == f.hasSoft, g.getBoolean("hasSoft"), f.hasSoft)
+            chk("hasSostenuto", g.getBoolean("hasSostenuto") == f.hasSostenuto, g.getBoolean("hasSostenuto"), f.hasSostenuto)
+            val pm = PedalMode.valueOf(g.getString("pedalMode").uppercase())
+            chk("pedalMode", pm == f.pedalMode, pm, f.pedalMode)
+            val folds = g.optJSONObject("folds")
+            if (folds != null) for (id in InstrumentId.entries) {
+                if (!folds.has(id.key)) continue
+                val p = MidiTestUtil.perf(bytes, InstrumentProfile.of(id))
+                chk("folds ${id.key}", folds.getInt(id.key) == p.info.folded, folds.getInt(id.key), p.info.folded)
             }
         }
+        assertTrue(failures.joinToString("\n"), failures.isEmpty())
     }
 }

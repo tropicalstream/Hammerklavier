@@ -8,7 +8,6 @@ import com.tropicalstream.hammerklavier.midi.MidiTestUtil.perf
 import com.tropicalstream.hammerklavier.midi.SmfWriter.Track
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Test
 import org.json.JSONObject
 import java.io.File
@@ -75,8 +74,11 @@ class VoiceDemandTest {
         File("build/voice_demand.txt").writeText(sb.toString())
     }
 
-    @Ignore("needs wp11 fixture") @Test fun writesReportForTheCatalogue() {
-        val cat = JSONObject(File("../app/src/main/assets/catalog.json").readText())
+    @Test fun writesReportForTheCatalogue() {
+        // The shipped catalogue once WP11 bundles it; until then WP11's catalogue fixture (same schema, test assets).
+        val shipped = File("../app/src/main/assets/catalog.json")
+        val cat = JSONObject((if (shipped.isFile) shipped else File("src/test/resources/wp11/catalog_fixture.json")).readText())
+        var rows = 0
         val works = cat.getJSONArray("works")
         val sb = StringBuilder("# voice demand (uncapped) per catalogue movement × default instrument: movement\tinstrument\tp99\tmax\n")
         for (w in 0 until works.length()) {
@@ -90,8 +92,11 @@ class VoiceDemandTest {
                 val p = perf(f.readBytes(), prof)
                 sb.append(o.getString("id")).append('\t').append(prof.id.key).append('\t')
                     .append(p.info.voiceDemandP99).append('\t').append(p.info.voiceDemandMax).append('\n')
+                assertTrue(o.getString("id"), p.info.voiceDemandMax >= 1 && p.info.voiceDemandP99 <= p.info.voiceDemandMax)
+                rows++
             }
         }
+        assertTrue("no catalogue movement found", rows > 0)
         File("build").mkdirs()
         File("build/voice_demand_catalogue.txt").writeText(sb.toString())
     }

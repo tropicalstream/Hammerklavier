@@ -7,7 +7,6 @@ import com.tropicalstream.hammerklavier.contract.SyntheticSpecs
 import com.tropicalstream.hammerklavier.midi.SmfWriter.Track
 import com.tropicalstream.hammerklavier.testutil.PerformanceValidator
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 import java.util.Random
@@ -93,8 +92,10 @@ class FuzzAndSpeedTest {
         assertTrue("20k notes built in ${best / 1e6} ms", best <= 60_000_000L)
     }
 
-    @Ignore("needs wp11 fixture") @Test fun op106ivBuildsIn60ms() {
-        val f = File("../app/src/main/assets/midi/krueger/beethoven/beethoven_hammerklavier_4.mid")
+    @Test fun op106ivBuildsIn60ms() {
+        // op. 106 iv once WP11 bundles it; until then the largest bundled score (the 46,080-note storm twin).
+        val op106 = File("../app/src/main/assets/midi/krueger/beethoven/beethoven_hammerklavier_4.mid")
+        val f = if (op106.isFile) op106 else File("../app/src/main/assets/midi/test/storm64.mid")
         val best = bestOfCompile(f.readBytes())
         assertTrue("op. 106 iv built in ${best / 1e6} ms", best <= 60_000_000L)
     }

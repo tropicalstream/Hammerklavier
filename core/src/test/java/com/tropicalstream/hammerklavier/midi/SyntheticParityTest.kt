@@ -11,7 +11,6 @@ import com.tropicalstream.hammerklavier.contract.stub.StubScoreCompiler
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 
@@ -68,7 +67,7 @@ class SyntheticParityTest {
         }
     }
 
-    @Ignore("needs wp11 fixture") @Test fun wp11TwinsCompileToTheirSyntheticScore() {
+    @Test fun wp11TwinsCompileToTheirSyntheticScore() {
         val dir = File("../app/src/main/assets/midi/test")
         for (kind in SyntheticScore.entries) {
             val f = File(dir, SyntheticSpecs.NAMES.getValue(kind) + ".mid")
