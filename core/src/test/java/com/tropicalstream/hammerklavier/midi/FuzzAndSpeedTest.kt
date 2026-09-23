@@ -1,0 +1,114 @@
+package com.tropicalstream.hammerklavier.midi
+
+import com.tropicalstream.hammerklavier.contract.CompileResult
+import com.tropicalstream.hammerklavier.contract.InstrumentProfile
+import com.tropicalstream.hammerklavier.contract.SyntheticScore
+import com.tropicalstream.hammerklavier.contract.SyntheticSpecs
+import com.tropicalstream.hammerklavier.midi.SmfWriter.Track
+import com.tropicalstream.hammerklavier.testutil.PerformanceValidator
+import org.junit.Assert.assertTrue
+import org.junit.Ignore
+import org.junit.Test
+import java.io.File
+import java.util.Random
+
+/** T1.6: fuzzing and speed. */
+class FuzzAndSpeedTest {
+
+    private fun testFiles(): List<Pair<String, ByteArray>> {
+        val out = ArrayList<Pair<String, ByteArray>>()
+        for (k in SyntheticScore.entries) out.add(SyntheticSpecs.NAMES.getValue(k) to SmfWriter.twin(SyntheticSpecs.notes(k)))
+        out.add("format1" to SmfWriter.file(1, 480, Track().tempo(0, 600_000).timeSig(0, 3, 2).name(0, "x").end().build(),
+            Track().on(0, 0, 60, 80).cc(0, 0, 64, 127).off(240, 0, 60).cc(10, 0, 64, 0).on(0, 1, 62, 80).off(240, 1, 62).end().build()))
+        out.add("smpte25" to SmfWriter.file(0, (0xE7 shl 8) or 40, Track().on(0, 0, 60, 80).off(500, 0, 60).end().build()))
+        out.add("rmid" to SmfWriter.rmid(SmfWriter.file(0, 96, Track(true).on(0, 0, 60, 80).on(0, 0, 64, 80).off(96, 0, 60).off(0, 0, 64).end().build())))
+        // WP11's twins when present.
+        val dir = File("../app/src/main/assets/midi/test")
+        dir.listFiles { f -> f.name.endsWith(".mid") }?.sortedBy { it.name }?.forEach { out.add("wp11/" + it.name to it.readBytes()) }
+        return out
+    }
+
+    private fun mutate(src: ByteArray, r: Random): ByteArray {
+        var b = src.copyOf()
+        val ops = 1 + r.nextInt(4)
+        for (o in 0 until ops) {
+            when (r.nextInt(4)) {
+                0 -> if (b.isNotEmpty()) { val i = r.nextInt(b.size); b[i] = (b[i].toInt() xor (1 shl r.nextInt(8))).toByte() }
+                1 -> if (b.isNotEmpty()) b = b.copyOf(r.nextInt(b.size))
+                2 -> {
+                    val i = if (b.isEmpty()) 0 else r.nextInt(b.size + 1); val m = 1 + r.nextInt(8)
+                    val ins = ByteArray(m) { r.nextInt(256).toByte() }
+                    b = b.copyOfRange(0, i) + ins + b.copyOfRange(i, b.size)
+                }
+                3 -> if (b.size > 2) { val i = r.nextInt(b.size); b[i] = r.nextInt(256).toByte() }
+            }
+        }
+        return b
+    }
+
+    @Test fun tenThousandMutationsOfEveryFileNeverThrow() {
+        val compiler = ScoreCompilerImpl()
+        var worstNs = 0L
+        var worstName = ""
+        for ((name, bytes) in testFiles()) {
+            val r = Random(name.hashCode().toLong())
+            val big = bytes.size > 100_000
+            val count = if (big) 1_000 else 10_000
+            for (i in 0 until count) {
+                val m = mutate(bytes, r)
+                var t0 = System.nanoTime()
+                val res = SmfParser.parse(m)                       // must not throw (no safety net here)
+                var dt = System.nanoTime() - t0
+                var retry = 0
+                while (dt > 50_000_000L && retry++ < 3) {          // re-time outliers: a GC pause is not the parser
+                    t0 = System.nanoTime(); SmfParser.parse(m); dt = minOf(dt, System.nanoTime() - t0)
+                }
+                if (i >= 50 && dt > worstNs) { worstNs = dt; worstName = name }
+                if (res is SmfResult.Ok && (!big || i % 50 == 0) && i % 4 == 0) {
+                    val b = ScoreCompilerImpl.build(res.smf, "fuzz", 0, InstrumentProfile.of(com.tropicalstream.hammerklavier.contract.InstrumentId.entries[i % 3]))
+                    if (b is PerformanceBuilder.Result.Ok) {
+                        val probs = PerformanceValidator.problems(b.perf)
+                        assertTrue("$name mutation $i: $probs", probs.isEmpty())
+                    }
+                }
+                if (i % 997 == 0) compiler.inspect(m)
+            }
+        }
+        assertTrue("slowest parse ${worstNs / 1e6} ms ($worstName)", worstNs < 50_000_000L)
+    }
+
+    @Test fun twentyThousandNotesBuildIn60ms() {
+        // A stand-in for op. 106 iv until WP11's asset exists: 20,000 notes, two channels, pedal every bar.
+        val t = Track(true).tempo(0, 400_000)
+        val r = Random(106)
+        for (i in 0 until 10_000) {
+            val k1 = 36 + r.nextInt(30); val k2 = 60 + r.nextInt(36)
+            t.on(if (i == 0) 0 else 20, 0, k1, 30 + r.nextInt(90)).on(0, 1, k2, 30 + r.nextInt(90))
+            if (i % 16 == 0) t.cc(0, 0, 64, 127)
+            if (i % 16 == 15) t.cc(0, 0, 64, 0)
+            t.off(40, 0, k1).off(0, 1, k2)
+        }
+        val bytes = SmfWriter.file(0, 480, t.end().build())
+        val best = bestOfCompile(bytes)
+        assertTrue("20k notes built in ${best / 1e6} ms", best <= 60_000_000L)
+    }
+
+    @Ignore("needs wp11 fixture") @Test fun op106ivBuildsIn60ms() {
+        val f = File("../app/src/main/assets/midi/krueger/beethoven/beethoven_hammerklavier_4.mid")
+        val best = bestOfCompile(f.readBytes())
+        assertTrue("op. 106 iv built in ${best / 1e6} ms", best <= 60_000_000L)
+    }
+
+    private fun bestOfCompile(bytes: ByteArray): Long {
+        val c = ScoreCompilerImpl()
+        var best = Long.MAX_VALUE
+        for (i in 0 until 12) {
+            val t0 = System.nanoTime()
+            val r = c.compile(bytes, "speed", 0, InstrumentProfile.GRAND)
+            val dt = System.nanoTime() - t0
+            assertTrue(r is CompileResult.Ok)
+            if (i >= 2) best = minOf(best, dt)
+        }
+        return best
+    }
+}
