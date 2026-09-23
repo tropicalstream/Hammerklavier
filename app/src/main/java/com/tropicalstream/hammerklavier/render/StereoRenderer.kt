@@ -356,6 +356,7 @@ class StereoRenderer(private val loader: ExecutorService?,
             var n = 0
             if (!d.stageHidden) {
                 for (i in list) { drawer.draw(scn.assembled.items[i], frame, gen); n++ }
+                if (director.view != ViewId.HALL) n += fader.draw(programs.fade, 1f - aplGain(director.view, director.framing, level))   // APL cap: surfaces only, flames stay full
                 n += sprites.draw(programs.sprite, eye.viewProj)
                 n += drawLabels(d, scn, eye.view, eye.proj)
                 if (viewCode == INSET_VIEW) { n += inset.draw(scn.assembled, frame, gen, ex, 0, ew); GLES20.glViewport(ex, 0, ew, height) }
@@ -363,7 +364,7 @@ class StereoRenderer(private val loader: ExecutorService?,
             val sd = sync.draw(programs.fade, pose, ex, 0, ew, height)
             if (sd > 0 && e == 0) { syncFrames++; if (syncFrames % 8 == 1) Log.i(HK.TAG_RENDER, "sync flash frame n=" + syncFrames) }
             n += sd
-            n += fader.draw(programs.fade, director.fade)
+            n += fader.draw(programs.fade, if (director.view == ViewId.HALL) 1f - (1f - director.fade) * aplGain(director.view, director.framing, level) else director.fade)   // Hall: cap folded into the fade (28-draw budget)
             if (e == 0) draws = n
         }
         drawsPerEye = draws
@@ -372,6 +373,19 @@ class StereoRenderer(private val loader: ExecutorService?,
         trisPerEye = drawer.trianglesDrawn / eyes
         if ((frames and 255L) == 0L) glErrors += com.tropicalstream.hammerklavier.render.gl.GlKit.checkError("frame")
         finish(t0, t0 - frameNanos)
+    }
+
+    /**
+     * T-APL cap (PLAN §1 budgets, §9 risk 1 "APL caps"): a black multiply over the lit surfaces, drawn
+     * before the flame sprites, glyphs and inset (in the Hall, folded into the fade quad: no draw to spare), so the average picture level stays ≤ 9% (Stage views)
+     * and ≤ 12% (Hall) with the M5 materials. Gains are the measured M5 APL scaled to ≈ 8.5% / 11.5%.
+     */
+    private fun aplGain(view: ViewId, framing: Int, level: Int): Float = when {
+        level == RoomLevel.PASSTHROUGH.ordinal -> 1f
+        view == ViewId.HALL -> APL_GAIN_HALL
+        view == ViewId.ACTION && framing == 1 -> APL_GAIN_OVERHEAD
+        view == ViewId.ACTION -> APL_GAIN_CUTAWAY
+        else -> APL_GAIN_PLAYER
     }
 
     private fun finish(t0: Long, lateNs: Long) {
@@ -621,6 +635,8 @@ class StereoRenderer(private val loader: ExecutorService?,
     }
 
     companion object {
+        const val APL_GAIN_PLAYER = 0.37f; const val APL_GAIN_CUTAWAY = 0.30f
+        const val APL_GAIN_OVERHEAD = 0.26f; const val APL_GAIN_HALL = 0.74f
         private val NOTE = arrayOf("C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B")
         /** §5.9: the thermal cap overrides Auto; an explicit user choice overrides both. */
         internal fun levelFor(userOverride: RoomLevel?, view: ViewId, cap: RoomLevel): Int {

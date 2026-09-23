@@ -261,3 +261,9 @@ Recorded by the integrator while merging WP1, WP2, WP3, WP4 and WP11 for M1 (doc
 ## M5 (2026-09-23, integrator)
 - No contract signature changes. Non-contract: `venue.fittings.gilt` drawSlot 5 → 2 (merge with `venue.gilt`); floor pool
   falloff in `RoomShell.floor`; SPRITE_VS fades sprites near the eye; SoakRecorder plan `therm30`.
+
+## 2026-09-23 M5 integrator: APL cap (render, no interface change)
+- `StereoRenderer` draws a black multiply ("APL cap", PLAN §9 risk 1) after the mesh list and before sprites/glyphs/inset
+  in Stage views (gain Player 0.37, Action cutaway 0.30, overhead 0.26); in the Hall it is folded into the fade quad (gain 0.74).
+- `SceneAssembler.overheadDraws` counts the extra quad outside the Hall (Hall stays at the 28-draw limit).
+- Interim: WP6/WP7/WP8 should bring the materials down so these gains can rise toward 1.

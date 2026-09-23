@@ -84,6 +84,7 @@ object SceneAssembler {
     fun overheadDraws(viewCode: Int, level: Int, labels: Int, syncDisc: Boolean): Int {
         var n = 1                                                    // fade quad
         if (level != RoomLevel.PASSTHROUGH.ordinal) n += 1           // sprites
+        if (level != RoomLevel.PASSTHROUGH.ordinal && viewCode / 2 != ViewId.HALL.ordinal) n += 1   // APL cap quad
         n += labels.coerceIn(0, 3)
         if (viewCode == ViewId.PLAYER.ordinal * 2 + 1) n += 2        // pedal inset
         if (syncDisc) n += 1

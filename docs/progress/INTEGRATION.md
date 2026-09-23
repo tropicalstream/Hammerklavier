@@ -362,3 +362,15 @@ flat beige slabs across the bottom and are the main APL overshoot; the grand is 
 - T12.8: pre-limiter peak tap (WP3 MasterChain) + real-region bank for the JVM test.
 - T-CPU with combs re-run, L-2 / L-7 listening with the user; look-around and "stays put when the head turns".
 - Soak CSV `movement` column is still "none" (WP12 facts at M6).
+
+### M5 re-run (2026-09-23, integrator, second pass) — gate still PARTIAL, not tagged
+- Fix: APL cap in `StereoRenderer` (black multiply over lit surfaces before flames/glyphs in Stage views; folded into the
+  fade quad in the Hall, which is at the 28-draw limit). Gains: Player 0.37, cutaway 0.30, overhead 0.26, Hall 0.74.
+- `tools/ci.sh` PASS; release md5 f7b37e535f80f56a44e588d912cb9056 installed and verified.
+- `smoke.sh M5` PASS: T-APL Player 8.36%, Action cutaway 7.63%, overhead 8.54% (≤ 9%), Hall 11.09% (≤ 12%); draws max 24;
+  0 hitches, 0 GL errors; setRoom per view unchanged (6 lines).
+- Shots: `m5_hall_aplcap`, `m5_player_aplcap`, `m5_action_overhead_aplcap`. Honest look: the Player is dim but the keys,
+  pedals and case read; the Hall mirrors still show dark shard polygons, the chandelier is still cropped, the flames
+  still tiny, the front chairs flat slabs — the cap hides brightness, it does not fix those (WP8/WP6).
+- Still blocking the tag: the unplugged 30-min T-THERM (user must unplug), T12.8, T-CPU with combs, comb calibration,
+  L-2/L-7, look-around.
