@@ -1,22 +1,58 @@
 # WP7 progress (Instrument models and the mesh builder)
 
-## Stage 1: done (MeshBuilder + MeshRaster, T7.0 green)
-- `core/.../mesh/MeshBuilder.kt` complete: part/color/vertex/tri (day-0), quad, box, plus
-  `triOutward` (orders a triangle to agree with its vertex normals, drops zero-area ones),
-  `extrude(outlineXZ, y0, y1, capTop, capBottom, creaseDeg = 30)` (concave outlines, either orientation, ear-clipped caps),
-  `lathe(profileRY, segments, cx, cz)` (profile bottom to top, poles dropped, seam column duplicated),
-  `sweep(pathXYZ, profileXY, closed, samplesPerSegment = 4, caps = true, creaseDeg = 30)` (Catmull-Rom path, parallel transport, twist spread on closed paths),
-  `ribbon(pathXYZ, widthM, closed = false)`, `spindle(a, b, segments, rgb)`, `build` with the 65,535 split.
-  Companion helpers: `catmullRom(pts, dim, samples, closed)`, `ccw`, `signedArea2`, `earClip`.
-- `core/src/testFixtures/.../testutil/MeshRaster.kt`: software rasteriser (perspective, z-buffer,
-  back-face culling, Lambert on vertex colours with the pow 0.85 lift; ribbons/strings as lines), `render`, `writePng`, `coverage`.
-- T7.0 `MeshBuilderTest`: 13 tests green (`tools/gw :core:test --tests '*MeshBuilderTest*'`).
+Status: **complete per §7.2** (JVM side). Device checks (18 mono screencaps into `docs/shots/`, T-APL) are the
+integrator's at the milestones, once WP6's renderer draws the meshes.
 
-## Decisions / interpretations (the §2.3 signature line is terse)
-- `sweep.closed` = the path is a loop; the profile is always a closed cross-section.
-- `spindle(a, b, segments, rgb)` is the string primitive: STRING layout, t = station/segments, side ±1, dir = unit(b − a), rgb also becomes the current colour. It requires the STRING layout.
-- `ribbon` requires the STATIC layout; added optional `closed` for plate lightening-hole loops.
-- Extra optional parameters (creaseDeg, samplesPerSegment, caps, closed) all default, so the contract call shapes still compile.
+## Done
+- Stage 1: `mesh/MeshBuilder.kt` complete and `testutil/MeshRaster.kt` (T7.0, 13 tests). MeshRaster now also
+  takes `clipX` for cutaway review (drops wholly-cut triangles of `clipped` meshes, shifts section caps and
+  the action set to the cut).
+- `instrument/Keyboard.kt`: any compass; equal back slots (7/12 of the head: 13.708 / 13.242 mm), equal heads
+  (23.5 / 22.7 mm), tails = own slot where a sharp neighbour exists (end keys full), sharps tapered to 10.5 mm,
+  key-local UV in mm, one skinned KEY_ROT mesh per colour (drawSlot 10).
+- `instrument/Anchors.kt`: every §5.6 camera and listener row, `roomFrame`, `clipX`, `lidLift`; allocation-free.
+- `instrument/GrandCase.kt` (`GrandDims`, rim from the §5.4 plan points, belly rail, cheeks, fallboard + lettering
+  decal, legs, casters, lyre, pedals, lid + stick + music desk, plate band/struts/pin bar/pins, gilt hole
+  ribbons, soundboard, bridges, section caps, edge overlay), `GrandActionMesh.kt` (88 hammers, `lastDamper − 20`
+  dampers, sostenuto rail, 13-slot action set, `GrandActionPacker`, `GrandModel`), `StringsMesh.kt` (228
+  strings, overstrung bass at 18°, wound 21–53).
+- `instrument/UprightModel.kt`: case by finish, upper panel and top lid out of Overhead, vertical strings with
+  the bass overstrung, horizontal hammers at 1.08 m, underdampers at 1.03 m (DAMPER_LIFT +z), hammer rail,
+  pedals, action set, `UprightActionPacker`.
+- `instrument/HarpsichordModel.kt`: 228 × 93 × 26 cm case (papered inside), stand, nameboard paper, lid with
+  motto, soundboard (texture with rose), 8′/4′ bridges and nuts, register slides, jack rail + lid stick (out of
+  Overhead), 61 keys, 122 jacks + tongues, 122 strings, action set, `HarpsichordActionPacker`.
+- `instrument/tex/InstrumentTextures.kt`: fallboard lettering, harpsichord paper, lid motto, soundboard.
+- `instrument/Instruments.kt`: `object Instruments.create(id, look, lastDamper)`, `InstrumentSceneImpl`,
+  `ActionSetPacker` (§5.8 block). `instrument/Geo.kt`: view masks and polygon helpers.
+- `docs/wiring/WP7.md`, `docs/requests/WP7.md` (conventions for WP6).
 
-## Remaining (stage 2+)
-- Instruments (§5.4), Anchors (§5.6), colours (§5.9), packActionSet, T7.1–T7.8. Not started by design.
+## Tests (`tools/gw :core:test`: 11 classes, 75 tests, 0 failures)
+`InstrumentsTest` (10): T7.1 triangles grand 18,260 / upright 16,926 / harpsichord 13,944; T7.2 pitch, counts,
+cut-out rule, centring; T7.3 slots < 34, one-hot lanes; T7.5 no NaN/Inf, index bounds, winding vs normals for
+every lit/skinned mesh; T7.4 every camera/listener row exactly, clamping, no allocation; T7.6 228 strings
+(8/40/180), 88 hammers, 68 dampers (and ld − 20 for 80/88/92), grand case 1.49 × 2.00, upright 1.31 tall with
+dampers 50 mm under the strike line, harpsichord 122 jacks/tongues/strings and 0.93 ≥ 0.817 + 0.104; T7.7
+packActionSet deterministic, §5.8 layout and shader addressing, window clamping, NaN → zeros, no allocation,
+action-set uv/slot/lane; T7.8 programs vs MaterialTable, merge keys per framing (grand 9/9/17/13/14/14,
+upright 8/8/16/12/14/14, harpsichord 9/9/18/13/16/16); upright finishes; textures paint; review PNGs in
+`core/build/shots/`. No `@Ignore` markers exist in the tree.
+
+## Decisions / deviations (with reasons)
+- `sweep.closed` = the path is a loop; `spindle` is the string primitive; `ribbon` has optional `closed`.
+- Rotation signs are carried by the signed max in `SkinParams` (see `docs/requests/WP7.md`); the contract has
+  no sign field. Harpsichord action-set part layout extended to six parts (8′ jack, tongue, register; key
+  lever; 4′ jack, tongue) with vec4 33 holding both register offsets.
+- Grand rim: the §5.4 plan points drive the bentside as an open Catmull-Rom chain from (1, 0.10) to the tail,
+  the spine straight; the key-well side (v < 0.10) is cheeks + key bed, and the rim's front side is a low
+  belly rail (to 0.80 m) so the pin block and plate bar show above it. Case bounds 1.49 × 2.00 m hold.
+- Soundboard colour SOUNDBOARD × 0.25 (the "shadowed ≤ 0.25" note). Grand key tops 0.715 m, strings 0.845 m,
+  strike line z −0.30, flange z −0.433 (head in front of the flange), dampers at z −0.50.
+- Harpsichord: key tops 0.78 m, case 0.64–0.90 m, balance at z −0.165 (midway to the jacks, so jack rise = key
+  travel), lid opens 50°; 4′ strings at least 0.10 m. Arcaded key fronts are a darker front colour only.
+- Upright: no LID skin (the top lid is static and hidden in Overhead, which the Overhead camera sees past).
+- Section caps are a few fixed quads (key bed/frame, belly rail/back) at x = 0 for WP6 to translate to clipX.
+- Texture recipes do not call begin/end (the uploader does).
+
+## Remaining
+- Nothing on the JVM side. Device: the 18 screencaps and T-APL (integrator, with WP6).
