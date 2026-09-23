@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "generated": "2026-10-01T12:00:00Z",
+  "startHere": ["bach.bwv846.krueger.1", "handel.hwv430.1", "beethoven.woo59.1", "beethoven.op106.1"],
+  "shelves": [
+    { "id": "bach-wtc", "title": "Bach · Well-Tempered Clavier", "works": ["bach.bwv846.krueger"] },
+    { "id": "handel", "title": "Handel", "works": ["handel.hwv430"] },
+    { "id": "beethoven", "title": "Beethoven", "works": ["beethoven.woo59", "beethoven.op106", "beethoven.nowhere"] }
+  ],
+  "sources": {
+    "krueger": { "credit": "Performance: Bernd Krueger · piano-midi.de · CC BY-SA 3.0 DE",
+                 "licence": "CC-BY-SA-3.0-DE", "licenceUrl": "https://creativecommons.org/licenses/by-sa/3.0/de/deed.en",
+                 "sourceUrl": "http://www.piano-midi.de", "licenceFile": "licenses/CC-BY-SA-3.0-DE.txt",
+                 "performanceType": "step-sequenced", "tier": "A", "exportAllowed": false },
+    "imslp":   { "credit": "Gouin · IMSLP", "licence": "CC-BY-4.0", "licenceUrl": "https://creativecommons.org/licenses/by/4.0/",
+                 "sourceUrl": "https://imslp.org", "licenceFile": null, "performanceType": "performed", "tier": "B", "exportAllowed": true }
+  },
+  "works": [
+    { "id": "bach.bwv846.krueger", "composer": "Johann Sebastian Bach", "composerShort": "Bach",
+      "title": "Prelude and Fugue in C major, BWV 846", "shortTitle": "WTC I: C major, BWV 846", "catalogue": "BWV 846",
+      "year": 1722, "era": "baroque", "shelf": "bach-wtc", "defaultInstrument": "harpsichord", "altInstruments": ["grand", "upright"],
+      "source": "krueger", "tier": "A", "velocityPolicy": "flat", "tuning": { "aHz": 415, "temperament": "Werckmeister III" },
+      "movements": [
+        { "id": "bach.bwv846.krueger.1", "title": "Prelude", "asset": "midi/krueger/bach/bach_846.mid", "sha1Hex": "aa",
+          "sha1b32": "X", "bytes": 1000, "durationSec": 120.5, "lowKey": 36, "highKey": 84, "notes": 600,
+          "hasSustain": false, "hasSoft": false, "hasSostenuto": false, "pedalMode": "none", "folds": { "harpsichord": 0 } },
+        { "id": "bach.bwv846.krueger.2", "title": "Fugue", "asset": "midi/krueger/bach/bach_846_2.mid", "sha1Hex": "ab",
+          "bytes": 1000, "durationSec": 140.0, "lowKey": 36, "highKey": 84, "notes": 700,
+          "hasSustain": false, "hasSoft": false, "hasSostenuto": false, "pedalMode": "none", "folds": {} } ] },
+    { "id": "handel.hwv430", "composer": "George Frideric Handel", "composerShort": "Händel",
+      "title": "Suite in E major, HWV 430", "shortTitle": "“Harmonious Blacksmith”", "catalogue": null, "year": null,
+      "era": "baroque", "shelf": "handel", "defaultInstrument": "harpsichord", "altInstruments": [], "source": "imslp",
+      "tier": "B", "velocityPolicy": "as-is", "tuning": null,
+      "movements": [ { "id": "handel.hwv430.1", "title": "Air and variations", "asset": "midi/imslp/hwv430.mid",
+        "sha1Hex": "cc", "bytes": 10, "durationSec": 240, "lowKey": 40, "highKey": 88, "notes": 10,
+        "hasSustain": false, "hasSoft": false, "hasSostenuto": false, "pedalMode": "none" } ] },
+    { "id": "beethoven.woo59", "composer": "Ludwig van Beethoven", "composerShort": "Beethoven",
+      "title": "Für Elise, WoO 59", "shortTitle": "Für Elise", "catalogue": "WoO 59", "year": 1810, "era": "classical",
+      "shelf": "beethoven", "defaultInstrument": "grand", "altInstruments": ["upright"], "source": "krueger", "tier": "A",
+      "velocityPolicy": "as-is", "tuning": null,
+      "movements": [ { "id": "beethoven.woo59.1", "title": "Poco moto", "asset": "midi/krueger/beethoven/elise.mid",
+        "sha1Hex": "dd", "bytes": 10, "durationSec": 180.2, "lowKey": 33, "highKey": 88, "notes": 900,
+        "hasSustain": true, "hasSoft": false, "hasSostenuto": false, "pedalMode": "switch" } ] },
+    { "id": "beethoven.op106", "composer": "Ludwig van Beethoven", "composerShort": "Beethoven",
+      "title": "Piano Sonata No. 29 in B-flat major, op. 106 “Hammerklavier”", "shortTitle": "Sonata op. 106 “Hammerklavier”",
+      "catalogue": "op. 106", "year": 1818, "era": "classical", "shelf": "beethoven", "defaultInstrument": "grand",
+      "altInstruments": ["upright"], "source": "krueger", "tier": "A", "velocityPolicy": "as-is", "tuning": null,
+      "movements": [ { "id": "beethoven.op106.1", "title": "I. Allegro", "asset": "midi/krueger/beethoven/beethoven_hammerklavier_1.mid",
+        "sha1Hex": "ee", "bytes": 74228, "durationSec": 593.1, "lowKey": 22, "highKey": 105, "notes": 9123,
+        "hasSustain": true, "hasSoft": true, "hasSostenuto": false, "pedalMode": "continuous", "folds": { "harpsichord": 412 } } ] }
+  ]
+}
