@@ -16,6 +16,10 @@ class DecodePlan(
     val order: IntArray, val pending: IntArray, val verify: IntArray, val playableSet: IntArray,
     val reduced: Boolean, val storageOk: Boolean, val requiredBytes: Long, val remainingBytes: Long) {
 
+    /** The same plan after more units became ready (no verification left). */
+    fun advance(mask: Long): DecodePlan = DecodePlan(order, order.filter { (mask ushr it) and 1L == 0L }.toIntArray(), IntArray(0),
+        playableSet, reduced, storageOk, requiredBytes, remainingBytes)
+
     val next: Int get() = if (pending.isEmpty()) -1 else pending[0]
     val complete: Boolean get() = pending.isEmpty()
 
