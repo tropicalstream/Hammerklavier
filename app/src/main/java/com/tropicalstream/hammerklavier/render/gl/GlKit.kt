@@ -25,6 +25,12 @@ precision mediump float;
 #endif
 """
 
+    /**
+     * JVM tests only: android.jar's stubs return 0 for every GL query, so compile/link status
+     * checks are skipped when this is set (the renderer's frame logic then runs headless).
+     */
+    @Volatile var skipStatusChecks = false
+
     fun floatBuffer(data: FloatArray, count: Int = data.size): FloatBuffer {
         val b = ByteBuffer.allocateDirect(count * 4).order(ByteOrder.nativeOrder()).asFloatBuffer()
         b.put(data, 0, count); b.position(0); return b
@@ -77,7 +83,7 @@ precision mediump float;
         GLES20.glCompileShader(id)
         val ok = IntArray(1)
         GLES20.glGetShaderiv(id, GLES20.GL_COMPILE_STATUS, ok, 0)
-        if (ok[0] != GLES20.GL_TRUE) {
+        if (ok[0] != GLES20.GL_TRUE && !skipStatusChecks) {
             val log = GLES20.glGetShaderInfoLog(id)
             GLES20.glDeleteShader(id)
             throw IllegalStateException("shader $name: $log")
@@ -94,7 +100,7 @@ precision mediump float;
         val ok = IntArray(1)
         GLES20.glGetProgramiv(p, GLES20.GL_LINK_STATUS, ok, 0)
         GLES20.glDeleteShader(v); GLES20.glDeleteShader(f)
-        if (ok[0] != GLES20.GL_TRUE) throw IllegalStateException("program $name: ${GLES20.glGetProgramInfoLog(p)}")
+        if (ok[0] != GLES20.GL_TRUE && !skipStatusChecks) throw IllegalStateException("program $name: ${GLES20.glGetProgramInfoLog(p)}")
         return p
     }
 

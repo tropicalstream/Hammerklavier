@@ -59,7 +59,8 @@ class BuiltScene(val request: Long, val id: InstrumentId, val profile: Instrumen
  * display rest or with the display off); a GL generation counter re-creates every handle after a
  * context loss from the resident arrays. Allocation-free in the steady state (§2.1 rule 1).
  */
-class StereoRenderer(private val loader: ExecutorService?) : GLSurfaceView.Renderer {
+class StereoRenderer(private val loader: ExecutorService?,
+                     private val painterFactory: (() -> com.tropicalstream.hammerklavier.contract.Painter2D)? = null) : GLSurfaceView.Renderer {
 
     /** Written by main (HkGlView), read by GL. */
     class Desired {
@@ -125,8 +126,15 @@ class StereoRenderer(private val loader: ExecutorService?) : GLSurfaceView.Rende
     private val tmp3 = FloatArray(3)
     private val white = floatArrayOf(Pal.HUD_TEXT[0] / 255f, Pal.HUD_TEXT[1] / 255f, Pal.HUD_TEXT[2] / 255f)
 
-    private var current: BuiltScene? = null
+    @Volatile private var current: BuiltScene? = null
+    /** The instrument on screen (diagnostics, T-Q3SWITCH). */
+    val currentInstrument: InstrumentId? get() = current?.id
+    /** The view and framing on screen. */
+    val shownView: ViewId get() = director.view
+    val shownFraming: Int get() = director.framing
     @Volatile private var ready: BuiltScene? = null
+    /** The last scene build failure (diagnostics). */
+    @Volatile var lastBuildError: String? = null; private set
     @Volatile private var building = -1L
     @Volatile private var buildPalette: Palette? = null
     private var boundSlot = -2
@@ -434,8 +442,8 @@ class StereoRenderer(private val loader: ExecutorService?) : GLSurfaceView.Rende
                       palette: Palette): BuiltScene? = try {
         val inst = scenes.instrument(id, look, lastDamper)
         val venue = scenes.venue()
-        val painter = CanvasPainter()
-        val tex = textures.paint(inst.textures() + venue.textures(), painter)
+        val recipes = inst.textures() + venue.textures()
+        val tex = if (recipes.isEmpty()) emptyList() else textures.paint(recipes, painterFactory?.invoke() ?: CanvasPainter())
         val placement = venue.geometry.placements[id] ?: KonzertzimmerAcoustics.PLACEMENTS.getValue(id)
         val probeBytes = ByteArray(TextureUploader.PROBE_W * TextureUploader.PROBE_H * 4)
         val centre = FloatArray(3); placement.toRoom(floatArrayOf(0f, 0.8f, -0.8f), centre)
@@ -444,6 +452,7 @@ class StereoRenderer(private val loader: ExecutorService?) : GLSurfaceView.Rende
         BuiltScene(request, id, InstrumentProfile.of(id).withLastDamper(lastDamper), inst, venue.flames(), placement, assembled, tex,
             ResidentTexture(TextureUploader.PROBE, TextureUploader.PROBE_W, TextureUploader.PROBE_H, probeBytes), palette)
     } catch (e: RuntimeException) {
+        lastBuildError = e.toString()
         Log.e(HK.TAG_RENDER, "scene build failed", e); null
     }
 
