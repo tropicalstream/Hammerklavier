@@ -238,3 +238,17 @@ Recorded by the integrator while merging WP1, WP2, WP3, WP4 and WP11 for M1 (doc
   main; headroom is measured ahead of the DAC timestamp and the guard also trips on underrun growth
   or render load > 92%. `KitManager(…, standIn)`: `kit.standIn` (default true until M2) opens the
   stub kit for every instrument.
+
+---
+
+## 2026-09-23 · M2 · WP0 (integrator)
+
+- **`contract/Dsp.kt` `MasterProcessor.latencyFrames: Int` (new member, default 0).** Frames by which
+  `process` delays its output; `MasterChain` returns `Limiter.LOOKAHEAD` (48). `EngineCore.debugOnset`'s
+  scheduled frame now includes it (T-ALIGN was off by exactly 48 frames on the glasses). Growth rule: default body.
+- **`Cmd.VOICE_CAP` semantics (no signature change):** `f` now carries the headroom guard's comb step
+  (0 = none, 1 = at most 44 combs, 2 = at most 22, dispersion off at ≥ 1); `l` is the voice cap as before.
+  `HeadroomGuard` takes its first two steps on the combs (`COMB_STEPS = 2`), then cap − 8.
+- Non-contract: `ResonanceBank.kernelWidth` (2 by default; 4 = the previous kernel), peak from every 8th frame.
+  `Wiring.library` = `LibraryServiceImpl`; `kit.standIn` default false.
+

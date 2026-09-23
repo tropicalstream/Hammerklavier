@@ -119,6 +119,8 @@ class ResonanceBank(sampleRate: Int = HK.SR) : ResonanceProcessor {
 
     /** Test hook: run the one-comb-at-a-time reference kernel instead of the 4-way kernel. */
     @JvmField var scalarReference = false
+    /** 4 or 2 combs per kernel iteration (M2 A55 measurement; results are identical within 1e-6). */
+    @JvmField var kernelWidth = 2
 
     init {
         val pans = floatArrayOf(-0.6f, -0.2f, 0.2f, 0.6f)
@@ -298,7 +300,8 @@ class ResonanceBank(sampleRate: Int = HK.SR) : ResonanceProcessor {
                 for (i in 0 until nr) processOne(runList[i], mix, self, m)
             } else {
                 var i = 0
-                while (i + 4 <= nr) { processFour(runList[i], runList[i + 1], runList[i + 2], runList[i + 3], mix, self, m); i += 4 }
+                if (kernelWidth == 4) while (i + 4 <= nr) { processFour(runList[i], runList[i + 1], runList[i + 2], runList[i + 3], mix, self, m); i += 4 }
+                else if (kernelWidth == 2) while (i + 2 <= nr) { processTwo(runList[i], runList[i + 1], mix, self, m); i += 2 }
                 while (i < nr) { processOne(runList[i], mix, self, m); i++ }
             }
             // 3. Pan the 4 register groups into the dry bus.
@@ -350,9 +353,7 @@ class ResonanceBank(sampleRate: Int = HK.SR) : ResonanceProcessor {
             val x = km * mix[i] + ks * self[so + i]
             buf[off + (p and mask)] = x + y
             group[go + i] += y
-            val ay = if (y < 0f) -y else y
-            if (ay > pk) pk = ay
-            if ((i and 7) == 0) e += y * y
+            if ((i and 7) == 0) { e += y * y; val ay = if (y < 0f) -y else y; if (ay > pk) pk = ay }   // peak and energy every 8th frame (M2: A55 cost)
             p++
         }
         store(c, g, fx, fy, a1x, a1y, a2x, a2y, lp, pk, e, n)
@@ -399,6 +400,8 @@ class ResonanceBank(sampleRate: Int = HK.SR) : ResonanceProcessor {
         var fx3 = sFx[c3]; var fy3 = sFy[c3]; var a1x3 = sA1x[c3]; var a1y3 = sA1y[c3]; var a2x3 = sA2x[c3]; var a2y3 = sA2y[c3]; var lp3 = sLp[c3]
         val km3 = cMix[c3]; val ks3 = cSelf[c3]; val so3 = c3 * HK.BLOCK; val go3 = groupOf(c3) * HK.BLOCK
         var pk3 = 0f; var e3 = 0f
+        val useSelf = ks0 != 0f || ks1 != 0f || ks2 != 0f || ks3 != 0f
+        val oneGroup = go0 == go1 && go1 == go2 && go2 == go3
         var p = pos
         for (i in 0 until n) {
             val mx = mix[i]
@@ -423,28 +426,87 @@ class ResonanceBank(sampleRate: Int = HK.SR) : ResonanceProcessor {
             lp2 = w2 + lpa2 * (lp2 - w2); g2 += dg2
             lp3 = w3 + lpa3 * (lp3 - w3); g3 += dg3
             val y0 = g0 * lp0
-            buf[off0 + (p and mask0)] = (km0 * mx + ks0 * self[so0 + i]) + y0
-            grp[go0 + i] += y0
-            val q0 = if (y0 < 0f) -y0 else y0; if (q0 > pk0) pk0 = q0
             val y1 = g1 * lp1
-            buf[off1 + (p and mask1)] = (km1 * mx + ks1 * self[so1 + i]) + y1
-            grp[go1 + i] += y1
-            val q1 = if (y1 < 0f) -y1 else y1; if (q1 > pk1) pk1 = q1
             val y2 = g2 * lp2
-            buf[off2 + (p and mask2)] = (km2 * mx + ks2 * self[so2 + i]) + y2
-            grp[go2 + i] += y2
-            val q2 = if (y2 < 0f) -y2 else y2; if (q2 > pk2) pk2 = q2
             val y3 = g3 * lp3
-            buf[off3 + (p and mask3)] = (km3 * mx + ks3 * self[so3 + i]) + y3
-            grp[go3 + i] += y3
-            val q3 = if (y3 < 0f) -y3 else y3; if (q3 > pk3) pk3 = q3
-            if ((i and 7) == 0) { e0 += y0 * y0; e1 += y1 * y1; e2 += y2 * y2; e3 += y3 * y3 }
+            if (useSelf) {
+                buf[off0 + (p and mask0)] = (km0 * mx + ks0 * self[so0 + i]) + y0
+                buf[off1 + (p and mask1)] = (km1 * mx + ks1 * self[so1 + i]) + y1
+                buf[off2 + (p and mask2)] = (km2 * mx + ks2 * self[so2 + i]) + y2
+                buf[off3 + (p and mask3)] = (km3 * mx + ks3 * self[so3 + i]) + y3
+            } else {
+                buf[off0 + (p and mask0)] = km0 * mx + y0
+                buf[off1 + (p and mask1)] = km1 * mx + y1
+                buf[off2 + (p and mask2)] = km2 * mx + y2
+                buf[off3 + (p and mask3)] = km3 * mx + y3
+            }
+            if (oneGroup) grp[go0 + i] += y0 + y1 + y2 + y3
+            else { grp[go0 + i] += y0; grp[go1 + i] += y1; grp[go2 + i] += y2; grp[go3 + i] += y3 }
+            if ((i and 7) == 0) {                          // peak and energy every 8th frame (M2: A55 cost)
+                e0 += y0 * y0; e1 += y1 * y1; e2 += y2 * y2; e3 += y3 * y3
+                val q0 = if (y0 < 0f) -y0 else y0; if (q0 > pk0) pk0 = q0
+                val q1 = if (y1 < 0f) -y1 else y1; if (q1 > pk1) pk1 = q1
+                val q2 = if (y2 < 0f) -y2 else y2; if (q2 > pk2) pk2 = q2
+                val q3 = if (y3 < 0f) -y3 else y3; if (q3 > pk3) pk3 = q3
+            }
             p++
         }
         store(c0, g0, fx0, fy0, a1x0, a1y0, a2x0, a2y0, lp0, pk0, e0, n)
         store(c1, g1, fx1, fy1, a1x1, a1y1, a2x1, a2y1, lp1, pk1, e1, n)
         store(c2, g2, fx2, fy2, a1x2, a1y2, a2x2, a2y2, lp2, pk2, e2, n)
         store(c3, g3, fx3, fy3, a1x3, a1y3, a2x3, a2y3, lp3, pk3, e3, n)
+    }
+
+    /** Two combs per iteration (M2: fewer live values than [processFour]; ART on the A55 spills the 4-way state). */
+    private fun processTwo(c0: Int, c1: Int, mix: FloatArray, self: FloatArray, n: Int) {
+        val buf = lines; val grp = group
+        val off0 = segOff[c0]; val mask0 = segMask[c0]; val dm0 = cm[c0]
+        val eta0 = ceta[c0]; val ap0 = cap[c0]; val lpa0 = clp[c0]
+        var g0 = cg[c0]; val dg0 = (gTarget[c0] - g0) / n
+        var fx0 = sFx[c0]; var fy0 = sFy[c0]; var a1x0 = sA1x[c0]; var a1y0 = sA1y[c0]; var a2x0 = sA2x[c0]; var a2y0 = sA2y[c0]; var lp0 = sLp[c0]
+        val km0 = cMix[c0]; val ks0 = cSelf[c0]; val so0 = c0 * HK.BLOCK; val go0 = groupOf(c0) * HK.BLOCK
+        var pk0 = 0f; var e0 = 0f
+        val off1 = segOff[c1]; val mask1 = segMask[c1]; val dm1 = cm[c1]
+        val eta1 = ceta[c1]; val ap1 = cap[c1]; val lpa1 = clp[c1]
+        var g1 = cg[c1]; val dg1 = (gTarget[c1] - g1) / n
+        var fx1 = sFx[c1]; var fy1 = sFy[c1]; var a1x1 = sA1x[c1]; var a1y1 = sA1y[c1]; var a2x1 = sA2x[c1]; var a2y1 = sA2y[c1]; var lp1 = sLp[c1]
+        val km1 = cMix[c1]; val ks1 = cSelf[c1]; val so1 = c1 * HK.BLOCK; val go1 = groupOf(c1) * HK.BLOCK
+        var pk1 = 0f; var e1 = 0f
+        val useSelf = ks0 != 0f || ks1 != 0f
+        val oneGroup = go0 == go1
+        var p = pos
+        for (i in 0 until n) {
+            val mx = mix[i]
+            val r0 = buf[off0 + ((p - dm0) and mask0)]
+            val r1 = buf[off1 + ((p - dm1) and mask1)]
+            val u0 = eta0 * (r0 - fy0) + fx0; fx0 = r0; fy0 = u0
+            val u1 = eta1 * (r1 - fy1) + fx1; fx1 = r1; fy1 = u1
+            val v0 = ap0 * (u0 - a1y0) + a1x0; a1x0 = u0; a1y0 = v0
+            val v1 = ap1 * (u1 - a1y1) + a1x1; a1x1 = u1; a1y1 = v1
+            val w0 = ap0 * (v0 - a2y0) + a2x0; a2x0 = v0; a2y0 = w0
+            val w1 = ap1 * (v1 - a2y1) + a2x1; a2x1 = v1; a2y1 = w1
+            lp0 = w0 + lpa0 * (lp0 - w0); g0 += dg0
+            lp1 = w1 + lpa1 * (lp1 - w1); g1 += dg1
+            val y0 = g0 * lp0
+            val y1 = g1 * lp1
+            if (useSelf) {
+                buf[off0 + (p and mask0)] = (km0 * mx + ks0 * self[so0 + i]) + y0
+                buf[off1 + (p and mask1)] = (km1 * mx + ks1 * self[so1 + i]) + y1
+            } else {
+                buf[off0 + (p and mask0)] = km0 * mx + y0
+                buf[off1 + (p and mask1)] = km1 * mx + y1
+            }
+            if (oneGroup) grp[go0 + i] += y0 + y1
+            else { grp[go0 + i] += y0; grp[go1 + i] += y1 }
+            if ((i and 7) == 0) {                          // peak and energy every 8th frame (M2: A55 cost)
+                e0 += y0 * y0; e1 += y1 * y1
+                val q0 = if (y0 < 0f) -y0 else y0; if (q0 > pk0) pk0 = q0
+                val q1 = if (y1 < 0f) -y1 else y1; if (q1 > pk1) pk1 = q1
+            }
+            p++
+        }
+        store(c0, g0, fx0, fy0, a1x0, a1y0, a2x0, a2y0, lp0, pk0, e0, n)
+        store(c1, g1, fx1, fy1, a1x1, a1y1, a2x1, a2y1, lp1, pk1, e1, n)
     }
 
     companion object {

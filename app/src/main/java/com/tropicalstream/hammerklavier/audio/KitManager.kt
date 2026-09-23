@@ -245,6 +245,7 @@ class KitManager(ctx: Context, private val voicer: ExecutorService, private val 
                 Log.w(HK.TAG_KIT, "${k.id.key}: unit $u failed its CRC; re-voicing")
                 ready = ready.without(u)
             }
+            Log.i(HK.TAG_KIT, "${k.id.key}: CRC check of units ${plan.verify.joinToString(",")} (boot or unclean exit); mask now 0x${java.lang.Long.toHexString(ready.mask)}")
             ready = PcmCacheFormat.ReadyState(ready.mask, ready.crc, boot)
             PcmCacheFormat.writeReady(readyF, ready)
             okF.delete()

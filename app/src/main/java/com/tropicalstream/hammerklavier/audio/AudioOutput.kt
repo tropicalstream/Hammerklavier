@@ -181,7 +181,7 @@ class AudioOutput internal constructor(
             Cmd.ROUTE -> routeOrdinal = l.toInt()
         }
         core.on(code, l, f, ref)
-        if (code == Cmd.QUALITY && headroom.steps > 0) core.on(Cmd.VOICE_CAP, headroom.cap(baseCap).toLong(), 0f, null)
+        if (code == Cmd.QUALITY && headroom.steps > 0) core.on(Cmd.VOICE_CAP, headroom.cap(baseCap).toLong(), headroom.combSteps.toFloat(), null)
     }
 
     // =====================================================================================
@@ -428,6 +428,16 @@ class AudioOutput internal constructor(
         writeAll(out)
     }
 
+    @Volatile private var wavBuf: FloatArray? = null
+    private var wavPos = 0
+    @Volatile private var wavDone: ((FloatArray) -> Unit)? = null
+
+    /** Debug only: capture the next [seconds] of the rendered interleaved stereo output; [done] runs on main. */
+    fun captureWav(seconds: Int, done: (FloatArray) -> Unit) {
+        wavDone = done; wavPos = 0
+        wavBuf = FloatArray(seconds * HK.SR * 2)
+    }
+
     /** One block; false = give up (output lost / audio stopped). */
     private fun block(gen: Int): Boolean {
         drainedAny = false
@@ -460,6 +470,11 @@ class AudioOutput internal constructor(
             }
             noteRenderTime(clockSource.now() - t0)
             lastRenderIdle = st.idle
+        }
+        wavBuf?.let { wb ->                                // debug WAV capture (--ei wavdump <s>); array preallocated on main
+            val n = minOf(out.size, wb.size - wavPos)
+            if (n > 0) { System.arraycopy(out, 0, wb, wavPos, n); wavPos += n }
+            if (wavPos >= wb.size) { wavBuf = null; wavDone?.let { post(Runnable { it(wb) }) } }
         }
         if (!writeAll(out)) return rebuildOrStop()
         audioClock.publishBlock(frame, st)
@@ -504,8 +519,8 @@ class AudioOutput internal constructor(
         urAtSample = underruns
         val q = if (stressed) 0 else queued
         when (if (gotTs) headroom.sample(framesAccepted, q, baseCap) else 0) {       // warm-up: from the first timestamp
-            1 -> { val cap = headroom.cap(baseCap); core.on(Cmd.VOICE_CAP, cap.toLong(), 0f, null); overloadPayload = cap; post(overloadRunnable) }
-            -1 -> core.on(Cmd.VOICE_CAP, headroom.cap(baseCap).toLong(), 0f, null)
+            1 -> { val cap = headroom.cap(baseCap); core.on(Cmd.VOICE_CAP, cap.toLong(), headroom.combSteps.toFloat(), null); overloadPayload = cap; post(overloadRunnable) }
+            -1 -> core.on(Cmd.VOICE_CAP, headroom.cap(baseCap).toLong(), headroom.combSteps.toFloat(), null)
         }
         // Idle → park.
         if (st.idle) {

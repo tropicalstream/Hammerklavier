@@ -39,3 +39,9 @@
   Also measured: `nsRoom` 1,161–1,240 ns per output frame (≈ 0.3 ms per block), `nsMaster` 389–393, `nsSoft` 48–52.
 - M1 wiring uses the full `DspFactory.create(HK.SR)` (the plan's M1 row says limiter only; the wiring notes of
   WP2/WP3/WP4 all use the full set, and the bench needs the real stages). No room design is posted yet (WP12).
+
+## Integrator answers (M2, 2026-09-23)
+- **9 (comb cost):** on the glasses the 4-way kernel runs at 63–64 ns per comb-frame (2.0 GHz, fast state); ART
+  spills its state. A 2-way kernel (`kernelWidth = 2`, now the default) runs at 40–42 ns, 1-way at 53 ns. Peak
+  is now sampled every 8th frame like the energy. Still ≈ 80 cycles vs §3.16's 22; `nsRoom` is 1.6–1.9 µs/frame.
+  T-CPU storm64 fails at 55–65 % normalised (INTEGRATION.md, M2).

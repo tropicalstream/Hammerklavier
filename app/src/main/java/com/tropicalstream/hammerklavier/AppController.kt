@@ -199,6 +199,8 @@ class AppController(private val ctx: Context, private val w: Wiring) {
                 "lowlatency" -> w.settings.putBool("audio.lowLatency", b.getBoolean(k))
                 "standin" -> w.settings.putBool(Wiring.KEY_STAND_IN, b.getBoolean(k))              // applies at the next launch
                 "stats" -> if (b.getBoolean(k)) playback.logStats()
+                "align" -> if (b.getBoolean(k)) playback.align()
+                "wavdump" -> playback.captureWav(b.getInt(k, 20).coerceIn(1, 60))
                 "selftest" -> if (b.getBoolean(k)) selfTest.run(gl, b.getInt("selftestsecs", 60).coerceIn(1, 600))
                 "selftestsecs", "benchsecs", "soakplan", "mono", "echo", "n" -> {}                   // parameters of other keys; echo is for the smoke test
                 "gcstats" -> if (b.getBoolean(k)) logGcStats()

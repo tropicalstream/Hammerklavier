@@ -53,6 +53,8 @@ interface SoftBusProcessor { fun configure(kind: SoftKind); fun process(inL: Flo
 
 interface MasterProcessor {
     fun setRoute(r: OutputRoute); fun setSpeakerBass(m: SpeakerBass); fun setGain(linear: Float)
-    fun process(l: FloatArray, r: FloatArray, n: Int, outInterleaved: FloatArray); fun reset() }
+    fun process(l: FloatArray, r: FloatArray, n: Int, outInterleaved: FloatArray); fun reset()
+    /** Frames by which process() delays its output (the limiter's lookahead); M2 contract addition. */
+    val latencyFrames: Int get() = 0 }
 
 class DspSet(val resonance: ResonanceProcessor, val room: RoomProcessor, val soft: SoftBusProcessor, val master: MasterProcessor)

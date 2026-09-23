@@ -52,14 +52,14 @@ class PoliciesTest {
         var f = 0L
         fun run(seconds: Int, queued: Int): Int { var r = 0; repeat(seconds * 50) { f += HK.SR / 50; val x = h.sample(f, queued, 96); if (x != 0) r = x }; return r }
         run(10, 4000); assertEquals(0, h.steps)
-        run(10, 1000); assertEquals(1, h.steps); assertEquals(88, h.cap(96))
+        run(10, 1000); assertEquals(1, h.steps); assertEquals(1, h.combSteps); assertEquals(96, h.cap(96))   // combs first
         run(10, 4000); val after = h.steps                  // the window still holding lows may step once more
         assertTrue(after in 1..2)
         run(50, 4000); assertEquals(after, h.steps)         // < 60 s of good headroom since the last low window
         run(15, 4000); assertEquals(after - 1, h.steps)     // one step back up
         // Floor at 32.
         repeat(20) { run(11, 100) }
-        assertEquals(32, h.cap(96)); assertTrue(w > 0)
+        assertEquals(32, h.cap(96)); assertEquals(2, h.combSteps); assertEquals(HeadroomGuard.COMB_STEPS + 8, h.steps); assertTrue(w > 0)
     }
 
     @Test fun latencyTunerGrowsOneBlockPerNewUnderrun() {

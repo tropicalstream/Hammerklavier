@@ -140,7 +140,7 @@ class EngineCore(private val dsp: DspSet, private val cursors: VoiceCursorBoard,
     private var dbgThreshold = 0f
 
     init {
-        dsp.resonance.setMode(resonanceMode, profile.id, combs, dispersion)
+        applyResonance()
         dsp.soft.configure(profile.softKind)
         keys.configure(profile)
     }
@@ -178,7 +178,11 @@ class EngineCore(private val dsp: DspSet, private val cursors: VoiceCursorBoard,
             }
             Cmd.DUCK -> { duck = f; dsp.master.setGain(masterLin * duck) }
             Cmd.REGISTRATION -> registration = l.toInt() and (HK.REG_8 or HK.REG_4)
-            Cmd.VOICE_CAP -> protectCap = l.toInt().coerceIn(8, HK.VOICE_CAP_MAX)
+            Cmd.VOICE_CAP -> {                              // f = AudioOutput's comb protection step (0, 1 = 44 combs, 2 = 22), M2
+                protectCap = l.toInt().coerceIn(8, HK.VOICE_CAP_MAX)
+                val cs = f.toInt().coerceIn(0, 2)
+                if (cs != protectCombStep) { protectCombStep = cs; applyResonance() }
+            }
             Cmd.BENCH -> bench.begin(if (l > 0) l.toFloat() else 2f, dsp, benchCpuMhz)
             Cmd.RESET -> reset()
             else -> {}
@@ -194,7 +198,7 @@ class EngineCore(private val dsp: DspSet, private val cursors: VoiceCursorBoard,
         profile = tok.profile
         keys.configure(profile)
         dsp.resonance.apply(tok.keyMap.resonance, 0)
-        dsp.resonance.setMode(resonanceMode, profile.id, combs, dispersion)
+        applyResonance()
         dsp.soft.configure(profile.softKind)
         epoch++
     }
@@ -265,7 +269,7 @@ class EngineCore(private val dsp: DspSet, private val cursors: VoiceCursorBoard,
         combs = q.combs
         dispersion = q.dispersion
         dsp.room.setLines(q.fdnLines)
-        dsp.resonance.setMode(resonanceMode, profile.id, combs, dispersion)
+        applyResonance()
     }
 
     private fun setMix(m: MixSettings) {
@@ -275,7 +279,7 @@ class EngineCore(private val dsp: DspSet, private val cursors: VoiceCursorBoard,
         masterLin = DecayTables.db2lin(m.masterDb)
         dsp.master.setGain(masterLin * duck)
         dsp.master.setSpeakerBass(m.speakerBass)
-        dsp.resonance.setMode(resonanceMode, profile.id, combs, dispersion)
+        applyResonance()
     }
 
     override fun reset() {
@@ -291,6 +295,14 @@ class EngineCore(private val dsp: DspSet, private val cursors: VoiceCursorBoard,
         java.util.Arrays.fill(selfRows, false); java.util.Arrays.fill(self, 0f)
         epoch++
         pool.peak = 0; pool.stolen = 0; seq.dropped = 0
+    }
+
+    private var protectCombStep = 0
+
+    /** Resonance mode with the quality ladder's combs, lowered by the headroom guard's comb steps (§3.16 step-down). */
+    private fun applyResonance() {
+        val c = when (protectCombStep) { 0 -> combs; 1 -> minOf(combs, 44); else -> minOf(combs, 22) }
+        dsp.resonance.setMode(resonanceMode, profile.id, c, dispersion && protectCombStep == 0)
     }
 
     /** Cap in effect: the quality ladder's, lowered by AudioOutput's self-protection. */
@@ -496,7 +508,7 @@ class EngineCore(private val dsp: DspSet, private val cursors: VoiceCursorBoard,
         if (bench.running) {
             if (!bench.step(BENCH_SLICE_NS)) {
                 // The bench drove the live stages with its own buffers: restore their modes and clear their state.
-                dsp.resonance.setMode(resonanceMode, profile.id, combs, dispersion)
+                applyResonance()
                 dsp.resonance.reset(); dsp.soft.reset()
             }
         }
@@ -682,7 +694,7 @@ class EngineCore(private val dsp: DspSet, private val cursors: VoiceCursorBoard,
         val bank = v.bank ?: return
         val r = v.region
         // where the −40 dB crossing should appear: the onset frame plus (thrFrame − onsetFrame) source frames at the voice's rate
-        dbgScheduled = outFrame + (v.onsetAt - pf) + Math.round((bank.thrFrame(r) - bank.onsetFrame(r)) * TWO32 / v.inc)
+        dbgScheduled = outFrame + dsp.master.latencyFrames + (v.onsetAt - pf) + Math.round((bank.thrFrame(r) - bank.onsetFrame(r)) * TWO32 / v.inc)
         dbgArmedOut = outFrame + (v.startAt - pf)
         val peakEnv = DecayTables.ENV_DB[bank.envByte(r, (bank.onsetFrame(r) + 480) / 480)]
         dbgThreshold = 0.01f * DecayTables.db2lin(peakEnv) * v.base * masterLin * 1.414f

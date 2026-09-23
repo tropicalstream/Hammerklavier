@@ -12,6 +12,8 @@ import com.tropicalstream.hammerklavier.contract.SpeakerBass
  * modified. Allocation-free.
  */
 class MasterChain(sampleRate: Int = HK.SR) : MasterProcessor {
+    override val latencyFrames: Int get() = Limiter.LOOKAHEAD
+
     val enhancer = SpeakerEnhancer(sampleRate)
     val limiter = Limiter(sampleRate)
     private val bl = FloatArray(HK.BLOCK); private val br = FloatArray(HK.BLOCK)

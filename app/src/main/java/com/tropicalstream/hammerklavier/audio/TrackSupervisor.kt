@@ -130,7 +130,8 @@ class RenderGuard(private val windowNs: Long = 10_000_000_000L) {
 
 /**
  * Headroom self-protection (PLAN §3.1): the queued frames' minimum over a rolling 10 s; below
- * [HK.HEADROOM_MIN_FRAMES] → one step down (cap − 8, not below 32); after 60 s with the minimum
+ * [HK.HEADROOM_MIN_FRAMES] → one step down. The first [COMB_STEPS] steps shed combs (88 → 44 → 22,
+ * dispersion off: on the glasses the combs cost ≈ 5× a voice-cap step, M2 §3.16 measured order), then cap − 8, not below 32; after 60 s with the minimum
  * ≥ 3,072 frames → one step back up. Time is counted in output frames. Pure; HKAudio.
  */
 class HeadroomGuard(private val sampleRate: Int = HK.SR) {
@@ -159,7 +160,7 @@ class HeadroomGuard(private val sampleRate: Int = HK.SR) {
         winStart = frame; winMin = Int.MAX_VALUE
         if (min < HK.HEADROOM_MIN_FRAMES) {
             goodSince = frame
-            if (cap(baseCap) > MIN_CAP) { steps++; return 1 }
+            if (steps < COMB_STEPS || cap(baseCap) > MIN_CAP) { steps++; return 1 }
             return 0
         }
         if (min < 2 * HK.HEADROOM_MIN_FRAMES) goodSince = frame
@@ -167,7 +168,10 @@ class HeadroomGuard(private val sampleRate: Int = HK.SR) {
         return 0
     }
 
-    fun cap(baseCap: Int): Int = maxOf(MIN_CAP, baseCap - 8 * steps)
+    fun cap(baseCap: Int): Int = maxOf(MIN_CAP, baseCap - 8 * maxOf(0, steps - COMB_STEPS))
 
-    companion object { const val MIN_CAP = 32 }
+    /** Comb protection steps in effect (0..[COMB_STEPS]). */
+    val combSteps: Int get() = minOf(steps, COMB_STEPS)
+
+    companion object { const val MIN_CAP = 32; const val COMB_STEPS = 2 }
 }

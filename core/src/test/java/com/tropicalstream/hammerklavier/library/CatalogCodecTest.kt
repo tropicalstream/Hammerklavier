@@ -94,6 +94,6 @@ class CatalogCodecTest {
         org.junit.Assume.assumeTrue("catalog.json not delivered yet (WP11, M6)", f.isFile)
         val m = CatalogCodec.parse(f.readText()) { File("../app/src/main/assets", it).isFile }
         assertTrue(m.works.size in 67..70)
-        assertEquals(13, m.startHere.size.coerceAtMost(13))
+        assertTrue("startHere ${m.startHere.size}", m.startHere.size in 12..13)   // Handel is skipped when absent (§4.8)
     }
 }

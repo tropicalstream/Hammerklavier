@@ -161,6 +161,24 @@ class ResonanceBankTest {
         assertTrue("max diff $maxd", maxd <= 1e-6)
     }
 
+    @Test fun twoAndFourWayKernelsAgree() {
+        val b = FloatArray(HK.KEYS) { if (it < 60) 2e-4f else 1e-4f }
+        val outs = listOf(2, 4).map { w ->
+            val r = CombRig(mode = ResonanceMode.RICH, b = b); r.bank.kernelWidth = w
+            java.util.Arrays.fill(r.damping, 0f)
+            for (k in 21..108) r.gate[k] = if (k % 3 == 0) 0.5f else 1f
+            r.voices += CombRig.Voice(40, DspTestUtil.noise(48000, 0.2, 3), false)
+            r.voices += CombRig.Voice(64, DspTestUtil.harmonicTone(48000, 64, 0.4), true)
+            r.softFeed[64] = true
+            val o = FloatArray(blockOf(1.0) * HK.BLOCK)
+            r.run(blockOf(1.0), sink = { bi -> System.arraycopy(r.outL, 0, o, bi * HK.BLOCK, HK.BLOCK) })
+            o
+        }
+        var maxd = 0.0
+        for (i in outs[0].indices) maxd = maxOf(maxd, abs(outs[0][i] - outs[1][i]).toDouble())
+        assertTrue("max diff $maxd", maxd <= 1e-6)
+    }
+
     @Test fun inactiveCombsCostNothing() {
         val rig = CombRig()
         rig.run(10)

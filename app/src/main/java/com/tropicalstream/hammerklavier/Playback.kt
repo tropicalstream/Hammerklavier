@@ -34,13 +34,20 @@ class Playback(private val w: Wiring) {
     private val cs = ClockStats()
     private val sample = ClockSample()
     private var running = false
+    private var voicing = -1f
+    private var lastPct = -100
     /** Set by AppController: the EngineBench's q0Cap once measured (§3.14). */
     var onVoiceCap: ((Int) -> Unit)? = null
     /** Set by AppController: a performance started (playback hint to the kits). */
     var onPlaying: (() -> Unit)? = null
 
     private val kitCb = object : KitCallback {
-        override fun onProgress(id: InstrumentId, fraction: Float) {}
+        override fun onProgress(id: InstrumentId, fraction: Float) {
+            voicing = fraction
+            val pct = (fraction * 100).toInt()
+            if (pct / 10 != lastPct / 10 || fraction >= 1f) Log.i(HK.TAG_KIT, "${id.key}: voicing ${pct}%")
+            lastPct = pct
+        }
         override fun onPlayable(bank: LoadedBank) = useBank(bank)
         override fun onLayersChanged(bank: LoadedBank) = useBank(bank)
         override fun onComplete(bank: LoadedBank) { Log.i(HK.TAG_KIT, "${instrument.key}: complete gen=${bank.generation} stub=${bank.info.isStub}") }
@@ -112,6 +119,52 @@ class Playback(private val w: Wiring) {
                 w.main.postDelayed({ logClock("play") }, 1000)
             }
         }
+    }
+
+    /** `--ei wavdump <s>`: the next s seconds of the rendered output → files/wav/capture.wav (16-bit) + a level line. */
+    fun captureWav(seconds: Int) {
+        val ao = w.audio as? com.tropicalstream.hammerklavier.audio.AudioOutput ?: return
+        Log.i(HK.TAG_AUDIO, "wavdump: capturing ${seconds}s")
+        ao.captureWav(seconds) { buf ->
+            w.loader.execute {
+                var peak = 0f; var sum = 0.0; var clip = 0
+                val winSz = HK.SR / 10 * 2; var winMax = -200.0; var winMin = 200.0
+                var ws = 0.0; var wn = 0
+                for (x in buf) {
+                    val a = kotlin.math.abs(x); if (a > peak) peak = a; if (a >= 0.999f) clip++
+                    sum += x * x; ws += x * x; wn++
+                    if (wn == winSz) { val d = 10 * kotlin.math.log10(ws / wn + 1e-20); if (d > winMax) winMax = d; if (d < winMin) winMin = d; ws = 0.0; wn = 0 }
+                }
+                val rms = 10 * kotlin.math.log10(sum / buf.size + 1e-20)
+                val pk = 20 * kotlin.math.log10(peak + 1e-20)
+                val dir = File(w.app.getExternalFilesDir(null) ?: w.app.filesDir, "wav").apply { mkdirs() }
+                val f = File(dir, "capture.wav")
+                val bb = java.nio.ByteBuffer.allocate(44 + buf.size * 2).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+                bb.put("RIFF".toByteArray()); bb.putInt(36 + buf.size * 2); bb.put("WAVEfmt ".toByteArray())
+                bb.putInt(16); bb.putShort(1); bb.putShort(2); bb.putInt(HK.SR); bb.putInt(HK.SR * 4); bb.putShort(4); bb.putShort(16)
+                bb.put("data".toByteArray()); bb.putInt(buf.size * 2)
+                for (x in buf) bb.putShort((x.coerceIn(-1f, 1f) * 32767f).toInt().toShort())
+                f.writeBytes(bb.array())
+                Log.i(HK.TAG_AUDIO, "wavdump ${f.absolutePath} name=$playingName peakDb=${"%.1f".format(pk)} rmsDb=${"%.1f".format(rms)} " +
+                    "win100msMaxDb=${"%.1f".format(winMax)} win100msMinDb=${"%.1f".format(winMin)} clipped=$clip")
+            }
+        }
+    }
+
+    /** `--ez align true`: T-ALIGN; polls EngineCore.debugOnset for 40 s and logs each isolated onset's error in frames. */
+    fun align() {
+        val o = LongArray(2); var last = Long.MIN_VALUE; val diffs = ArrayList<Long>()
+        val t0 = System.currentTimeMillis()
+        w.main.post(object : Runnable {
+            override fun run() {
+                if (w.engine.debugOnset(o) && o[1] != last) {
+                    last = o[1]; diffs += o[1] - o[0]
+                }
+                if (System.currentTimeMillis() - t0 < 40_000) { w.main.postDelayed(this, 5); return }
+                val mx = diffs.maxOfOrNull { kotlin.math.abs(it) } ?: -1
+                Log.i(HK.TAG_AUDIO, "align name=$playingName n=${diffs.size} maxAbsFrames=$mx diffs=${diffs.take(40).joinToString(",")}")
+            }
+        })
     }
 
     /** After a resume: the smoke's clock cycle wants fromTimestamp within 1 s. */
@@ -194,6 +247,7 @@ class Playback(private val w: Wiring) {
     fun debugLine(): String {
         w.audio.stats(stats); w.audio.clockStats(cs); w.audio.clock.sample(System.nanoTime(), sample)
         return "v ${stats.voices}/${stats.voiceCap} p50 ${stats.blockP50Us} p99 ${stats.blockP99Us}µs head ${stats.headroomMinFrames} " +
-            "clk ${if (sample.fromTimestamp) "ts" else "est"} miss ${cs.clockMiss} ur ${stats.underruns}"
+            "clk ${if (sample.fromTimestamp) "ts" else "est"} miss ${cs.clockMiss} ur ${stats.underruns}" +
+            (if (voicing in 0f..0.999f) " voicing ${(voicing * 100).toInt()}%" else "")
     }
 }

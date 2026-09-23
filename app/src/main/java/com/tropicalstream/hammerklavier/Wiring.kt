@@ -24,7 +24,7 @@ import com.tropicalstream.hammerklavier.dsp.RoomAcoustics
 import com.tropicalstream.hammerklavier.engine.EngineCore
 import com.tropicalstream.hammerklavier.midi.ScoreCompilerImpl
 import com.tropicalstream.hammerklavier.contract.HK
-import com.tropicalstream.hammerklavier.contract.stub.StubLibrary
+import com.tropicalstream.hammerklavier.library.android.LibraryServiceImpl
 import com.tropicalstream.hammerklavier.contract.stub.StubMechanics
 import com.tropicalstream.hammerklavier.contract.stub.StubScenes
 import com.tropicalstream.hammerklavier.contract.stub.StubUi
@@ -39,8 +39,8 @@ import java.util.concurrent.ExecutorService
  * app names a concrete component. Built once by HammerklavierApp (process singletons); the GL view,
  * the overlay and the GL-thread mechanics are made per activity.
  *
- * Current state (M1): WP1 compiler, WP2 engine, WP3 DSP and designer, WP4 audio and kits are real;
- * library, scenes, mechanics, UI, GL host and overlay are still contract stubs.
+ * Current state (M2): WP1 compiler, WP2 engine, WP3 DSP and designer, WP4 audio and kits (real grand), WP9 library are real;
+ * scenes, mechanics, UI, GL host and overlay are still contract stubs.
  */
 class Wiring(val app: Application, val loader: ExecutorService, val voicer: ExecutorService, val main: Handler) {
     val post: (Runnable) -> Unit = { r -> main.post(r) }
@@ -51,14 +51,12 @@ class Wiring(val app: Application, val loader: ExecutorService, val voicer: Exec
     /** Written by HKAudio, read by HKPrefetch (WP4). */
     val cursors = VoiceCursorBoard()
     val compiler: ScoreCompiler = ScoreCompilerImpl()                    // WP1
-    /** M1: every instrument opens the WP11 stand-in (stub) bank while `kit.standIn` is true (default until M2). */
-    val kits: KitService = KitManager(app, voicer, loader) { settings.getBool(KEY_STAND_IN, true) }   // WP4
+    /** M2: the real kits; `--ez standin true` restores the WP11 stand-in (stub) bank. */
+    val kits: KitService = KitManager(app, voicer, loader) { settings.getBool(KEY_STAND_IN, false) }   // WP4
     /** WP2 engine with WP3's DspSet; the concrete handle is kept here only for the EngineBench results. */
     val engine = EngineCore(DspFactory.create(HK.SR), cursors, head, HK.SR)
     val audio: AudioControl = AudioOutput(app, engine, cursors, head, settings)   // WP4
-    val library: LibraryService = StubLibrary(                           // WP9: library.android.LibraryServiceImpl(ctx, compiler)
-        readAsset = { path -> runCatching { app.assets.open(path).use { it.readBytes() } }.getOrNull() },
-        scoresDir = File(app.getExternalFilesDir(null) ?: app.filesDir, "Scores"))
+    val library: LibraryService = LibraryServiceImpl(app, compiler)      // WP9 (bundled-only at M2)
     val designer: RoomDesigner = RoomAcoustics                            // WP3
     val scenes: SceneFactory = StubScenes()                              // WP7/WP8: Instruments + VenueSceneImpl()
     val ui: UiStateMachine = StubUi()                                    // WP10: ui.model.UiStateMachineImpl()

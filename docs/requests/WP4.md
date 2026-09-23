@@ -52,3 +52,9 @@ One contract-change request (item 1, for WP0/WP4); the rest are notes on how to 
   server fills with silence and the timestamp stalls); `KitManager(…, standIn)`.
 - The RayNeo launcher (Mercury `BackgroundAppManager`) force-stops the app ≈ 1 s after HOME with the display
   on, playing or not. Sleep (KEYCODE_SLEEP) keeps it alive and playing. Relevant for T-LEAVE / resume points.
+
+## Integrator answers (M2, 2026-09-23)
+- T-DEC fails: playable 9.2 s, complete 148 s; units voice at 25–31× real time while the decode bench runs at 47×.
+  Please measure the cost of the post-force sleep (2× write time per 4 MiB) when nothing plays, and consider two
+  codecs for the non-playable units. T-UND-FIRSTRUN, T-PF and T-RESUME (force-stop) pass.
+- `HeadroomGuard` now sheds combs for its first two steps (`COMB_STEPS`), then voices.
