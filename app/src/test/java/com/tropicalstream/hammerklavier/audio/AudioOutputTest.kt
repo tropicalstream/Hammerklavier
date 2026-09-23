@@ -135,6 +135,42 @@ class AudioOutputTest {
         waitFor(5_000, "playing") { val s = ClockSample(); a.sampleClock(s); s.playing }
     }
 
+    /** The sink's head keeps counting across pause/play, as AudioTrack's does (review WP4 r2 blocker). */
+    @Test fun unparkKeepsClockAndHeadroomConsistent() {
+        val rec = Recorder()
+        val a = output()
+        a.setListener(rec)
+        loadScale(a)
+        a.pause()
+        a.start()
+        waitFor(30_000, "park") { val s = AudioStats(); a.stats(s); s.parked }
+        val plays = sinks[0].plays
+        a.play()
+        waitFor(5_000, "unpark") { sinks[0].plays > plays }
+        val c = com.tropicalstream.hammerklavier.contract.ClockStats()
+        waitFor(10_000, "timestamps after unpark") { a.clockStats(c); c.tsAccepted > 3 }
+        assertEquals("no timestamp rejected after unpark", 0, c.tsRejected)
+        val s = ClockSample()
+        waitFor(5_000, "timestamp sample") { a.sampleClock(s); s.valid && s.fromTimestamp }
+        // Let HeadroomGuard see well over its 10 s window of post-unpark frames.
+        val w0 = sinks[0].written
+        waitFor(30_000, "12 s of frames") { sinks[0].written - w0 > 12 * 48_000L }
+        val st = AudioStats(); a.stats(st)
+        assertTrue("queued never negative: ${st.headroomMinFrames}", st.headroomMinFrames >= 0)
+        assertEquals("no VOICE_CAP step-down", 0, rec.overloads.get())
+        assertEquals(1, sinks.size)
+    }
+
+    @Test fun permanentFocusLossParksAtOnce() {
+        val a = output()
+        loadScale(a)
+        a.start()
+        waitFor(10_000, "playing") { val s = ClockSample(); a.sampleClock(s); s.playing }
+        a.focusPause(permanent = true)
+        waitFor(3_000, "parked") { val s = AudioStats(); a.stats(s); s.parked }
+        assertTrue(sinks[0].pauses >= 1)
+    }
+
     @Test fun deadObjectRebuildsTheTrackAtTheSamePosition() {
         val count = AtomicInteger()
         val a = output(factory = SinkFactory { FakeSink(failAt = if (count.getAndIncrement() == 0) 48_000L else -1L).also { sinks += it } })

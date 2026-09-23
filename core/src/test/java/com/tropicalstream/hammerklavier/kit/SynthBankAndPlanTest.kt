@@ -96,6 +96,7 @@ class SynthBankAndPlanTest {
         val complete = PcmCacheFormat.ReadyState(mask(0, 1, 2, 3, 4, 5, 62, 63), IntArray(64), 7)
         val c = DecodePlan.plan(grand, complete, okPresent = true, bootCount = 7, freeBytes = 0, cacheAllocated = true)
         assertTrue(c.complete); assertEquals(-1, c.next); assertEquals(0, c.verify.size)
+        assertTrue(c.storageOk); assertEquals(0L, c.requiredBytes)
     }
 
     @Test fun storageCheck() {
@@ -119,7 +120,10 @@ class SynthBankAndPlanTest {
         val none = DecodePlan.plan(labelled, null, false, 1, freeBytes = 1000, cacheAllocated = false)
         assertFalse(none.storageOk)
         // A pre-sized cache already holds its space.
-        assertTrue(DecodePlan.plan(labelled, null, false, 1, freeBytes = DecodePlan.MARGIN_BYTES, cacheAllocated = true).storageOk)
+        // A pre-sized .pcm is sparse: its remaining bytes are still required.
+        val alloc = DecodePlan.plan(labelled, null, false, 1, freeBytes = DecodePlan.MARGIN_BYTES, cacheAllocated = true)
+        assertFalse(alloc.storageOk)
+        assertEquals(alloc.remainingBytes + DecodePlan.MARGIN_BYTES, alloc.requiredBytes)
     }
 
     @Test fun staleFilesForAnotherSha() {

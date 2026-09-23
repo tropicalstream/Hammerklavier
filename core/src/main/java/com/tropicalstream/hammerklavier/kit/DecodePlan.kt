@@ -49,7 +49,9 @@ class DecodePlan(
          * @param okPresent whether `.ok` exists
          * @param bootCount the current `Settings.Global.BOOT_COUNT` (-1 unknown)
          * @param freeBytes usable bytes on the cache's file system
-         * @param cacheAllocated whether the pre-sized `.pcm` already exists (its space is taken)
+         * @param cacheAllocated whether the pre-sized `.pcm` already exists. Ignored for the storage
+         *   check: setLength makes a sparse file on f2fs/ext4 and reserves no blocks, so the remaining
+         *   bytes are always required (review WP4 r2).
          */
         fun plan(index: KitIndex, ready: PcmCacheFormat.ReadyState?, okPresent: Boolean, bootCount: Long,
                  freeBytes: Long, cacheAllocated: Boolean): DecodePlan {
@@ -67,8 +69,10 @@ class DecodePlan(
 
             fun remaining(units: IntArray): Long =
                 units.filter { !isReady(it) }.sumOf { unitBytes(index, it) }
-            fun required(units: IntArray): Long =
-                (if (cacheAllocated) 0L else remaining(units)) + MARGIN_BYTES
+            fun required(units: IntArray): Long {
+                val left = remaining(units)
+                return if (left == 0L) 0L else left + MARGIN_BYTES   // nothing left to decode needs no space
+            }
 
             var order = full
             var reduced = false

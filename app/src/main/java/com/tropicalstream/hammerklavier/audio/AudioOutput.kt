@@ -86,6 +86,8 @@ class AudioOutput internal constructor(
     private var running = false
     private var everStopped = false
     private var thread: Thread? = null
+    /** The last HKAudio thread started; a new one waits for it to exit before touching shared state. */
+    private var lastThread: Thread? = null
     @Volatile private var threadGen = 0
     private var lastBank: LoadedBank? = null
     private var lastProfile: InstrumentProfile? = null
@@ -120,7 +122,11 @@ class AudioOutput internal constructor(
     private val latAllowance = AtomicIntegerArray(OutputRoute.entries.size).also { a ->
         for (r in OutputRoute.entries) a.set(r.ordinal, RouteMonitor.defaultLatencyFrames(r))
     }
+    /** Routes whose allowance came from a steady run of timestamps this process (only these persist). */
+    private val latMeasured = AtomicIntegerArray(OutputRoute.entries.size)
     @Volatile private var lastSongUs = 0L
+    /** Permanent focus loss: HKAudio parks at its next block. */
+    @Volatile private var parkRequested = false
     @Volatile private var lowLatencyForced = false
 
     // ---- HKAudio-confined ----
@@ -141,6 +147,8 @@ class AudioOutput internal constructor(
     private var routeOrdinal = 0
     private var baseCap = 96
     private var unparkRequested = false
+    private val latEma = IntArray(OutputRoute.entries.size)
+    private val latSamples = IntArray(OutputRoute.entries.size)
     private var drainedAny = false
     private var lastRenderIdle = false
     private var renderMaxNs = 0L
@@ -187,9 +195,16 @@ class AudioOutput internal constructor(
         }
         if (everStopped) replay()
         val gen = ++threadGen
-        val t = Thread(null, { hkAudio(gen) }, HK.TAG_AUDIO)
+        // A previous HKAudio that outlived stop()'s join may still be inside a write. The new thread
+        // waits for it to exit so the two never share the sink, counters, buffers or the ring consumer.
+        val prev = lastThread?.takeIf { it.isAlive }
+        val t = Thread(null, {
+            if (prev != null) try { prev.join() } catch (e: InterruptedException) { return@Thread }
+            if (gen == threadGen) hkAudio(gen)
+        }, HK.TAG_AUDIO)
         t.priority = Thread.MAX_PRIORITY
         thread = t
+        lastThread = t
         t.start()
         prefetcher.start()
     }
@@ -208,7 +223,8 @@ class AudioOutput internal constructor(
         everStopped = true
         if (t == null || !t.isAlive) ring.drain(Int.MAX_VALUE, DISCARD)   // single consumer again
         fake.pause()
-        for (r in OutputRoute.entries) settings.putInt(KEY_LAT + r.name.lowercase(), latAllowance.get(r.ordinal))
+        for (r in OutputRoute.entries) if (latMeasured.get(r.ordinal) != 0)
+            settings.putInt(KEY_LAT + r.name.lowercase(), latAllowance.get(r.ordinal))
     }
 
     private fun replay() {
@@ -273,7 +289,14 @@ class AudioOutput internal constructor(
     override fun setListener(l: AudioListener?) { listener = l }
 
     override fun focusDuck(gain: Float) { focusDuck = gain; offer(Cmd.DUCK, f = userDuck * focusDuck) }
-    override fun focusPause(permanent: Boolean) { pause(60) }
+    override fun focusPause(permanent: Boolean) {
+        pause(60)
+        if (permanent) {                                   // §3.1: permanent loss → pause and park
+            parkRequested = true
+            wake()
+            focus?.abandon()
+        }
+    }
 
     override fun stats(out: AudioStats) {
         readStats(out)
@@ -337,7 +360,7 @@ class AudioOutput internal constructor(
             beginSession()
             while (alive(gen)) {
                 if (parked) { parkWait(gen); continue }
-                if (!block()) break
+                if (!block(gen)) break
             }
         } catch (t: Throwable) {
             errorCode = StatusCode.AUDIO_STOPPED; errorDetail = t.javaClass.simpleName
@@ -356,6 +379,8 @@ class AudioOutput internal constructor(
             val low = lowLatencyForced || attempt == 1
             val s = try { sinks.create(low) } catch (t: Throwable) { null } ?: continue
             sink = s
+            // A new track counts its head from 0 at this frame; pause/play (park) never reset it.
+            trackBaseFrame = framesAccepted
             sinkForRouting = s
             main?.let { h -> runCatching { s.addRoutingListener({ h.post(routingRunnable) }, h) } }
             post(routingRunnable)
@@ -367,7 +392,6 @@ class AudioOutput internal constructor(
     /** clock.reset → play → prime one silent block (SpyHunt rule: never prime before play). */
     private fun beginSession() {
         audioClock.reset(); energy.reset(); cursors.clearAll()
-        trackBaseFrame = framesAccepted
         gotTs = false; idleFrames = 0; parked = false; headroom.reset(); tuner.reset()
         val s = sink ?: return
         s.play()
@@ -376,11 +400,13 @@ class AudioOutput internal constructor(
     }
 
     /** One block; false = give up (output lost / audio stopped). */
-    private fun block(): Boolean {
+    private fun block(gen: Int): Boolean {
         drainedAny = false
         wakeFlag = false
+        if (!alive(gen)) return false                      // never drain a successor's commands
         ring.drain(16, tap)
         if (unparkRequested) { unparkRequested = false; idleFrames = 0 }
+        if (parkRequested) { parkRequested = false; park(); return true }
         val frame = framesAccepted
         val skipDsp = lastRenderIdle && !drainedAny && idleFrames > 0
         if (skipDsp) {
@@ -425,7 +451,7 @@ class AudioOutput internal constructor(
                     gotTs = true
                     val h = trackBaseFrame + tsBuf[0] + (now - tsBuf[1]) * HK.SR / 1_000_000_000L
                     val lat = (framesAccepted - h).toInt()
-                    if (lat in 1..96_000) latAllowance.set(routeOrdinal.coerceIn(0, OutputRoute.entries.size - 1), lat)
+                    if (lat in 1..96_000) noteLatency(routeOrdinal.coerceIn(0, OutputRoute.entries.size - 1), lat)
                 }
             }
             if (supervisor.onTimestamp(ok, st.playing)) return rebuildOrStop()
@@ -498,11 +524,26 @@ class AudioOutput internal constructor(
         if (!alive(gen)) return
         drainedAny = false
         ring.drain(Int.MAX_VALUE, tap)
+        parkRequested = false                              // already parked
         if (unparkRequested) {
             unparkRequested = false
             lastRenderIdle = false
             beginSession()                                // clock.reset, play, prime; estimate until a timestamp
         }
+    }
+
+    /**
+     * Smooths the measured latency (EMA, 1/8 per sample, first sample seeds it) so one jittery
+     * reading never becomes the allowance; after [LAT_STEADY] samples the route counts as measured
+     * and stop() persists it.
+     */
+    private fun noteLatency(r: Int, lat: Int) {
+        val n = latSamples[r]
+        val e = if (n == 0) lat else latEma[r] + (lat - latEma[r]) / 8
+        latEma[r] = e
+        latSamples[r] = n + 1
+        if (n + 1 >= LAT_STEADY) { latAllowance.set(r, e); latMeasured.set(r, 1) }
+        else if (latMeasured.get(r) == 0 && n + 1 >= 4) latAllowance.set(r, e)
     }
 
     private fun noteRenderTime(ns: Long) {
@@ -566,6 +607,7 @@ class AudioOutput internal constructor(
 
     companion object {
         const val STOP_JOIN_MS = 350L
+        const val LAT_STEADY = 16
         const val IDLE_PARK_FRAMES = HK.IDLE_PARK_MS.toLong() * HK.SR / 1000
         const val KEY_LOW_LATENCY = "audio.lowLatency"       // --ez lowlatency true (DebugControl writes it)
         const val KEY_LAT = "audio.latFrames."

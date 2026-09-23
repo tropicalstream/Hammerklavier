@@ -59,3 +59,13 @@ Branch `wp4-audio` (from contracts-v1), worktree `/Users/me/Projects/hk-wp4`. Pl
 - **Stats cross threads** as a seqlocked AtomicIntegerArray published every 16 blocks (rule 2 (e) spirit, data-race-free).
 - **KitService.release** drops KitManager's reference at once; the engine/prefetcher keep theirs until replaced (no unmapping).
 - The HKAudio time source is a primitive `NanoSource` (a `() -> Long` boxed and allocated on every call).
+
+## Review round 2 fixes (2026-09-22)
+- BLOCKER unpark clock/headroom: `trackBaseFrame` is now set only in `openSink()` (new track), never on unpark; AudioTrack's head and timestamp frame keep counting across pause/play. Test `unparkKeepsClockAndHeadroomConsistent` (fake head persists across pause/play): no timestamp rejected, headroom min >= 0, no onOverload.
+- MAJOR stop/start overlap: each new HKAudio thread first joins the previous one if it outlived stop()'s 350 ms join, so the two never share sink/counters/buffers or the ring consumer; `block(gen)` checks liveness before draining. Deviation from the suggested per-thread session object: the join gives the same exclusivity with a much smaller change. Known leftover: commands offered before a stop that the stuck thread never drained are handled by the new thread after its core.reset() (harmless: the replay follows them).
+- MAJOR DecodePlan storage: `required()` is always remaining + 64 MiB (0 when nothing remains); `cacheAllocated` is kept in the signature but ignored, since setLength makes a sparse file. T4.6 test updated.
+- minor focusPause(permanent): pauses, requests an immediate park on HKAudio and abandons focus. Test `permanentFocusLossParksAtOnce`.
+- minor latency allowance: EMA (1/8) per route; applied after 4 samples, and persisted by stop() only after 16 samples (steady run).
+- minor SampleStore counters: AtomicLong (lock-free, allocation-free) instead of `@Volatile +=`.
+- minor KeyMapBuilder: deviation recorded: a substituted layer's trim is clamped to +/-6 dB (FALLBACK_CLAMP_DB), so with only v10 ready the extreme velocities sit on the level curve only within that clamp. The T4.2 test already asserts the clamped value explicitly.
+- Tests: tools/gw :core:test :app:testDebugUnitTest green (core 138, app 19, 0 failures).

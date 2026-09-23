@@ -22,9 +22,11 @@ class SampleStore private constructor(val file: File, val layout: PcmCacheFormat
                                       private val channel: FileChannel, private val map: MappedByteBuffer) {
 
     /** Frames served from the mapping by every reader (tests: prefetch leaves it unchanged). */
-    @Volatile var mappedFramesRead = 0L; private set
+    val mappedFramesRead: Long get() = mapped.get()
+    private val mapped = java.util.concurrent.atomic.AtomicLong()
     /** Bytes read positionally by every reader's prefetch. */
-    @Volatile var prefetchBytesRead = 0L; private set
+    val prefetchBytesRead: Long get() = prefetched.get()
+    private val prefetched = java.util.concurrent.atomic.AtomicLong()
 
     val regionCount: Int get() = layout.regionCount
     fun frames(region: Int): Int = layout.frames[region]
@@ -50,7 +52,7 @@ class SampleStore private constructor(val file: File, val layout: PcmCacheFormat
             shorts.get(dst, dstOff + 2 * (a - fromFrame), 2 * (b - a))
             if (System.nanoTime() - t0 > SLOW_NS) slow++
             if (end > b) java.util.Arrays.fill(dst, dstOff + 2 * (b - fromFrame), dstOff + 2 * frames, 0)
-            mappedFramesRead += (b - a)
+            mapped.addAndGet((b - a).toLong())   // lock-free, allocation-free
             return b - a
         }
 
@@ -74,7 +76,7 @@ class SampleStore private constructor(val file: File, val layout: PcmCacheFormat
             } catch (e: IOException) {
                 // A failed prefetch only costs a later page fault.
             }
-            prefetchBytesRead += got
+            prefetched.addAndGet(got)
         }
 
         override val slowReads: Int get() = slow
