@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hammerklavier</title>
+<style>
+:root { --bg:#faf6ee; --fg:#2b2118; --muted:#7a6a58; --gilt:#b07a2a; --line:#e2d6c2; --card:#fffdf8; --bad:#a0302a; --ok:#2f6b3a; }
+@media (prefers-color-scheme: dark) { :root { --bg:#16120e; --fg:#f0e6d6; --muted:#a8977f; --gilt:#e0a860; --line:#3a3026; --card:#1f1914; --bad:#e07a70; --ok:#7cc38a; } }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { padding:16px; border-bottom:1px solid var(--line); }
+h1 { margin:0; font:600 20px/1.2 Georgia, serif; letter-spacing:.12em; color:var(--gilt); }
+.sub { color:var(--muted); font-size:13px; }
+main { padding:0 16px 32px; max-width:760px; margin:0 auto; }
+section { margin-top:20px; }
+h2 { font:600 15px/1.2 system-ui, sans-serif; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:0 0 8px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
+button, select, input { font:inherit; color:inherit; }
+button { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:8px 12px; cursor:pointer; min-height:40px; }
+button.primary { background:var(--gilt); color:#fff; border-color:var(--gilt); }
+button:disabled { opacity:.5; }
+input[type=search], input[type=password], input[type=text] { width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--bg); }
+.row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+#drop { border:2px dashed var(--line); border-radius:10px; padding:24px 12px; text-align:center; color:var(--muted); }
+#drop.over { border-color:var(--gilt); color:var(--fg); }
+.up { margin-top:8px; font-size:14px; }
+.up progress { width:100%; height:6px; }
+.bad { color:var(--bad); } .ok { color:var(--ok); }
+.work { border-top:1px solid var(--line); padding:8px 0; }
+.work:first-child { border-top:0; }
+.wt { font-weight:600; }
+.mv { display:flex; align-items:center; gap:8px; padding:4px 0 4px 12px; font-size:14px; }
+.mv .t { flex:1; min-width:0; overflow-wrap:anywhere; }
+.mv button { min-height:32px; padding:4px 10px; font-size:13px; }
+.shelf { margin-top:12px; font:600 13px/1.2 system-ui; color:var(--gilt); text-transform:uppercase; letter-spacing:.06em; }
+#now { font-size:15px; }
+#tokenBox { display:none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>HAMMERKLAVIER</h1>
+  <div class="sub">Konzertzimmer · Sanssouci 1747 — phone companion</div>
+</header>
+<main>
+  <section id="tokenBox" class="card">
+    <h2>Token</h2>
+    <p class="sub">Type the 8-character token shown on the glasses (title card or More › Import from phone).</p>
+    <div class="row"><input id="tokenIn" type="text" autocomplete="off" autocapitalize="characters" maxlength="8" placeholder="K7QM4TZP" style="flex:1">
+    <button class="primary" id="tokenOk">Save</button></div>
+    <div id="tokenMsg" class="sub bad"></div>
+  </section>
+
+  <section>
+    <h2>Now playing</h2>
+    <div class="card">
+      <div id="now">—</div>
+      <div class="row" style="margin-top:8px">
+        <button id="prev" title="Previous">⏮</button>
+        <button id="toggle" title="Play or pause">⏯</button>
+        <button id="next" title="Next">⏭</button>
+        <select id="inst" title="Instrument">
+          <option value="grand">Grand</option><option value="upright">Upright</option><option value="harpsichord">Harpsichord · Bach era</option>
+        </select>
+        <select id="view" title="View">
+          <option value="player:0">Player</option><option value="player:1">Follow</option>
+          <option value="action:0">Action</option><option value="action:1">Overhead</option>
+          <option value="hall:0">Hall</option><option value="hall:1">Life-size</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Import</h2>
+    <div id="drop" class="card">Drop MIDI files, folders or a .zip here<br>
+      <span class="sub">.mid .midi .kar .rmi (≤ 4 MiB) · .zip (≤ 20 MiB, ≤ 200 files) · a folder becomes one work</span>
+      <div class="row" style="justify-content:center;margin-top:10px">
+        <button id="pick">Choose files…</button>
+        <input id="file" type="file" multiple accept=".mid,.midi,.kar,.rmi,.zip" hidden>
+      </div>
+    </div>
+    <div id="ups"></div>
+  </section>
+
+  <section>
+    <h2>Library</h2>
+    <input id="filter" type="search" placeholder="Filter by composer or title">
+    <div id="lib" class="card" style="margin-top:8px"><span class="sub">Loading…</span></div>
+  </section>
+</main>
+<script>
+"use strict";
+var KEY = "hk-token";
+var token = "";
+try { token = localStorage.getItem(KEY) || ""; } catch (e) {}
+var lib = null;
+
+function el(id) { return document.getElementById(id); }
+function make(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function fmt(sec) { sec = Math.max(0, Math.round(sec || 0)); var m = Math.floor(sec / 60), s = sec % 60; return m + ":" + (s < 10 ? "0" : "") + s; }
+
+function askToken(msg) {
+  el("tokenBox").style.display = "block";
+  el("tokenMsg").textContent = msg || "";
+  el("tokenIn").focus();
+}
+el("tokenOk").onclick = function () {
+  var t = el("tokenIn").value.trim().toUpperCase();
+  if (!/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{8}$/.test(t)) { el("tokenMsg").textContent = "8 characters: digits 2–9 and letters without I, L, O."; return; }
+  token = t; try { localStorage.setItem(KEY, t); } catch (e) {}
+  el("tokenBox").style.display = "none";
+  loadLibrary(); poll();
+};
+
+function api(method, path, body, headers, onProgress) {
+  return new Promise(function (resolve, reject) {
+    var x = new XMLHttpRequest();
+    x.open(method, path);
+    x.setRequestHeader("x-hk-token", token);
+    if (headers) for (var k in headers) x.setRequestHeader(k, headers[k]);
+    if (onProgress && x.upload) x.upload.onprogress = function (ev) { if (ev.lengthComputable) onProgress(ev.loaded / ev.total); };
+    x.onload = function () {
+      var data = null; try { data = JSON.parse(x.responseText); } catch (e) {}
+      if (x.status === 403) { askToken("The glasses did not accept that token."); reject({ status: 403, data: data }); return; }
+      if (x.status === 429) { askToken("Too many wrong tokens: wait a minute."); reject({ status: 429, data: data }); return; }
+      if (x.status >= 200 && x.status < 300) resolve(data); else reject({ status: x.status, data: data });
+    };
+    x.onerror = function () { reject({ status: 0 }); };
+    x.send(body || null);
+  });
+}
+function q(params) { var s = []; for (var k in params) s.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k])); return s.join("&"); }
+function command(path, params) { return api("POST", path + "?" + q(params || {})).catch(function () {}); }
+
+// ── now playing ──
+function poll() {
+  if (!token) return;
+  api("GET", "/api/state").then(function (s) {
+    if (!s || !s.movementId) { el("now").textContent = "Nothing playing"; return; }
+    el("now").textContent = (s.playing ? "▶ " : "❚❚ ") + (s.composer ? s.composer + " · " : "") + (s.title || s.movementId) +
+      "   " + fmt(s.positionSec) + " / " + fmt(s.durationSec);
+    if (s.instrument) el("inst").value = s.instrument;
+    if (s.view != null) { var v = String(s.view).toLowerCase() + ":" + (s.framing || 0); for (var i = 0; i < el("view").options.length; i++) if (el("view").options[i].value === v) el("view").value = v; }
+  }).catch(function () {});
+}
+setInterval(poll, 2000);
+el("toggle").onclick = function () { command("/api/transport", { cmd: "toggle" }).then(poll); };
+el("next").onclick = function () { command("/api/transport", { cmd: "next" }).then(poll); };
+el("prev").onclick = function () { command("/api/transport", { cmd: "prev" }).then(poll); };
+el("inst").onchange = function () { command("/api/instrument", { id: el("inst").value }); };
+el("view").onchange = function () { var p = el("view").value.split(":"); command("/api/view", { id: p[0], framing: p[1] }); };
+
+// ── library ──
+function loadLibrary() {
+  if (!token) return;
+  api("GET", "/api/library").then(function (d) { lib = d; renderLibrary(); }).catch(function (e) {
+    if (e.status !== 403 && e.status !== 429) el("lib").textContent = "Could not load the library.";
+  });
+}
+function renderLibrary() {
+  var box = el("lib"); box.textContent = "";
+  if (!lib) return;
+  var f = el("filter").value.trim().toLowerCase();
+  var works = {}, movements = {};
+  lib.works.forEach(function (w) { works[w.id] = w; });
+  lib.movements.forEach(function (m) { movements[m.id] = m; });
+  var shown = 0, seen = {};
+  lib.shelves.forEach(function (sh) {
+    var list = sh.works.map(function (id) { return works[id]; }).filter(function (w) {
+      if (!w) return false;
+      if (!f) return true;
+      var hay = (w.composer + " " + w.title + " " + w.shortTitle).toLowerCase();
+      return hay.indexOf(f) >= 0 || w.movements.some(function (id) { var m = movements[id]; return m && m.title.toLowerCase().indexOf(f) >= 0; });
+    });
+    if (f) list = list.filter(function (w) { if (seen[w.id]) return false; seen[w.id] = 1; return true; });
+    if (!list.length) return;
+    box.appendChild(make("div", "shelf", sh.title));
+    list.forEach(function (w) {
+      var wd = make("div", "work");
+      wd.appendChild(make("div", "wt", w.composerShort + " · " + w.shortTitle));
+      w.movements.forEach(function (id) {
+        var m = movements[id]; if (!m) return;
+        var row = make("div", "mv");
+        row.appendChild(make("span", "t", m.title + "  " + fmt(m.durationSec)));
+        var play = make("button", null, "▶ Play");
+        play.onclick = function () { command("/api/play", { id: id, instrument: el("inst").value }).then(poll); };
+        row.appendChild(play);
+        if (w.imported) {
+          var del = make("button", null, "Delete");
+          del.onclick = function () {
+            if (!confirm("Delete “" + m.title + "” from the glasses?")) return;
+            api("POST", "/api/delete?" + q({ id: id })).then(loadLibrary).catch(function () {});
+          };
+          row.appendChild(del);
+        }
+        wd.appendChild(row);
+      });
+      box.appendChild(wd); shown++;
+    });
+  });
+  if (!shown) box.appendChild(make("span", "sub", f ? "No match." : "The library is empty."));
+}
+el("filter").oninput = renderLibrary;
+
+// ── upload ──
+var queue = [], busy = false;
+var REASONS = { NOT_MIDI: "not a MIDI file", TRUNCATED: "the file is cut short", BAD_HEADER: "damaged MIDI header",
+  TOO_LARGE: "too large", TOO_MANY_EVENTS: "too many events", NO_KEYBOARD_NOTES: "no keyboard notes", DUPLICATE: "already imported",
+  ZIP_LIMIT: "zip too large or more than 200 files", ZIP_TRAVERSAL: "zip contains unsafe paths", PERMISSION_DENIED: "permission denied",
+  IO_ERROR: "could not be read" };
+function enqueue(file, rel) {
+  if (!/\.(mid|midi|kar|rmi|zip)$/i.test(rel)) return;
+  var box = make("div", "up card");
+  var line = make("div", null, rel + " — waiting"); var bar = make("progress"); bar.max = 1; bar.value = 0;
+  box.appendChild(line); box.appendChild(bar); el("ups").insertBefore(box, el("ups").firstChild);
+  queue.push({ file: file, rel: rel, line: line, bar: bar });
+  pump();
+}
+function pump() {
+  if (busy || !queue.length) return;
+  if (!token) { askToken(); return; }
+  busy = true;
+  var it = queue.shift();
+  it.line.textContent = it.rel + " — uploading";
+  api("POST", "/api/upload", it.file, { "Content-Type": "application/octet-stream", "x-hk-name": encodeURIComponent(it.rel) },
+      function (p) { it.bar.value = p; })
+    .then(function (d) {
+      it.bar.value = 1;
+      var parts = [];
+      (d.saved || []).forEach(function (s) { parts.push("✓ " + s.title + " (" + fmt(s.durationSec) + ", " + s.notes + " notes)"); });
+      (d.rejected || []).forEach(function (r) { parts.push("✗ " + r.name + ": " + (REASONS[r.reason] || r.reason) + (r.detail && r.reason === "DUPLICATE" ? " — " + r.detail : "")); });
+      it.line.textContent = it.rel + " — " + (parts.join(" · ") || "nothing imported");
+      it.line.className = (d.saved && d.saved.length) ? "ok" : "bad";
+      loadLibrary();
+    })
+    .catch(function (e) {
+      it.line.textContent = it.rel + " — " + (e.status === 413 ? "too large (MIDI ≤ 4 MiB, zip ≤ 20 MiB)" : e.status === 0 ? "the glasses did not answer" : "failed (" + e.status + ")");
+      it.line.className = "bad";
+    })
+    .then(function () { busy = false; pump(); });
+}
+function walkEntry(entry, path) {
+  if (entry.isFile) { entry.file(function (f) { enqueue(f, path + f.name); }); return; }
+  if (entry.isDirectory) {
+    var reader = entry.createReader(), all = [];
+    var read = function () {
+      reader.readEntries(function (batch) {
+        if (!batch.length) {
+          all.sort(function (a, b) { return a.name.localeCompare(b.name, undefined, { numeric: true }); });
+          all.forEach(function (e) { walkEntry(e, path + entry.name + "/"); });
+          return;
+        }
+        all = all.concat(Array.prototype.slice.call(batch)); read();
+      });
+    };
+    read();
+  }
+}
+var drop = el("drop");
+drop.addEventListener("dragover", function (e) { e.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave", function () { drop.classList.remove("over"); });
+drop.addEventListener("drop", function (e) {
+  e.preventDefault(); drop.classList.remove("over");
+  var items = e.dataTransfer.items;
+  if (items && items.length && items[0].webkitGetAsEntry) {
+    for (var i = 0; i < items.length; i++) { var en = items[i].webkitGetAsEntry(); if (en) walkEntry(en, ""); }
+  } else {
+    var files = e.dataTransfer.files; for (var j = 0; j < files.length; j++) enqueue(files[j], files[j].name);
+  }
+});
+el("pick").onclick = function () { el("file").click(); };
+el("file").onchange = function () {
+  var files = el("file").files;
+  for (var i = 0; i < files.length; i++) enqueue(files[i], files[i].webkitRelativePath || files[i].name);
+  el("file").value = "";
+};
+
+if (!token) askToken(); else { loadLibrary(); poll(); }
+</script>
+</body>
+</html>
