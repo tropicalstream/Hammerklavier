@@ -189,3 +189,9 @@ for t in [[0],[1],[2],[3],[4],[5],[0,1],[1,0],[2,3],[3,2],[4,5],[5,4]]:
     print(max(1, round((di-dd)*48000/343)), g*math.cos(th), g*math.sin(th), all(alpha(pl, 5) < 0.15 for pl in t))
 rc = 0.057*math.sqrt(2*V/((T[2]+T[3])/2)); print(T, dd/rc)
 ```
+
+## 2026-09-22 contracts-v1.1 (bodies only; no signature changed)
+
+- AudioClock and VisualClock get their full §2.5 bodies (item 31 closed). Interpretation recorded: when H(n) is older
+  than the oldest record, the sample uses the oldest record *at its start* (heardFrame = F_oldest, no backward
+  extrapolation) and counts clockMiss; an invalid ClockSample makes VisualClock reseed.
