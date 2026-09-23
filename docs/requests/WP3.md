@@ -29,3 +29,13 @@
 10. **Plan owner (§3.12, review 2026-09-22):** RoomChain now feeds the FDN without directGain (a
    second, ungained mono pre-delayed in EarlyReflections), so the late level is reverbGain at every
    seat as §3.12 says; `setDesign` also glides the FDN loop gains. No contract change.
+
+## Integrator answers (M1, 2026-09-22)
+- **9 (comb budget on the A55):** measured by EngineBench on A06B4A96A733283, release build, speed-compiled:
+  `nsComb` 54–57 ns per comb-frame at a reported 1.8 GHz (≈ 100 cycles), and 93–95 ns in the device's slow
+  state (see INTEGRATION.md, "bimodal speed"); dispersion off saves nothing measurable (54.6 vs 54.1 ns).
+  §3.16's 22 cycles per comb is **not met** (≈ 4.5×). 88 combs cost ≈ 1.2 ms per 256-frame block at 1.8 GHz.
+  Carried to M2 (T-CPU with combs, storm64 ≤ 42%); the step-down order should use these numbers.
+  Also measured: `nsRoom` 1,161–1,240 ns per output frame (≈ 0.3 ms per block), `nsMaster` 389–393, `nsSoft` 48–52.
+- M1 wiring uses the full `DspFactory.create(HK.SR)` (the plan's M1 row says limiter only; the wiring notes of
+  WP2/WP3/WP4 all use the full set, and the bench needs the real stages). No room design is posted yet (WP12).

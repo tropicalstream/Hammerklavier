@@ -54,7 +54,14 @@ class SelfTest(private val ctx: Context, private val w: Wiring, private val main
             val info = runCatching { w.kits.info(id) }.getOrNull()
             if (info == null) line("SKIP", "kit.$id", "no map.json yet (state=$st)") else line("PASS", "kit.$id", "map.json ok state=$st")
         }
-        line("SKIP", "decoderProbe", "WP4 not merged")
+        run {                                                     // KitManager's DecoderProbe (WP4): offset once a kit has opened
+            val d = runCatching { w.kits.diagnostics() }.getOrDefault(emptyMap())
+            when {
+                d["probeOffset"] != null -> line("PASS", "decoderProbe", "offset=${d["probeOffset"]} codec=${d["codec"]}")
+                d["probe"] != null -> line("FAIL", "decoderProbe", d["probe"]!!)
+                else -> line("SKIP", "decoderProbe", "no kit opened yet")
+            }
+        }
         runCatching { w.library.load() }.fold(
             { m -> line("PASS", "catalogue", "${m.shelves.size} shelves") },
             { e -> line("FAIL", "catalogue", e.toString()) })

@@ -41,3 +41,14 @@ One contract-change request (item 1, for WP0/WP4); the rest are notes on how to 
 5. **RATE deviation (for the plan owner, §10).** `Cmd.RATE` while playing also rewinds the cursor and
    drops not-yet-heard voices (like PAUSE, without a fade), beyond the §2.5/R5 list, because pending
    voices were scheduled at the old rate. Tested: an onset 1–255 frames after a rate change sounds once.
+
+## Integrator answers (M1, 2026-09-22)
+- DebugControl: `--ez lowlatency true` writes `audio.lowLatency`; `--ez bench true` runs `KitManager.decodeBench()`
+  on HKVoicer and `audio.bench(2)`; results logged as `HKKit decode bench: …` and `HKPerf bench …`.
+- Changes made in WP4 code at integration (keep them): bank/key-map prepare off main (`HKPrepare`; the stub
+  bank's prepare stalled main ≈ 1 s); headroom measured ahead of the DAC timestamp (this route drains the client
+  buffer in 7,680-frame chunks, so `framesAccepted − playbackHeadPosition` dips to 256 after every pull); the
+  guard also trips on underrun growth and render load > 92 % (the DAC-side measure hides an overrun because the
+  server fills with silence and the timestamp stalls); `KitManager(…, standIn)`.
+- The RayNeo launcher (Mercury `BackgroundAppManager`) force-stops the app ≈ 1 s after HOME with the display
+  on, playing or not. Sleep (KEYCODE_SLEEP) keeps it alive and playing. Relevant for T-LEAVE / resume points.

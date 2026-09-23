@@ -195,3 +195,46 @@ rc = 0.057*math.sqrt(2*V/((T[2]+T[3])/2)); print(T, dd/rc)
 - AudioClock and VisualClock get their full §2.5 bodies (item 31 closed). Interpretation recorded: when H(n) is older
   than the oldest record, the sample uses the oldest record *at its start* (heardFrame = F_oldest, no backward
   extrapolation) and counts clockMiss; an invalid ClockSample makes VisualClock reseed.
+
+## 2026-09-22 M1 integration (bodies and stubs only; no signature changed)
+
+Recorded by the integrator while merging WP1, WP2, WP3, WP4 and WP11 for M1 (docs/progress/INTEGRATION.md).
+
+- **`contract/Clock.kt` AudioClock (body).** Measured on the X3 Pro speaker: a fresh or un-parked
+  track's first timestamp lies off the frame/time line (3,840 frames reported ~70 ms early), and the
+  old rule (implied rate checked against the *oldest* pair in the fit window) then rejected every
+  later, consistent pair for the whole session (tsAcc = 1, fsFit frozen). Now:
+  (1) the first timestamp of a session is the anchor only; it enters neither the fit nor the drift
+  statistics; (2) while the fit window is empty the rate is checked against that anchor;
+  (3) after `RESEED_AFTER` = 4 consecutive rate rejections the fit window is dropped and the pair
+  accepted (`reseeds` counts it). New public read-only `AudioClock.reseeds`.
+  (4) `clockMiss` counts only a sample whose record was *overwritten* (ring wrapped); a heard frame
+  before a new session's first record (right after reset/un-park, ~300 ms) is not a miss. This
+  replaces the contracts-v1.1 interpretation above for that case (the oldest record at its start is
+  still used). Tests: `offLineFirstTimestampIsDroppedAfterReseed`; `staleAndRejectedTimestamps` and
+  `stopStartCycleWithReset` updated to the new semantics.
+- **`contract/stub/StubUi.kt` (stub).** `render` appends `UiFacts.debug` as a second line, so the
+  `--ez debug true` overlay shows the M1 audio line (voices/cap, p50/p99, headroom, clock source,
+  misses, underruns) until WP10.
+- **`contract/stub/android/StubGlHost.kt` (stub).** Paced by a main-thread Handler instead of a
+  Choreographer frame callback: Qualcomm's `BoostFramework$ScrollOptimizer.setVsyncTime` allocates
+  ~1.5 KB on every vsync a Choreographer delivers (~92 KB/s), which failed T-GC. Request to WP6
+  (docs/requests/WP6.md).
+- **Not changed (requests answered):** WP1's `RejectReason.MALFORMED` and the fold-merge-in-either-order
+  change are signature/fixture changes with no M1 effect; deferred to the next contracts round (M2).
+  WP2's bench-results-on-`diagnostics()` request: not needed; `Wiring` (the one place allowed to name
+  concrete classes) keeps the `EngineCore` handle and the interim `Playback` driver reads
+  `engine.bench` directly. WP3 request 5 (second soft pair): deferred.
+
+### Non-contract changes made at M1 that other WPs should know
+- `:core` must not link JDK 9+ covariant `java.nio` overrides (ART on the glasses lacks
+  `MappedByteBuffer.duplicate()`; HKLoader crashed). Call through `java.nio.Buffer` / `ByteBuffer`.
+  `tools/check_nio_linkage.sh` (in `tools/ci.sh`) fails the build on any such call in `:core` classes.
+- WP11 pipeline `pedalMode`: SWITCH needs a CC64 value > 0 (a file whose only CC64 is 0 is NONE, as
+  WP1's builder already decided); `midi_facts_golden.json` regenerated, `catalog.json` bach_847/850.
+- WP2 `EngineCore`: `CoreClockState.idle` ignores voices frozen by a pause (`VoicePool.anyAudible`)
+  and is false while the bench runs.
+- WP4 `AudioOutput`: bank/key-map tables are prepared on an `HKPrepare` worker and published on
+  main; headroom is measured ahead of the DAC timestamp and the guard also trips on underrun growth
+  or render load > 92%. `KitManager(…, standIn)`: `kit.standIn` (default true until M2) opens the
+  stub kit for every instrument.

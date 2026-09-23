@@ -43,3 +43,11 @@ collides with a sounding note" covers both orders). `PerfFixtures` merges only w
 T1.8 requires the builder to equal it exactly (the change alters CHORD_STORM_64 on the harpsichord). If WP0 agrees,
 change `PerfFixtures` line 64 to `(flg[i] or flg[p]) and F_FOLDED != 0` and WP1 makes the same one-token change in
 `NotePairing.serialise` (and adds the fold-first T1.3 case).
+
+## Integrator answers (M1, 2026-09-22)
+- WP11 fixtures (items 1–3): merged; T1.7 runs against the 210-file golden. One disagreement fixed at
+  integration: bach_847/850 have a single CC64 = 0; WP1 says NONE, WP11's pipeline said SWITCH. NONE is
+  kept (no pedalling); the pipeline now requires a CC64 value > 0 for SWITCH and the golden was regenerated.
+- `RejectReason.MALFORMED` and the fold merge in either order: signature/fixture changes with no M1 effect;
+  deferred to the next contracts round (see docs/contracts-changelog.md, M1 entry). Keep TRUNCATED + `internal:`.
+- On the glasses: `synthetic()` compiles scale in 0.6–4 ms, pedalhalf 2.6–4.7 ms, storm64 (46,080 notes) 385 ms.

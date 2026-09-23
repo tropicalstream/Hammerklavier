@@ -192,7 +192,7 @@ class AudioOutput internal constructor(
         if (running) return
         running = true
         stopFlag = false
-        lowLatencyForced = settings.getBool(KEY_LOW_LATENCY, false)
+        lowLatencyForced = settings.getBool(KEY_LOW_LATENCY, LOW_LATENCY_DEFAULT)
         for (r in OutputRoute.entries) {
             val v = settings.getInt(KEY_LAT + r.name.lowercase(), -1)
             if (v > 0) latAllowance.set(r.ordinal, v)
@@ -650,7 +650,16 @@ class AudioOutput internal constructor(
         const val STOP_JOIN_MS = 350L
         const val LAT_STEADY = 16
         const val IDLE_PARK_FRAMES = HK.IDLE_PARK_MS.toLong() * HK.SR / 1000
-        const val KEY_LOW_LATENCY = "audio.lowLatency"       // --ez lowlatency true (DebugControl writes it)
+        const val KEY_LOW_LATENCY = "audio.lowLatency"       // --ez lowlatency true|false (DebugControl writes it)
+        /**
+         * Integrator, M1 (deviation from §3.1, for the plan owner): on the X3 Pro a
+         * PERFORMANCE_MODE_NONE music track is routed to the DEEP_BUFFER output (7,680-frame pulls,
+         * ~300 ms write-to-DAC, timestamp pairs jittering to p99 1.1–2.1 ms: the M1 drift line fails),
+         * not the primary normal mixer the plan measured. The LOW_LATENCY request lands on the primary
+         * output's FastMixer with the plan's 4,096-frame buffer: ~108 ms, drift p99 0.25–0.41 ms,
+         * 0 underruns. `--ez lowlatency false` restores NONE.
+         */
+        const val LOW_LATENCY_DEFAULT = true
         const val KEY_LAT = "audio.latFrames."
         private const val HIST = 256
         private const val HIST_US = 50
