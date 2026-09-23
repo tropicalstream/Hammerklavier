@@ -1,0 +1,68 @@
+<!doctype html public "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<title>Copyright and the Performance of Early Music</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<body background="back.jpg" text="#000044" link="#0000FF" vlink="#000044">
+<h2>Copyright and the Performance of Early Music</h2>
+<blockquote>
+<b>All my MIDI recordings are Copyright &copy; John Sankey, 1939-2005, under the Berne Convention</b>
+solely to protect the right of all to continue to freely use them. Anyone may copy, link to,
+distribute or play any of them as much as they wish as long as this notice of copyright and
+permission to copy is distributed with all copies. (On the Internet, a link to
+<a href="http://www.johnsankey.ca/harpsichord.html">http://www.johnsankey.ca/harpsichord.html</a>
+is sufficient.)  No one may
+restrict their further use in any way, by collection copyright or any other means.
+If the distribution format is any form of audio, it must be derived from the MIDI files
+using my
+<a href="my.html#sf">matching soundfont</a>
+on a SoundBlaster 32 or 100% compatible system. Anyone is free
+to modify them as they wish for their personal use, but I require that solely my originals be
+posted or otherwise made available to others. They are a record of my personal performance on a
+MIDI keyboard, using Cubase Compact for Windows and a PC with my harpsichord sound bank
+installed.
+</blockquote>
+<p>See my pages on
+<a href="sustain.html">sustaining sound</a> and
+<a href="consonance.html">consonance</a>
+for the reasons why I require that my harpsichord's sound be used for distribution of my
+recordings to others.
+<p><hr width="50%"><p>
+As I understand the current practise of international copyright law, for music I record to be free
+of copyright restrictions all over the world, I may record solely music that meets one of the
+following conditions:
+<ul>
+<li>an original manuscript which I own, or to which I have been granted access (photocopy
+access acceptable) for the purpose of recording by the owner, or 
+<li>music which was published long enough ago that every person associated with the
+publication died more than 70 years ago, and which exists in more than one copy today so that
+copy ownership rights do not exist (photocopy acceptable), or
+<li>a publication (photocopy not acceptable) not meeting the above but claimed to be without
+editorial emendments ("original text") published in a country other than France, several of whose
+publishers still use the legal system to enforce performance and recording restriction as part of
+"all rights reserved" even for their facsimile copies.
+</ul><p>
+The copyright list of listserv@cni.org is an expert forum for such matters.
+<p>
+So, I used the Longo edition of Domenico Scarlatti, but did not dare even look at Kenneth
+Gilbert's scholarly edition published in France. For Wm. Byrd, I used the Dover reprints of
+out-of-copyright collections, and Musica Brittanica editions that are claimed to be original text
+when I could gain access to originals, but cannot use photocopies of these even though most are long out
+of print. (Local libraries are still under the impression that they can be photocopied, and so refuse
+to lend most of them!) I use Peters' Urtext editions of J.S.Bach that I own. I will be able to use
+the Brahms &amp; Chrysander edition (German) of François Couperin, but not the Gilbert
+edition. I will not be able to use my long-owned copy of Louis Couperin's works - it was
+published in France....
+<p>
+When the music I play was written, copies were considered a compliment, and a composition by
+another that carried one's musical idea to new heights was a cause for pride. It is improper that
+the only use of these people's work protected by today's copyright law is denigration with parody
+or destructive criticism, and that to praise it with imitation or performance can now be cause for
+legal action.
+<p>
+I look forward to a return to a world where "he who receives an idea from me, receives
+instruction himself without lessening mine; as he who lights his taper at mine, receives light
+without darkening me." (Thomas Jefferson). That's what my copyright notice really means.
+<p>
+<a href="contact.html">John Sankey 1993</a>
+<br><a href="harpsichord.html">other notes on harpsichord playing</a>
+</body></html>

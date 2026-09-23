@@ -57,7 +57,8 @@ def export(out_dir):
         facts[name] = {"root": t["root"], "layer": "v%d" % vno, "onsetFrame": info["onsetFrame"],
                        "thrFrame": info["thrFrame"], "gainDb": info["gainDb"],
                        "pitchCents": audio.pitch_cents(fit["f0"], t["root"]) if fit else 0.0,
-                       "inharmB": fit["B"] if fit else 0.0, "frames": n, "format": "wav s16le mono 48000"}
+                       "inharmB": fit["B"] if fit else 0.0, "frames": n, "format": "wav s16le mono 48000",
+                       "sha1": common.sha1_file(os.path.join(out_dir, name + ".wav"))}
     common.write_text(os.path.join(out_dir, "regions.json"), common.json_dumps(facts, digits=7))
     return facts
 

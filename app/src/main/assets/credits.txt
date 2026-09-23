@@ -1,0 +1,17 @@
+Hammerklavier — a keyboard recital in the Konzertzimmer of Sanssouci, 1747.
+
+Instruments
+Grand piano: Salamander Grand Piano V3 by Alexander Holm (Yamaha C5), licensed CC-BY 3.0 and declared public domain by the author in 2022. Retuning tables by Markus Fiedler; SFZ mapping data by kinwie (sfzinstruments). The samples were trimmed, level-matched, normalised and encoded to Opus for this app.
+Upright piano and harpsichord: Versilian Community Sample Library (VCSL) and VS Chamber Orchestra 2: Community Edition, Versilian Studios LLC / Sam Gossner; upright sampled by Simon Dalzell (Ivy Audio). CC0 1.0.
+
+Music
+Piano performances of Bach, Haydn, Mozart, Clementi and Beethoven by Bernd Krueger, source http://www.piano-midi.de, licensed under Creative Commons Attribution-ShareAlike 3.0 Germany (https://creativecommons.org/licenses/by-sa/3.0/de/deed.en). The files are included unmodified. Recordings or videos made from them are adaptations and must be shared under the same licence with this credit.
+Harpsichord performances of J.S. Bach and Domenico Scarlatti by John Sankey, © John Sankey, released for anyone to copy and play freely under his notice at https://www.johnsankey.ca/harpsichord.html (full text in licenses/SANKEY.txt). The files are included unmodified.
+C.P.E. Bach, Solfeggietto H. 220: sequenced by Shane Nieb, via Wikimedia Commons, CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/).
+Beethoven, Bagatelles op. 126 and op. 33; Mozart, Sonata K. 281 and Variations K. 265: by Michael Bednarek, via Wikimedia Commons (CC0 / public domain).
+Rameau, Tambourin: Ricardo André Frantz, after the Mutopia Project, via Wikimedia Commons (public domain).
+Further pieces are engraved by volunteers of The Mutopia Project (https://www.mutopiaproject.org) and are in the public domain.
+
+The room is a procedural evocation of the Konzertzimmer at Sanssouci (Knobelsdorff, Nahl, Hoppenhaupt, 1746–47) by candlelight; its dimensions are a design, not a survey. No photographs or trademarks are used.
+
+Code © tropicalstream. Licence texts: assets/licenses/.

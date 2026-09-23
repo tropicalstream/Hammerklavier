@@ -1,0 +1,86 @@
+{
+ "c3_v10": {
+  "root": 48,
+  "layer": "v10",
+  "onsetFrame": 96,
+  "thrFrame": 0,
+  "gainDb": -4.6370256,
+  "pitchCents": -11.3188192,
+  "inharmB": 0.0002043,
+  "frames": 192000,
+  "format": "wav s16le mono 48000",
+  "sha1": "830aacea73c190a781d392ee1e7368b973bff6c3"
+ },
+ "c3_v13": {
+  "root": 48,
+  "layer": "v13",
+  "onsetFrame": 96,
+  "thrFrame": 0,
+  "gainDb": -2.6411771,
+  "pitchCents": -11.2201585,
+  "inharmB": 0.0002028,
+  "frames": 192000,
+  "format": "wav s16le mono 48000",
+  "sha1": "7869aa743308ab1b581ad80371b7e3b3491153ec"
+ },
+ "c4_v10": {
+  "root": 60,
+  "layer": "v10",
+  "onsetFrame": 96,
+  "thrFrame": 0,
+  "gainDb": -2.6097008,
+  "pitchCents": -1.1192206,
+  "inharmB": 0.0002932,
+  "frames": 192000,
+  "format": "wav s16le mono 48000",
+  "sha1": "7b45a948a2a287301bbc54e89a68a5c503b7606e"
+ },
+ "c4_v13": {
+  "root": 60,
+  "layer": "v13",
+  "onsetFrame": 96,
+  "thrFrame": 0,
+  "gainDb": -0.167025,
+  "pitchCents": -1.158225,
+  "inharmB": 0.0002937,
+  "frames": 192000,
+  "format": "wav s16le mono 48000",
+  "sha1": "bc1a9a3fb9a53173abd3b50bef2dd6490911662a"
+ },
+ "c5_v10": {
+  "root": 72,
+  "layer": "v10",
+  "onsetFrame": 96,
+  "thrFrame": 34,
+  "gainDb": -6.1379932,
+  "pitchCents": 3.994405,
+  "inharmB": 0.0008015,
+  "frames": 192000,
+  "format": "wav s16le mono 48000",
+  "sha1": "dfca86420b10c071732e4e9dd83f9cf4dfccc2fb"
+ },
+ "c5_v13": {
+  "root": 72,
+  "layer": "v13",
+  "onsetFrame": 96,
+  "thrFrame": 36,
+  "gainDb": -2.5688021,
+  "pitchCents": 5.4768924,
+  "inharmB": 0.0007151,
+  "frames": 192000,
+  "format": "wav s16le mono 48000",
+  "sha1": "da386d792a069b8f97cda7813758465a21fbc1a6"
+ },
+ "c4_unacorda_v8": {
+  "root": 60,
+  "layer": "v8",
+  "onsetFrame": 96,
+  "thrFrame": 0,
+  "gainDb": -5.1134531,
+  "pitchCents": -1.0742409,
+  "inharmB": 0.0002926,
+  "frames": 192000,
+  "format": "wav s16le mono 48000",
+  "sha1": "8846b5bde4630308e814666211a1704f4ab4aabf"
+ }
+}

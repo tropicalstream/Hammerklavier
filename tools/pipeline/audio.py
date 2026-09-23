@@ -132,21 +132,30 @@ def crossing_frame(pcm, db=-20.0):
     return int(np.nonzero(a > pk * db_to_lin(db))[0][0])
 
 
-def alignment_lag(src, dec, start, length=480, max_lag=48):
+def alignment_lag(src, dec, start, length=960, max_lag=48, plateau=0.99):
     """Lag (frames) of `dec` against `src` that maximises the correlation of their first
     differences (the attack transient) over [start, start + length): 0 when a codec round trip
-    kept the region's timing."""
+    kept the region's timing. 20 ms: over 10 ms a bass note's correlation peak is flat enough
+    that a few frames of codec smearing win (F#1 v1 of Salamander read +4 at 10 ms, 0 at 20 ms).
+    A soft attack still has a broad peak; when the correlation at lag 0 is within `plateau` of
+    the best one, the timing is not distinguishable from 0 and 0 is returned (a real shift of a
+    sharp attack drops the lag-0 correlation far below that)."""
     a = np.diff(to_mono(src))
     b = np.diff(to_mono(dec))
+    length = max(16, min(length, len(a) - start - max_lag))   # every lag in ±max_lag stays inside
     seg = a[start:start + length]
-    best, best_lag = -math.inf, 0
+    best, best_lag, c0 = -math.inf, 0, None
     for lag in range(-max_lag, max_lag + 1):
         lo = start + lag
         if lo < 0 or lo + len(seg) > len(b):
             continue
         c = float(np.dot(seg, b[lo:lo + len(seg)]))
+        if lag == 0:
+            c0 = c
         if c > best:
             best, best_lag = c, lag
+    if c0 is not None and best > 0 and c0 >= plateau * best:
+        return 0
     return best_lag
 
 
@@ -186,8 +195,11 @@ def fit_partials(mono, f0_nominal, sr=SR, t0=0.3, t1=1.3, n_max=24, n_min=6, flo
     nfft = 1 << int(math.ceil(math.log2(len(seg) * 8)))
     spec = np.abs(np.fft.rfft(seg * w, nfft))
     mag_db = 20 * np.log10(spec + 1e-20)
-    top = float(mag_db.max())
     hz_per_bin = sr / nfft
+    # the floor is relative to the strongest peak at or above half the nominal f0: room rumble and
+    # handling noise below the fundamental would otherwise set it (a treble upright note's decay
+    # is 20-30 dB under its sub-50 Hz rumble by 0.3 s)
+    top = float(mag_db[max(1, int(0.5 * f0_nominal / hz_per_bin)):].max())
     f0, B = float(f0_nominal), 0.0
     pts = []
     for n in range(1, n_max + 1):
@@ -206,11 +218,13 @@ def fit_partials(mono, f0_nominal, sr=SR, t0=0.3, t1=1.3, n_max=24, n_min=6, flo
         pts.append((n, kf * hz_per_bin, m))
         if len(pts) >= 2:
             f0, B = _ls_fit(pts)
+            B = max(B, 0.0)                 # a noisy early pair can give B < 0; the search needs B >= 0
     if len(pts) < 2:
         return None
     keep = pts
     for _ in range(3):
         f0, B = _ls_fit(keep)
+        B = max(B, 0.0)
         res = np.array([_cents(f, n * f0 * math.sqrt(1 + B * n * n)) for n, f, _m in keep])
         mad = float(np.median(np.abs(res - np.median(res)))) + 1e-3
         nk = [p for p, r in zip(keep, res) if abs(r) <= max(3 * mad, 0.5)]
@@ -218,9 +232,60 @@ def fit_partials(mono, f0_nominal, sr=SR, t0=0.3, t1=1.3, n_max=24, n_min=6, flo
             break
         keep = nk
     f0, B = _ls_fit(keep)
+    B = max(B, 0.0)
     res = [_cents(f, n * f0 * math.sqrt(1 + B * n * n)) for n, f, _m in keep]
     return {"f0": f0, "B": max(B, 0.0), "partials": [(n, f) for n, f, _m in keep],
             "resid_cents": float(np.sqrt(np.mean(np.square(res))))}
+
+
+def fundamental_peak(mono, f0_nominal, sr=SR, t0=0.05, t1=0.55, span=0.07):
+    """Frequency of the strongest spectral peak within ±`span` (±117 cents at 7%) of the nominal
+    f0 over [t0, t1] s, parabolically interpolated; None when there is no signal. The top octave's
+    pitch: few partials lie below Nyquist and the fundamental dominates (Salamander's C8 sounds
+    about +99 cents, outside the partial search window)."""
+    x = np.asarray(mono, dtype=np.float64)
+    seg = x[int(t0 * sr):min(len(x), int(t1 * sr))]
+    if len(seg) < 1024 or not np.any(seg):
+        return None
+    nfft = 1 << int(math.ceil(math.log2(len(seg) * 8)))
+    mag_db = 20 * np.log10(np.abs(np.fft.rfft(seg * np.hanning(len(seg)), nfft)) + 1e-20)
+    hz_per_bin = sr / nfft
+    lo = max(1, int(f0_nominal * (1 - span) / hz_per_bin))
+    hi = min(len(mag_db) - 2, int(math.ceil(f0_nominal * (1 + span) / hz_per_bin)))
+    if hi <= lo:
+        return None
+    k = lo + int(np.argmax(mag_db[lo:hi + 1]))
+    return _peak_interp(mag_db, k)[0] * hz_per_bin
+
+
+def acf_f0(mono, f0_nominal, sr=SR, t0=0.05, t1=0.55, span=0.07, up=8):
+    """Autocorrelation f0 within ±`span` of the nominal f0 over [t0, t1] s: an estimate independent
+    of the spectral peak, used to cross-check the top octave (§6.5 step 4). The segment is
+    band-limited to ±1.5·span around nominal (hammer noise elsewhere biases it) and upsampled `up`× (FFT zero-pad) so that a lag of ~11 samples
+    at C8 is resolved to well under a cent by parabolic interpolation. None when there is no signal."""
+    x = np.asarray(mono, dtype=np.float64)
+    seg = x[int(t0 * sr):min(len(x), int(t1 * sr))]
+    if len(seg) < 1024 or not np.any(seg):
+        return None
+    seg = seg - seg.mean()
+    n = len(seg)
+    X = np.fft.rfft(seg * np.hanning(n))
+    f = np.fft.rfftfreq(n, 1.0 / sr)
+    X[(f < (1 - 1.5 * span) * f0_nominal) | (f > (1 + 1.5 * span) * f0_nominal)] = 0.0
+    P = np.abs(X) ** 2                        # Wiener-Khinchin: the band's (circular) ACF
+    N = 2 * n * up                            # zero-padding the spectrum interpolates the ACF
+    ac = np.fft.irfft(P, N)
+    lag_unit = float(n) / N                   # input samples per ACF index (= 1 / (2 up))
+    lo = int((sr / (f0_nominal * (1 + span))) / lag_unit)
+    hi = int(math.ceil((sr / (f0_nominal * (1 - span))) / lag_unit))
+    hi = min(hi, len(ac) - 2)
+    if hi <= lo + 1:
+        return None
+    k = lo + int(np.argmax(ac[lo:hi + 1]))
+    a, b, c = ac[k - 1], ac[k], ac[k + 1]
+    den = a - 2 * b + c
+    d = 0.5 * (a - c) / den if den != 0 else 0.0
+    return sr / ((k + d) * lag_unit)
 
 
 def _ls_fit(pts):

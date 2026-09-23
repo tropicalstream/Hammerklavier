@@ -143,10 +143,29 @@ def build(src, assets_dir=common.ASSETS, partial=False, generated=None, check_li
         sources = {k: v for k, v in sources.items() if k in used}
     else:
         shelves = [dict(s, works=[x for x in s["works"] if x in known]) for s in shelves]
+        shelves = [s for s in shelves if s["works"]]          # e.g. Handel when HWV 430 is not installed
     gen = generated or datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     cat = {"schema": 1, "generated": gen, "startHere": start, "shelves": shelves,
            "sources": {k: dict(v) for k, v in sources.items()}, "works": works_out}
     return cat, errors, listen
+
+
+MIN_DURATION_FRACTION = 0.5
+
+
+def duration_coverage(src):
+    """(movements with expectDurationSec, all movements) in a catalogue source: the §6.7 step 4
+    duration check only runs where a listing duration was entered."""
+    mvs = [m for w in src.get("works", []) for m in w.get("movements", [])]
+    return sum(1 for m in mvs if m.get("expectDurationSec")), len(mvs)
+
+
+def coverage_warning(src):
+    have, total = duration_coverage(src)
+    if total and have < MIN_DURATION_FRACTION * total:
+        return ("catalog: WARNING: only %d of %d movements carry expectDurationSec; the listing-duration "
+                "check (PLAN 6.7 step 4) is not protecting the rest" % (have, total))
+    return None
 
 
 def main(argv=None):
@@ -168,6 +187,9 @@ def main(argv=None):
             print("catalog: " + e, file=sys.stderr)
         return 1
     common.write_text(out, common.json_dumps(cat, digits=3))
+    warn = coverage_warning(src)
+    if warn:
+        print("*" * 78 + "\n" + warn + "\n" + "*" * 78, file=sys.stderr)
     if not a.fixture:
         common.write_text(os.path.join(common.BUILD, "listen.txt"), "\n".join(listen) + ("\n" if listen else ""))
     n = sum(len(w["movements"]) for w in cat["works"])

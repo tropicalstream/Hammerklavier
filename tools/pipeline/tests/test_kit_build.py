@@ -66,6 +66,21 @@ class KitBuildTest(unittest.TestCase):
                  {"id": 1, "label": "4'", "order": 2}]
         return layers, stops, units, srcs
 
+    def test_damper_fallback_limits(self):
+        fitted, flag = kit_build.damper_fallback("upright", {60: 0.3, 62: 0.3}, list(range(63, 80)))
+        self.assertEqual(fitted, {})
+        self.assertTrue(flag.startswith("DAMPER-FALLBACK instrument=upright fitted=2 roots=19"))
+        kit_build.damper_fallback("harpsichord", {k: 0.2 for k in range(13)}, list(range(40, 59)))
+        with self.assertRaises(RuntimeError):
+            kit_build.damper_fallback("upright", {}, list(range(18)))
+        with self.assertRaises(RuntimeError):
+            kit_build.damper_fallback("harpsichord", {}, list(range(20)))
+        with self.assertRaises(RuntimeError):
+            kit_build.damper_fallback("grand", {}, [60, 61])
+        fitted, flag = kit_build.damper_fallback("upright", {60: 0.3, 61: 0.3}, [62])
+        self.assertEqual(len(fitted), 2)
+        self.assertTrue(flag.startswith("DAMPER-FIT"))
+
     def test_harpsichord_like_kit(self):
         with tempfile.TemporaryDirectory() as d:
             orig = kit_build.harpsichord_sources

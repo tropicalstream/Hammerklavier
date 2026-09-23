@@ -51,6 +51,22 @@ class OpusRoundTripTest(unittest.TestCase):
             for r, s, s2 in zip(rs, starts, starts[1:]):
                 self.assertEqual(s2 - s, len(r["pcm"]) + kit_build.GAP)
 
+    def test_alignment_lag_sees_a_real_shift(self):
+        # the plateau rule (lag 0 within 1% of the best) must not hide a real shift of an attack
+        src = np.concatenate([noise_burst(0.3, 3), noise_burst(0.3, 4), noise_burst(0.3, 5), noise_burst(0.3, 6)])
+        for shift in (2, 5, -3):
+            dec = np.roll(src, shift, axis=0)
+            self.assertEqual(audio.alignment_lag(src, dec, 48), shift)
+            self.assertEqual(audio.alignment_lag(src, dec, 48, length=24000), shift)
+
+    def test_release_on_a_sounding_tone(self):
+        # a release that starts on the sustained tone (no attack) round-trips at lag 0 with the long window
+        t = np.arange(48000) / 48000
+        x = 0.5 * np.sin(2 * np.pi * 987.8 * t) * np.exp(-t / 0.3) + 0.01 * np.random.default_rng(2).standard_normal(len(t))
+        r = {"id": 0, "onsetFrame": kit_build.PRE_ROLL, "gainDb": 0.0, "pcm": np.stack([x, x], 1).astype(np.float32)}
+        with tempfile.TemporaryDirectory() as d:
+            kit_build.encode_and_verify([r], os.path.join(d, "u.opus"), [], "test")
+
     def test_renormalised_region_keeps_its_level(self):
         rs = self.regions()
         before = {r["id"]: r["gainDb"] for r in rs}

@@ -1,0 +1,2 @@
+# John Sankey notice ships byte-identical with its CRLF line ends (PLAN 6.9); never normalise.
+SANKEY.txt -text

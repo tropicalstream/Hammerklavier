@@ -1,0 +1,5430 @@
+{
+ "schema": 1,
+ "generated": "2026-09-23T04:38:09Z",
+ "startHere": ["bach.bwv846.krueger.1", "bach.bwv772-786.1", "bach.bwv988.1", "scarlatti.k141.1", "rameau.tambourin.1", "cpebach.h220.1", "mozart.k331.3", "mozart.k545.1", "beethoven.woo59.1", "beethoven.op27-2.1", "beethoven.op13.2", "beethoven.op106.1"],
+ "shelves": [
+  {
+   "id": "bach-young",
+   "title": "The young Bach",
+   "works": ["bach.bwv992", "bach.bwv914"]
+  },
+  {
+   "id": "bach-teaching",
+   "title": "Inventions and Sinfonias",
+   "works": ["bach.bwv772-786", "bach.bwv787-801"]
+  },
+  {
+   "id": "bach-wtc",
+   "title": "The Well-Tempered Clavier",
+   "works": ["bach.bwv846.krueger", "bach.bwv847.krueger", "bach.bwv850.krueger", "bach.wtc1.sankey", "bach.wtc2.sankey"]
+  },
+  {
+   "id": "bach-suites",
+   "title": "Suites, partitas and concertos",
+   "works": ["bach.bwv816", "bach.bwv807", "bach.bwv825", "bach.bwv826", "bach.bwv971", "bach.bwv974", "bach.bwv903", "bach.bwv988"]
+  },
+  {
+   "id": "scarlatti",
+   "title": "Scarlatti",
+   "works": ["scarlatti.k001", "scarlatti.k009", "scarlatti.k027", "scarlatti.k087", "scarlatti.k096", "scarlatti.k141", "scarlatti.k159", "scarlatti.k208", "scarlatti.k380", "scarlatti.k466"]
+  },
+  {
+   "id": "french",
+   "title": "The French clavecinistes",
+   "works": ["rameau.tambourin", "rameau.plaintes", "rameau.sauvages"]
+  },
+  {
+   "id": "galant",
+   "title": "The galant style",
+   "works": ["cpebach.h220", "cpebach.h288", "haydn.xvi7", "haydn.xvi8", "haydn.xvi9"]
+  },
+  {
+   "id": "haydn",
+   "title": "Haydn",
+   "works": ["haydn.xvi33", "haydn.xvi35", "haydn.xvi40", "haydn.xvi43"]
+  },
+  {
+   "id": "mozart",
+   "title": "Mozart",
+   "works": ["mozart.k281", "mozart.k311", "mozart.k330", "mozart.k331", "mozart.k332", "mozart.k333", "mozart.k545", "mozart.k570", "mozart.k397", "mozart.k457", "mozart.k265"]
+  },
+  {
+   "id": "clementi",
+   "title": "Clementi",
+   "works": ["clementi.op36"]
+  },
+  {
+   "id": "beethoven",
+   "title": "Beethoven",
+   "works": ["beethoven.op10-1", "beethoven.op13", "beethoven.op22", "beethoven.op27-2", "beethoven.op31-2", "beethoven.op49-2", "beethoven.op53", "beethoven.op57", "beethoven.op81a", "beethoven.woo59", "beethoven.op90", "beethoven.op106", "beethoven.op111-1", "beethoven.op33", "beethoven.op126", "beethoven.op129"]
+  }
+ ],
+ "sources": {
+  "krueger": {
+   "credit": "Performance: Bernd Krueger · piano-midi.de · CC BY-SA 3.0 DE",
+   "licence": "CC-BY-SA-3.0-DE",
+   "licenceUrl": "https://creativecommons.org/licenses/by-sa/3.0/de/deed.en",
+   "sourceUrl": "http://www.piano-midi.de",
+   "licenceFile": "licenses/CC-BY-SA-3.0-DE.txt",
+   "performanceType": "step-sequenced",
+   "tier": "A",
+   "exportAllowed": false
+  },
+  "sankey": {
+   "credit": "Harpsichord: John Sankey · johnsankey.ca/harpsichord.html · free-copy notice",
+   "licence": "SANKEY",
+   "licenceUrl": "https://www.johnsankey.ca/copyright.html",
+   "sourceUrl": "https://www.johnsankey.ca/harpsichord.html",
+   "licenceFile": "licenses/SANKEY.txt",
+   "performanceType": "performed",
+   "tier": "A",
+   "exportAllowed": false
+  },
+  "mutopia": {
+   "credit": "Engraving: The Mutopia Project · mutopiaproject.org · public domain",
+   "licence": "PD",
+   "licenceUrl": "https://www.mutopiaproject.org/legal.html",
+   "sourceUrl": "https://www.mutopiaproject.org",
+   "licenceFile": null,
+   "performanceType": "engraved",
+   "tier": "B",
+   "exportAllowed": true
+  },
+  "bednarek": {
+   "credit": "Performance: Michael Bednarek · Wikimedia Commons · CC0 / public domain",
+   "licence": "CC0-1.0",
+   "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "sourceUrl": "https://commons.wikimedia.org",
+   "licenceFile": "licenses/CC0-1.0.txt",
+   "performanceType": "performed",
+   "tier": "A",
+   "exportAllowed": true
+  },
+  "nieb": {
+   "credit": "Sequenced by Shane Nieb · Wikimedia Commons · CC BY-SA 3.0",
+   "licence": "CC-BY-SA-3.0",
+   "licenceUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+   "sourceUrl": "https://commons.wikimedia.org/wiki/File:C_P_E_Bach_Solfeggio.mid",
+   "licenceFile": "licenses/CC-BY-SA-3.0.txt",
+   "performanceType": "step-sequenced",
+   "tier": "B",
+   "exportAllowed": false
+  },
+  "frantz": {
+   "credit": "Ricardo André Frantz after the Mutopia Project · Wikimedia Commons · public domain",
+   "licence": "PD",
+   "licenceUrl": "https://commons.wikimedia.org/wiki/File:RAMEAU_Tambourin.mid",
+   "sourceUrl": "https://commons.wikimedia.org/wiki/File:RAMEAU_Tambourin.mid",
+   "licenceFile": null,
+   "performanceType": "engraved",
+   "tier": "B",
+   "exportAllowed": true
+  }
+ },
+ "works": [
+  {
+   "id": "bach.bwv992",
+   "composer": "Johann Sebastian Bach",
+   "composerShort": "Bach",
+   "title": "Capriccio sopra la lontananza del fratello dilettissimo, BWV 992",
+   "shortTitle": "Capriccio BWV 992",
+   "catalogue": "BWV 992",
+   "year": 1704,
+   "era": "baroque",
+   "shelf": "bach-young",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "bach.bwv992.1",
+     "title": "Capriccio (complete)",
+     "asset": "midi/sankey/misc1/BWV992.MID",
+     "sha1Hex": "cf4faac53c99a058c131bff4744b1532ae2c4adc",
+     "bytes": 26443,
+     "durationSec": 494.219,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 3083,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "bach.bwv914",
+   "composer": "Johann Sebastian Bach",
+   "composerShort": "Bach",
+   "title": "Toccata in E minor, BWV 914",
+   "shortTitle": "Toccata BWV 914",
+   "catalogue": "BWV 914",
+   "year": 1710,
+   "era": "baroque",
+   "shelf": "bach-young",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "bach.bwv914.1",
+     "title": "Toccata (complete)",
+     "asset": "midi/sankey/910-916/BWV914.MID",
+     "sha1Hex": "d9c168bbe3502c7bc4e5d93de5c041f50ce72498",
+     "bytes": 25052,
+     "durationSec": 442.539,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 2998,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "bach.bwv772-786",
+   "composer": "Johann Sebastian Bach",
+   "composerShort": "Bach",
+   "title": "Fifteen Two-Part Inventions, BWV 772–786",
+   "shortTitle": "Two-Part Inventions",
+   "catalogue": "BWV 772–786",
+   "year": 1723,
+   "era": "baroque",
+   "shelf": "bach-teaching",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "bach.bwv772-786.1",
+     "title": "No. 1 in C major, BWV 772",
+     "asset": "midi/sankey/772-786/BWV772.MID",
+     "sha1Hex": "5a82aa113eae2b7868e87eafb47767bf387ea50d",
+     "bytes": 4569,
+     "durationSec": 83.038,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 508,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv772-786.2",
+     "title": "No. 2 in C minor, BWV 773",
+     "asset": "midi/sankey/772-786/BWV773.MID",
+     "sha1Hex": "d4f184de49c645258fbd59d5e36338697b4c8cd5",
+     "bytes": 6416,
+     "durationSec": 98.339,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 737,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv772-786.3",
+     "title": "No. 3 in D major, BWV 774",
+     "asset": "midi/sankey/772-786/BWV774.MID",
+     "sha1Hex": "0bac7db7a585cedc1a1a894fa8cee35bed41430e",
+     "bytes": 4968,
+     "durationSec": 87.697,
+     "lowKey": 38,
+     "highKey": 83,
+     "notes": 557,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv772-786.4",
+     "title": "No. 4 in D minor, BWV 775",
+     "asset": "midi/sankey/772-786/BWV775.MID",
+     "sha1Hex": "5e1e00c25d55f69ed2609c358095e9811e1157e2",
+     "bytes": 5155,
+     "durationSec": 68.81,
+     "lowKey": 36,
+     "highKey": 82,
+     "notes": 591,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv772-786.5",
+     "title": "No. 5 in E-flat major, BWV 776",
+     "asset": "midi/sankey/772-786/BWV776.MID",
+     "sha1Hex": "bace1f7b27ece5ac315c7a1aff0fd56b551616b7",
+     "bytes": 7021,
+     "durationSec": 117.652,
+     "lowKey": 39,
+     "highKey": 84,
+     "notes": 795,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv772-786.6",
+     "title": "No. 6 in E major, BWV 777",
+     "asset": "midi/sankey/772-786/BWV777.MID",
+     "sha1Hex": "ace8722b66bb814b0b0a0a54bf0b14334b3a244f",
+     "bytes": 4887,
+     "durationSec": 98.182,
+     "lowKey": 35,
+     "highKey": 83,
+     "notes": 549,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv772-786.7",
+     "title": "No. 7 in E minor, BWV 778",
+     "asset": "midi/sankey/772-786/BWV778.MID",
+     "sha1Hex": "3030690ab6f90b85af7073ff49918a19ac009b13",
+     "bytes": 6074,
+     "durationSec": 90.243,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 702,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv772-786.8",
+     "title": "No. 8 in F major, BWV 779",
+     "asset": "midi/sankey/772-786/BWV779.MID",
+     "sha1Hex": "15fb731624e863b0812d7992142134320cc8cbb7",
+     "bytes": 5279,
+     "durationSec": 71.297,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 596,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv772-786.9",
+     "title": "No. 9 in F minor, BWV 780",
+     "asset": "midi/sankey/772-786/BWV780.MID",
+     "sha1Hex": "eaa4bed2ad8caba700ea1600eaacb8b75eef3b0b",
+     "bytes": 5585,
+     "durationSec": 103.133,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 628,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv772-786.10",
+     "title": "No. 10 in G major, BWV 781",
+     "asset": "midi/sankey/772-786/BWV781.MID",
+     "sha1Hex": "36713cc9d9ec5c5f2a19710209764fc295ec2495",
+     "bytes": 5161,
+     "durationSec": 61.699,
+     "lowKey": 38,
+     "highKey": 84,
+     "notes": 594,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv772-786.11",
+     "title": "No. 11 in G minor, BWV 782",
+     "asset": "midi/sankey/772-786/BWV782.MID",
+     "sha1Hex": "6bf9495d0940548731e483295b044694d4b9a3db",
+     "bytes": 5529,
+     "durationSec": 85.737,
+     "lowKey": 36,
+     "highKey": 82,
+     "notes": 626,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv772-786.12",
+     "title": "No. 12 in A major, BWV 783",
+     "asset": "midi/sankey/772-786/BWV783.MID",
+     "sha1Hex": "54a5bf71f35db1e2254d1d227c9b9228153f0f64",
+     "bytes": 7705,
+     "durationSec": 91.908,
+     "lowKey": 37,
+     "highKey": 83,
+     "notes": 891,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv772-786.13",
+     "title": "No. 13 in A minor, BWV 784",
+     "asset": "midi/sankey/772-786/BWV784.MID",
+     "sha1Hex": "45fa78785b6771631e6a39bc12c60e5e75ec922d",
+     "bytes": 5155,
+     "durationSec": 93.211,
+     "lowKey": 38,
+     "highKey": 84,
+     "notes": 575,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv772-786.14",
+     "title": "No. 14 in B-flat major, BWV 785",
+     "asset": "midi/sankey/772-786/BWV785.MID",
+     "sha1Hex": "a66de449d8ee85e43dc8608bd872f6364aa63dd0",
+     "bytes": 5370,
+     "durationSec": 91.353,
+     "lowKey": 36,
+     "highKey": 82,
+     "notes": 618,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv772-786.15",
+     "title": "No. 15 in B minor, BWV 786",
+     "asset": "midi/sankey/772-786/BWV786.MID",
+     "sha1Hex": "c838085a6d0c6d65091d7a3c44e00364e0877682",
+     "bytes": 4935,
+     "durationSec": 79.887,
+     "lowKey": 37,
+     "highKey": 84,
+     "notes": 558,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "bach.bwv787-801",
+   "composer": "Johann Sebastian Bach",
+   "composerShort": "Bach",
+   "title": "Fifteen Sinfonias (Three-Part Inventions), BWV 787–801",
+   "shortTitle": "Sinfonias",
+   "catalogue": "BWV 787–801",
+   "year": 1723,
+   "era": "baroque",
+   "shelf": "bach-teaching",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "bach.bwv787-801.1",
+     "title": "No. 1 in C major, BWV 787",
+     "asset": "midi/sankey/787-801/BWV787.MID",
+     "sha1Hex": "89d71d876339ef7ae1899884469d57412d486f2b",
+     "bytes": 5163,
+     "durationSec": 77.271,
+     "lowKey": 37,
+     "highKey": 84,
+     "notes": 583,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv787-801.2",
+     "title": "No. 2 in C minor, BWV 788",
+     "asset": "midi/sankey/787-801/BWV788.MID",
+     "sha1Hex": "07b6e689524a38cbd4fa6b09d15318b1aa2e2d95",
+     "bytes": 7204,
+     "durationSec": 110.466,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 851,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv787-801.3",
+     "title": "No. 3 in D major, BWV 789",
+     "asset": "midi/sankey/787-801/BWV789.MID",
+     "sha1Hex": "993f9c90ed43eb193404a5037a853c7a6dea4ffd",
+     "bytes": 5986,
+     "durationSec": 86.953,
+     "lowKey": 37,
+     "highKey": 84,
+     "notes": 676,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv787-801.4",
+     "title": "No. 4 in D minor, BWV 790",
+     "asset": "midi/sankey/787-801/BWV790.MID",
+     "sha1Hex": "e15a74470e93fea5110ccc0065a243f436ab8350",
+     "bytes": 5012,
+     "durationSec": 107.111,
+     "lowKey": 38,
+     "highKey": 82,
+     "notes": 559,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv787-801.5",
+     "title": "No. 5 in E-flat major, BWV 791",
+     "asset": "midi/sankey/787-801/BWV791.MID",
+     "sha1Hex": "e19013af222be6fc5925c82210789eccc449a5d9",
+     "bytes": 3889,
+     "durationSec": 118.225,
+     "lowKey": 36,
+     "highKey": 82,
+     "notes": 424,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv787-801.6",
+     "title": "No. 6 in E major, BWV 792",
+     "asset": "midi/sankey/787-801/BWV792.MID",
+     "sha1Hex": "cf66a46077456ce0883c7230088f170004d69ad0",
+     "bytes": 4604,
+     "durationSec": 91.734,
+     "lowKey": 35,
+     "highKey": 83,
+     "notes": 507,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv787-801.7",
+     "title": "No. 7 in E minor, BWV 793",
+     "asset": "midi/sankey/787-801/BWV793.MID",
+     "sha1Hex": "81eed37dc1c8d6526a43e45a86d06d59d8bb0f1d",
+     "bytes": 6422,
+     "durationSec": 126.467,
+     "lowKey": 38,
+     "highKey": 84,
+     "notes": 724,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv787-801.8",
+     "title": "No. 8 in F major, BWV 794",
+     "asset": "midi/sankey/787-801/BWV794.MID",
+     "sha1Hex": "f3bebeb7c40f6e25bc31a02e37110bcd6b8b7842",
+     "bytes": 5146,
+     "durationSec": 89.858,
+     "lowKey": 36,
+     "highKey": 82,
+     "notes": 577,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv787-801.9",
+     "title": "No. 9 in F minor, BWV 795",
+     "asset": "midi/sankey/787-801/BWV795.MID",
+     "sha1Hex": "58438760dda9383c5dd35d7113383d47989e963c",
+     "bytes": 5866,
+     "durationSec": 161.362,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 660,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv787-801.10",
+     "title": "No. 10 in G major, BWV 796",
+     "asset": "midi/sankey/787-801/BWV796.MID",
+     "sha1Hex": "bc14badcd8e7e3c16c3e8666f9d0e3c8de93e0d2",
+     "bytes": 5573,
+     "durationSec": 89.214,
+     "lowKey": 38,
+     "highKey": 84,
+     "notes": 624,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv787-801.11",
+     "title": "No. 11 in G minor, BWV 797",
+     "asset": "midi/sankey/787-801/BWV797.MID",
+     "sha1Hex": "e157baca39facc8d1832488f6965bdad6ece8c0f",
+     "bytes": 4864,
+     "durationSec": 103.048,
+     "lowKey": 38,
+     "highKey": 84,
+     "notes": 539,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv787-801.12",
+     "title": "No. 12 in A major, BWV 798",
+     "asset": "midi/sankey/787-801/BWV798.MID",
+     "sha1Hex": "32a7b86d3516dd3479a238790fcae311625450aa",
+     "bytes": 6799,
+     "durationSec": 115.734,
+     "lowKey": 40,
+     "highKey": 83,
+     "notes": 769,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv787-801.13",
+     "title": "No. 13 in A minor, BWV 799",
+     "asset": "midi/sankey/787-801/BWV799.MID",
+     "sha1Hex": "f5804040c141073596ab949c0de28b3ace0ceb09",
+     "bytes": 6002,
+     "durationSec": 104.732,
+     "lowKey": 40,
+     "highKey": 84,
+     "notes": 683,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv787-801.14",
+     "title": "No. 14 in B-flat major, BWV 800",
+     "asset": "midi/sankey/787-801/BWV800.MID",
+     "sha1Hex": "a2bb58b5ab14259417e8cf235d88b0756d713614",
+     "bytes": 5597,
+     "durationSec": 95.678,
+     "lowKey": 36,
+     "highKey": 82,
+     "notes": 632,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.bwv787-801.15",
+     "title": "No. 15 in B minor, BWV 801",
+     "asset": "midi/sankey/787-801/BWV801.MID",
+     "sha1Hex": "2f959824991bf549defdea30d3adacce0b11111c",
+     "bytes": 5789,
+     "durationSec": 106.638,
+     "lowKey": 37,
+     "highKey": 83,
+     "notes": 672,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "bach.bwv846.krueger",
+   "composer": "Johann Sebastian Bach",
+   "composerShort": "Bach",
+   "title": "The Well-Tempered Clavier I, No. 1: Prelude and Fugue in C major, BWV 846",
+   "shortTitle": "WTC I No. 1 (piano)",
+   "catalogue": "BWV 846",
+   "year": 1722,
+   "era": "baroque",
+   "shelf": "bach-wtc",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "bach.bwv846.krueger.1",
+     "title": "Prelude and Fugue",
+     "asset": "midi/krueger/bach/bach_846.mid",
+     "sha1Hex": "7759b99a471715ba00d5d68f72c7b83d47a25d29",
+     "sha1b32": "O5M3TGSHC4K3UAGV22HXFR5YHVD2EXJJ",
+     "bytes": 12599,
+     "durationSec": 225.558,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 1284,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "bach.bwv847.krueger",
+   "composer": "Johann Sebastian Bach",
+   "composerShort": "Bach",
+   "title": "The Well-Tempered Clavier I, No. 2: Prelude and Fugue in C minor, BWV 847",
+   "shortTitle": "WTC I No. 2 (piano)",
+   "catalogue": "BWV 847",
+   "year": 1722,
+   "era": "baroque",
+   "shelf": "bach-wtc",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "bach.bwv847.krueger.1",
+     "title": "Prelude and Fugue",
+     "asset": "midi/krueger/bach/bach_847.mid",
+     "sha1Hex": "a1d4ce1ae02ce2babb91254757b627e55502eea6",
+     "sha1b32": "UHKM4GXAFTRLVO4REVDVPNRH4VKQF3VG",
+     "bytes": 15797,
+     "durationSec": 189.754,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 1845,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "bach.bwv850.krueger",
+   "composer": "Johann Sebastian Bach",
+   "composerShort": "Bach",
+   "title": "The Well-Tempered Clavier I, No. 5: Prelude and Fugue in D major, BWV 850",
+   "shortTitle": "WTC I No. 5 (piano)",
+   "catalogue": "BWV 850",
+   "year": 1722,
+   "era": "baroque",
+   "shelf": "bach-wtc",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "bach.bwv850.krueger.1",
+     "title": "Prelude and Fugue",
+     "asset": "midi/krueger/bach/bach_850.mid",
+     "sha1Hex": "02d335a1f6a482f7f592a4a5044db8ae5415ddf1",
+     "sha1b32": "ALJTLIPWUSBPP5MSUSSQITNYVZKBLXPR",
+     "bytes": 12625,
+     "durationSec": 172.972,
+     "lowKey": 38,
+     "highKey": 83,
+     "notes": 1503,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "bach.wtc1.sankey",
+   "composer": "Johann Sebastian Bach",
+   "composerShort": "Bach",
+   "title": "The Well-Tempered Clavier, Book I, BWV 846–869",
+   "shortTitle": "Well-Tempered Clavier I",
+   "catalogue": "BWV 846–869",
+   "year": 1722,
+   "era": "baroque",
+   "shelf": "bach-wtc",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "bach.wtc1.sankey.1",
+     "title": "No. 1 in C major, BWV 846",
+     "asset": "midi/sankey/846-869/bwv846.mid",
+     "sha1Hex": "4d468f2283d757ce9521bb241ab6c6193bacbeb2",
+     "bytes": 11624,
+     "durationSec": 230.01,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 1318,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.2",
+     "title": "No. 2 in C minor, BWV 847",
+     "asset": "midi/sankey/846-869/bwv847.mid",
+     "sha1Hex": "f1830547de62f942fa15ca2e877da7d9b4bf68e5",
+     "bytes": 15639,
+     "durationSec": 216.02,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 1877,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.3",
+     "title": "No. 3 in C-sharp major, BWV 848",
+     "asset": "midi/sankey/846-869/bwv848.mid",
+     "sha1Hex": "b82e4f4b56eb77ecb09b69b5a250abf138243d2f",
+     "bytes": 19134,
+     "durationSec": 264.59,
+     "lowKey": 37,
+     "highKey": 84,
+     "notes": 2266,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.4",
+     "title": "No. 4 in C-sharp minor, BWV 849",
+     "asset": "midi/sankey/846-869/bwv849.mid",
+     "sha1Hex": "1e9d64a72ae5e4a5fe43a5f805b141fc07c9150e",
+     "bytes": 18206,
+     "durationSec": 390.125,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 2085,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.5",
+     "title": "No. 5 in D major, BWV 850",
+     "asset": "midi/sankey/846-869/bwv850.mid",
+     "sha1Hex": "82f5b81bdfb5c3d3c018aa7743be1fd8a7a529f5",
+     "bytes": 12771,
+     "durationSec": 184.233,
+     "lowKey": 38,
+     "highKey": 83,
+     "notes": 1553,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.6",
+     "title": "No. 6 in D minor, BWV 851",
+     "asset": "midi/sankey/846-869/bwv851.mid",
+     "sha1Hex": "883981a2b8bed4a82119ca3772c60509c901781a",
+     "bytes": 13411,
+     "durationSec": 218.234,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 1602,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.7",
+     "title": "No. 7 in E-flat major, BWV 852",
+     "asset": "midi/sankey/846-869/bwv852.mid",
+     "sha1Hex": "5a27ae78de11f90a0f9622c4e8cc6291b03a10cd",
+     "bytes": 19975,
+     "durationSec": 313.484,
+     "lowKey": 38,
+     "highKey": 84,
+     "notes": 2345,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.8",
+     "title": "No. 8 in E-flat minor, BWV 853",
+     "asset": "midi/sankey/846-869/bwv853.mid",
+     "sha1Hex": "db2272d1315620759036ab7fa929f9014a5bc23d",
+     "bytes": 18140,
+     "durationSec": 380.798,
+     "lowKey": 37,
+     "highKey": 84,
+     "notes": 2129,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.9",
+     "title": "No. 9 in E major, BWV 854",
+     "asset": "midi/sankey/846-869/bwv854.mid",
+     "sha1Hex": "d68a52e027fa61e9aeddeb2863918c7ae634d824",
+     "bytes": 10638,
+     "durationSec": 177.771,
+     "lowKey": 37,
+     "highKey": 83,
+     "notes": 1221,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.10",
+     "title": "No. 10 in E minor, BWV 855",
+     "asset": "midi/sankey/846-869/bwv855.mid",
+     "sha1Hex": "6f1746c1139107d021e4d71a95ed8edbf1a5b629",
+     "bytes": 17420,
+     "durationSec": 232.639,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 2069,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.11",
+     "title": "No. 11 in F major, BWV 856",
+     "asset": "midi/sankey/846-869/bwv856.mid",
+     "sha1Hex": "48579e03c4124b71464084a29e4a2c5227f3f374",
+     "bytes": 13017,
+     "durationSec": 165.892,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 1562,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.12",
+     "title": "No. 12 in F minor, BWV 857",
+     "asset": "midi/sankey/846-869/bwv857.mid",
+     "sha1Hex": "f4453051e3c8151b30de69ab563676fd13032ace",
+     "bytes": 16469,
+     "durationSec": 358.75,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 1897,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.13",
+     "title": "No. 13 in F-sharp major, BWV 858",
+     "asset": "midi/sankey/846-869/bwv858.mid",
+     "sha1Hex": "03fabefea2c6cc64798ddf66dcfdb06afdc4aa30",
+     "bytes": 11978,
+     "durationSec": 208.595,
+     "lowKey": 37,
+     "highKey": 84,
+     "notes": 1378,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.14",
+     "title": "No. 14 in F-sharp minor, BWV 859",
+     "asset": "midi/sankey/846-869/bwv859.mid",
+     "sha1Hex": "74e799ad2f49602015fc9a7153535975dfb8d5ce",
+     "bytes": 12818,
+     "durationSec": 277.514,
+     "lowKey": 37,
+     "highKey": 83,
+     "notes": 1477,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.15",
+     "title": "No. 15 in G major, BWV 860",
+     "asset": "midi/sankey/846-869/bwv860.mid",
+     "sha1Hex": "2507a06da22a310c6d093b9a55b34a163339893a",
+     "bytes": 20129,
+     "durationSec": 269.609,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 2392,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.16",
+     "title": "No. 16 in G minor, BWV 861",
+     "asset": "midi/sankey/846-869/bwv861.mid",
+     "sha1Hex": "da31607ea68ccf1a1a2841841b61c791e4e14505",
+     "bytes": 12864,
+     "durationSec": 257.969,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 1491,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.17",
+     "title": "No. 17 in A-flat major, BWV 862",
+     "asset": "midi/sankey/846-869/bwv862.mid",
+     "sha1Hex": "681ac08d1ce8fe2e34dfe3c07c785ece5fa95145",
+     "bytes": 13649,
+     "durationSec": 244.357,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 1575,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.18",
+     "title": "No. 18 in G-sharp minor, BWV 863",
+     "asset": "midi/sankey/846-869/bwv863.mid",
+     "sha1Hex": "09fb8c783227cb4c228cddc2c936dfedb7246e1c",
+     "bytes": 11901,
+     "durationSec": 282.048,
+     "lowKey": 36,
+     "highKey": 83,
+     "notes": 1371,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.19",
+     "title": "No. 19 in A major, BWV 864",
+     "asset": "midi/sankey/846-869/bwv864.mid",
+     "sha1Hex": "59e8a7d98aa274c362eb7b2d549fe74dd8331855",
+     "bytes": 15585,
+     "durationSec": 283.521,
+     "lowKey": 37,
+     "highKey": 83,
+     "notes": 1794,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.20",
+     "title": "No. 20 in A minor, BWV 865",
+     "asset": "midi/sankey/846-869/bwv865.mid",
+     "sha1Hex": "23346aaebebe18054da247adb70136a51b1769e9",
+     "bytes": 26104,
+     "durationSec": 446.154,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 3043,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.21",
+     "title": "No. 21 in B-flat major, BWV 866",
+     "asset": "midi/sankey/846-869/bwv866.mid",
+     "sha1Hex": "a3dbeb9e15dac202603eecb04b59ce1437088581",
+     "bytes": 13582,
+     "durationSec": 202.323,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 1603,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.22",
+     "title": "No. 22 in B-flat minor, BWV 867",
+     "asset": "midi/sankey/846-869/bwv867.mid",
+     "sha1Hex": "2a1b82621f5ad2800231a81f5bf2f0b8deda4392",
+     "bytes": 12929,
+     "durationSec": 340.0,
+     "lowKey": 38,
+     "highKey": 84,
+     "notes": 1514,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.23",
+     "title": "No. 23 in B major, BWV 868",
+     "asset": "midi/sankey/846-869/bwv868.mid",
+     "sha1Hex": "d550042f44f15c1015168d08ba3a48c91f3fe27f",
+     "bytes": 11457,
+     "durationSec": 217.198,
+     "lowKey": 37,
+     "highKey": 83,
+     "notes": 1315,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc1.sankey.24",
+     "title": "No. 24 in B minor, BWV 869",
+     "asset": "midi/sankey/846-869/bwv869.mid",
+     "sha1Hex": "987c64e5320df523e8b63ebc8475dd00948f4762",
+     "bytes": 22092,
+     "durationSec": 479.667,
+     "lowKey": 37,
+     "highKey": 84,
+     "notes": 2551,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "bach.wtc2.sankey",
+   "composer": "Johann Sebastian Bach",
+   "composerShort": "Bach",
+   "title": "The Well-Tempered Clavier, Book II, Nos. 1–12, BWV 870–881",
+   "shortTitle": "Well-Tempered Clavier II (1–12)",
+   "catalogue": "BWV 870–881",
+   "year": 1742,
+   "era": "baroque",
+   "shelf": "bach-wtc",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "bach.wtc2.sankey.1",
+     "title": "No. 1 in C major, BWV 870",
+     "asset": "midi/sankey/870-881/bwv870.mid",
+     "sha1Hex": "f022749bd547aa80b3548e9fd42eb2a1192887f5",
+     "bytes": 17087,
+     "durationSec": 332.281,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 1973,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc2.sankey.2",
+     "title": "No. 2 in C minor, BWV 871",
+     "asset": "midi/sankey/870-881/bwv871.mid",
+     "sha1Hex": "a284352e00c26580951b7a279efc3eff31cba220",
+     "bytes": 11890,
+     "durationSec": 220.964,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 1361,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc2.sankey.3",
+     "title": "No. 3 in C-sharp major, BWV 872",
+     "asset": "midi/sankey/870-881/bwv872.mid",
+     "sha1Hex": "184d5dd34ffca17105847eae4b96085b7c9fd53e",
+     "bytes": 14154,
+     "durationSec": 263.5,
+     "lowKey": 37,
+     "highKey": 85,
+     "notes": 1624,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc2.sankey.4",
+     "title": "No. 4 in C-sharp minor, BWV 873",
+     "asset": "midi/sankey/870-881/bwv873.mid",
+     "sha1Hex": "99bb081ef0d1842d6cb8058b4f9195db302cdeab",
+     "bytes": 23021,
+     "durationSec": 409.737,
+     "lowKey": 37,
+     "highKey": 83,
+     "notes": 2663,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc2.sankey.5",
+     "title": "No. 5 in D major, BWV 874",
+     "asset": "midi/sankey/870-881/bwv874.mid",
+     "sha1Hex": "5f29cfd2e9b426de5aa6b457412d1c5fbdd41b7d",
+     "bytes": 20269,
+     "durationSec": 354.312,
+     "lowKey": 37,
+     "highKey": 83,
+     "notes": 2423,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc2.sankey.6",
+     "title": "No. 6 in D minor, BWV 875",
+     "asset": "midi/sankey/870-881/bwv875.mid",
+     "sha1Hex": "c527fd1fce9c61e64336b874dd0acd88e7249593",
+     "bytes": 15888,
+     "durationSec": 255.583,
+     "lowKey": 37,
+     "highKey": 83,
+     "notes": 1897,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc2.sankey.7",
+     "title": "No. 7 in E-flat major, BWV 876",
+     "asset": "midi/sankey/870-881/bwv876.mid",
+     "sha1Hex": "b9211730e8d10932cd0b3010a0217ff771ad9b5a",
+     "bytes": 14082,
+     "durationSec": 306.891,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 1616,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc2.sankey.8",
+     "title": "No. 8 in E-flat minor, BWV 877",
+     "asset": "midi/sankey/870-881/bwv877.mid",
+     "sha1Hex": "0554c70814e5f071ab2e7c5589671a8175747abb",
+     "bytes": 17172,
+     "durationSec": 322.875,
+     "lowKey": 37,
+     "highKey": 83,
+     "notes": 1994,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc2.sankey.9",
+     "title": "No. 9 in E major, BWV 878",
+     "asset": "midi/sankey/870-881/bwv878.mid",
+     "sha1Hex": "dd39e70ee4b924bb7d6e4a995f6a3f627eeccfaf",
+     "bytes": 14340,
+     "durationSec": 303.676,
+     "lowKey": 37,
+     "highKey": 83,
+     "notes": 1645,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc2.sankey.10",
+     "title": "No. 10 in E minor, BWV 879",
+     "asset": "midi/sankey/870-881/bwv879.mid",
+     "sha1Hex": "7837b9d2db1be26288dd91857dbcfd3661292729",
+     "bytes": 22628,
+     "durationSec": 337.003,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 2637,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc2.sankey.11",
+     "title": "No. 11 in F major, BWV 880",
+     "asset": "midi/sankey/870-881/bwv880.mid",
+     "sha1Hex": "82c316fd59d24b6207475ad76d40141e7d43df92",
+     "bytes": 19232,
+     "durationSec": 290.816,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 2206,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "bach.wtc2.sankey.12",
+     "title": "No. 12 in F minor, BWV 881",
+     "asset": "midi/sankey/870-881/bwv881.mid",
+     "sha1Hex": "79e0a49e594b8eec55e3df74d61b9309060c8d71",
+     "bytes": 16139,
+     "durationSec": 302.103,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 1849,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "bach.bwv816",
+   "composer": "Johann Sebastian Bach",
+   "composerShort": "Bach",
+   "title": "French Suite No. 5 in G major, BWV 816",
+   "shortTitle": "French Suite No. 5",
+   "catalogue": "BWV 816",
+   "year": 1722,
+   "era": "baroque",
+   "shelf": "bach-suites",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "bach.bwv816.1",
+     "title": "Suite (complete)",
+     "asset": "midi/sankey/812-817/bwv816.mid",
+     "sha1Hex": "4b7cefb021e1cf40f2ae3bac6f13fb50e838bbfb",
+     "bytes": 32624,
+     "durationSec": 520.406,
+     "lowKey": 38,
+     "highKey": 84,
+     "notes": 3838,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "bach.bwv807",
+   "composer": "Johann Sebastian Bach",
+   "composerShort": "Bach",
+   "title": "English Suite No. 2 in A minor, BWV 807",
+   "shortTitle": "English Suite No. 2",
+   "catalogue": "BWV 807",
+   "year": 1715,
+   "era": "baroque",
+   "shelf": "bach-suites",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "bach.bwv807.1",
+     "title": "Suite (complete)",
+     "asset": "midi/sankey/806-811/bwv807.mid",
+     "sha1Hex": "3acb9b79996d0f5ea279164e2939fb3607ef0f32",
+     "bytes": 54905,
+     "durationSec": 867.007,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 6404,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "bach.bwv825",
+   "composer": "Johann Sebastian Bach",
+   "composerShort": "Bach",
+   "title": "Partita No. 1 in B-flat major, BWV 825",
+   "shortTitle": "Partita No. 1",
+   "catalogue": "BWV 825",
+   "year": 1726,
+   "era": "baroque",
+   "shelf": "bach-suites",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "bach.bwv825.1",
+     "title": "Partita (complete)",
+     "asset": "midi/sankey/825-830/BWV825.MID",
+     "sha1Hex": "d9f61c6f19e45b99cd9c240fd0c081338c49dfea",
+     "bytes": 38984,
+     "durationSec": 581.882,
+     "lowKey": 31,
+     "highKey": 86,
+     "notes": 4655,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "bach.bwv826",
+   "composer": "Johann Sebastian Bach",
+   "composerShort": "Bach",
+   "title": "Partita No. 2 in C minor, BWV 826",
+   "shortTitle": "Partita No. 2",
+   "catalogue": "BWV 826",
+   "year": 1727,
+   "era": "baroque",
+   "shelf": "bach-suites",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "bach.bwv826.1",
+     "title": "Partita (complete)",
+     "asset": "midi/sankey/825-830/BWV826.MID",
+     "sha1Hex": "0ab0c78049aaabc66749cd1fb5ba69f7e8283fc6",
+     "bytes": 47855,
+     "durationSec": 716.763,
+     "lowKey": 33,
+     "highKey": 86,
+     "notes": 5803,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "bach.bwv971",
+   "composer": "Johann Sebastian Bach",
+   "composerShort": "Bach",
+   "title": "Italian Concerto in F major, BWV 971",
+   "shortTitle": "Italian Concerto",
+   "catalogue": "BWV 971",
+   "year": 1735,
+   "era": "baroque",
+   "shelf": "bach-suites",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "bach.bwv971.1",
+     "title": "Concerto (complete)",
+     "asset": "midi/sankey/bach/bwv971.mid",
+     "sha1Hex": "5a261ca4bc5856ef0bf15acaa5161099b13e1960",
+     "bytes": 54302,
+     "durationSec": 790.499,
+     "lowKey": 33,
+     "highKey": 84,
+     "notes": 6356,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "bach.bwv974",
+   "composer": "Johann Sebastian Bach",
+   "composerShort": "Bach",
+   "title": "Concerto in D minor after Alessandro Marcello, BWV 974",
+   "shortTitle": "Concerto after Marcello",
+   "catalogue": "BWV 974",
+   "year": 1714,
+   "era": "baroque",
+   "shelf": "bach-suites",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "bach.bwv974.1",
+     "title": "Concerto (complete)",
+     "asset": "midi/sankey/972-987/BWV974.MID",
+     "sha1Hex": "086258aa6ff23a89604ec68f80dab4e16edc48fd",
+     "bytes": 32884,
+     "durationSec": 486.366,
+     "lowKey": 36,
+     "highKey": 86,
+     "notes": 3882,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "bach.bwv903",
+   "composer": "Johann Sebastian Bach",
+   "composerShort": "Bach",
+   "title": "Chromatic Fantasia and Fugue in D minor, BWV 903",
+   "shortTitle": "Chromatic Fantasia and Fugue",
+   "catalogue": "BWV 903",
+   "year": 1720,
+   "era": "baroque",
+   "shelf": "bach-suites",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "bach.bwv903.1",
+     "title": "Fantasia and Fugue",
+     "asset": "midi/sankey/misc3/bwv903.mid",
+     "sha1Hex": "0cdd85b83ed54f7895e5f7da78247285e8acaa97",
+     "bytes": 41236,
+     "durationSec": 678.042,
+     "lowKey": 33,
+     "highKey": 86,
+     "notes": 5032,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "bach.bwv988",
+   "composer": "Johann Sebastian Bach",
+   "composerShort": "Bach",
+   "title": "Goldberg Variations, BWV 988",
+   "shortTitle": "Goldberg Variations",
+   "catalogue": "BWV 988",
+   "year": 1741,
+   "era": "baroque",
+   "shelf": "bach-suites",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "bach.bwv988.1",
+     "title": "Aria and thirty variations",
+     "asset": "midi/sankey/bwv988/BWV988.MID",
+     "sha1Hex": "a458d3402acca4a23c211dc1525b73a677a4b4af",
+     "bytes": 150519,
+     "durationSec": 2459.457,
+     "lowKey": 31,
+     "highKey": 86,
+     "notes": 18008,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "scarlatti.k001",
+   "composer": "Domenico Scarlatti",
+   "composerShort": "Scarlatti",
+   "title": "Sonata in D minor, K. 1",
+   "shortTitle": "Sonata K. 1",
+   "catalogue": "K. 1",
+   "year": 1738,
+   "era": "baroque",
+   "shelf": "scarlatti",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "scarlatti.k001.1",
+     "title": "Sonata",
+     "asset": "midi/sankey/scarlatti/K001.MID",
+     "sha1Hex": "513077758afbf557a56b95a5608fdf4f0ab9d2e9",
+     "bytes": 6569,
+     "durationSec": 72.379,
+     "lowKey": 38,
+     "highKey": 84,
+     "notes": 801,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "scarlatti.k009",
+   "composer": "Domenico Scarlatti",
+   "composerShort": "Scarlatti",
+   "title": "Sonata in D minor, K. 9",
+   "shortTitle": "Sonata K. 9",
+   "catalogue": "K. 9",
+   "year": 1738,
+   "era": "baroque",
+   "shelf": "scarlatti",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "scarlatti.k009.1",
+     "title": "Sonata",
+     "asset": "midi/sankey/scarlatti/K009.MID",
+     "sha1Hex": "d0e1dc1337c92c8e86c930bc9889843206b4a2bc",
+     "bytes": 7279,
+     "durationSec": 100.931,
+     "lowKey": 33,
+     "highKey": 84,
+     "notes": 860,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "scarlatti.k027",
+   "composer": "Domenico Scarlatti",
+   "composerShort": "Scarlatti",
+   "title": "Sonata in B minor, K. 27",
+   "shortTitle": "Sonata K. 27",
+   "catalogue": "K. 27",
+   "year": 1738,
+   "era": "baroque",
+   "shelf": "scarlatti",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "scarlatti.k027.1",
+     "title": "Sonata",
+     "asset": "midi/sankey/scarlatti/K027.MID",
+     "sha1Hex": "5a8b5af3cb8b5a8ef1408767fa6731fa8dd45222",
+     "bytes": 7721,
+     "durationSec": 102.995,
+     "lowKey": 34,
+     "highKey": 83,
+     "notes": 941,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "scarlatti.k087",
+   "composer": "Domenico Scarlatti",
+   "composerShort": "Scarlatti",
+   "title": "Sonata in B minor, K. 87",
+   "shortTitle": "Sonata K. 87",
+   "catalogue": "K. 87",
+   "year": null,
+   "era": "baroque",
+   "shelf": "scarlatti",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "scarlatti.k087.1",
+     "title": "Sonata",
+     "asset": "midi/sankey/scarlatti/K087.MID",
+     "sha1Hex": "580b9e101c1b5bed6b81a5a2fc44386ef9f12581",
+     "bytes": 7099,
+     "durationSec": 149.935,
+     "lowKey": 42,
+     "highKey": 83,
+     "notes": 818,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "scarlatti.k096",
+   "composer": "Domenico Scarlatti",
+   "composerShort": "Scarlatti",
+   "title": "Sonata in D major, K. 96",
+   "shortTitle": "Sonata K. 96",
+   "catalogue": "K. 96",
+   "year": null,
+   "era": "baroque",
+   "shelf": "scarlatti",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "scarlatti.k096.1",
+     "title": "Sonata",
+     "asset": "midi/sankey/scarlatti/K096.MID",
+     "sha1Hex": "5f7a1121857ea3b050b3b319f8f223d7ea1ee7db",
+     "bytes": 14182,
+     "durationSec": 182.439,
+     "lowKey": 37,
+     "highKey": 86,
+     "notes": 1702,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "scarlatti.k141",
+   "composer": "Domenico Scarlatti",
+   "composerShort": "Scarlatti",
+   "title": "Sonata in D minor, K. 141",
+   "shortTitle": "Sonata K. 141",
+   "catalogue": "K. 141",
+   "year": null,
+   "era": "baroque",
+   "shelf": "scarlatti",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "scarlatti.k141.1",
+     "title": "Sonata",
+     "asset": "midi/sankey/scarlatti/K141.MID",
+     "sha1Hex": "536fbf9cdc3abf1c0057673d4b376fe4e05248a2",
+     "bytes": 12604,
+     "durationSec": 128.296,
+     "lowKey": 33,
+     "highKey": 86,
+     "notes": 1556,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "scarlatti.k159",
+   "composer": "Domenico Scarlatti",
+   "composerShort": "Scarlatti",
+   "title": "Sonata in C major, K. 159",
+   "shortTitle": "Sonata K. 159",
+   "catalogue": "K. 159",
+   "year": null,
+   "era": "baroque",
+   "shelf": "scarlatti",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "scarlatti.k159.1",
+     "title": "Sonata",
+     "asset": "midi/sankey/scarlatti/K159.MID",
+     "sha1Hex": "07952f60756eb7021adf1cf9e5f8f575f4f0dceb",
+     "bytes": 7905,
+     "durationSec": 83.585,
+     "lowKey": 31,
+     "highKey": 86,
+     "notes": 928,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "scarlatti.k208",
+   "composer": "Domenico Scarlatti",
+   "composerShort": "Scarlatti",
+   "title": "Sonata in A major, K. 208",
+   "shortTitle": "Sonata K. 208",
+   "catalogue": "K. 208",
+   "year": null,
+   "era": "baroque",
+   "shelf": "scarlatti",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "scarlatti.k208.1",
+     "title": "Sonata",
+     "asset": "midi/sankey/scarlatti/K208.MID",
+     "sha1Hex": "ec15a3da7b56cc0c2b5f190ff5fd807bf04096cc",
+     "bytes": 4351,
+     "durationSec": 83.336,
+     "lowKey": 43,
+     "highKey": 86,
+     "notes": 492,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "scarlatti.k380",
+   "composer": "Domenico Scarlatti",
+   "composerShort": "Scarlatti",
+   "title": "Sonata in E major, K. 380",
+   "shortTitle": "Sonata K. 380",
+   "catalogue": "K. 380",
+   "year": null,
+   "era": "baroque",
+   "shelf": "scarlatti",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "scarlatti.k380.1",
+     "title": "Sonata",
+     "asset": "midi/sankey/scarlatti/K380.MID",
+     "sha1Hex": "31cf31338a50cacceba8b8d247f7d6b09f16796e",
+     "bytes": 11075,
+     "durationSec": 170.689,
+     "lowKey": 35,
+     "highKey": 91,
+     "notes": 1297,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 3
+     }
+    }
+   ]
+  },
+  {
+   "id": "scarlatti.k466",
+   "composer": "Domenico Scarlatti",
+   "composerShort": "Scarlatti",
+   "title": "Sonata in F minor, K. 466",
+   "shortTitle": "Sonata K. 466",
+   "catalogue": "K. 466",
+   "year": null,
+   "era": "baroque",
+   "shelf": "scarlatti",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "scarlatti.k466.1",
+     "title": "Sonata",
+     "asset": "midi/sankey/scarlatti/K466.MID",
+     "sha1Hex": "11c8bb57a27bc4d7967b6ce062d108a166e9a359",
+     "bytes": 9333,
+     "durationSec": 178.659,
+     "lowKey": 31,
+     "highKey": 87,
+     "notes": 1075,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "rameau.tambourin",
+   "composer": "Jean-Philippe Rameau",
+   "composerShort": "Rameau",
+   "title": "Tambourin (Pièces de clavessin, 1724)",
+   "shortTitle": "Tambourin",
+   "catalogue": null,
+   "year": 1724,
+   "era": "baroque",
+   "shelf": "french",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "frantz",
+   "tier": "B",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "rameau.tambourin.1",
+     "title": "Tambourin",
+     "asset": "midi/commons/rameau_tambourin_frantz.mid",
+     "sha1Hex": "5033e14e157c259f822b21c5e8c3950608cee25c",
+     "bytes": 5524,
+     "durationSec": 91.524,
+     "lowKey": 40,
+     "highKey": 83,
+     "notes": 620,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "rameau.plaintes",
+   "composer": "Jean-Philippe Rameau",
+   "composerShort": "Rameau",
+   "title": "Les Tendres Plaintes (Pièces de clavessin, 1724)",
+   "shortTitle": "Les Tendres Plaintes",
+   "catalogue": null,
+   "year": 1724,
+   "era": "baroque",
+   "shelf": "french",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "mutopia",
+   "tier": "B",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "rameau.plaintes.1",
+     "title": "Les Tendres Plaintes",
+     "asset": "midi/mutopia/rameau_tendres_plaintes.mid",
+     "sha1Hex": "7177bc69aec54c98b2a7154251f207f6d81bf863",
+     "bytes": 6061,
+     "durationSec": 180.0,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 660,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "rameau.sauvages",
+   "composer": "Jean-Philippe Rameau",
+   "composerShort": "Rameau",
+   "title": "Les Sauvages (Nouvelles suites, c. 1728)",
+   "shortTitle": "Les Sauvages",
+   "catalogue": null,
+   "year": 1728,
+   "era": "baroque",
+   "shelf": "french",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "mutopia",
+   "tier": "B",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "rameau.sauvages.1",
+     "title": "Les Sauvages",
+     "asset": "midi/mutopia/rameau_sauvages.mid",
+     "sha1Hex": "4cd40dc6145f51f9d8df9cb15ca1fc082ead8ca2",
+     "bytes": 7171,
+     "durationSec": 160.0,
+     "lowKey": 31,
+     "highKey": 84,
+     "notes": 786,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "cpebach.h220",
+   "composer": "Carl Philipp Emanuel Bach",
+   "composerShort": "C.P.E. Bach",
+   "title": "Solfeggietto in C minor, H. 220 (Wq 117/2)",
+   "shortTitle": "Solfeggietto",
+   "catalogue": "H. 220",
+   "year": 1766,
+   "era": "galant",
+   "shelf": "galant",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "nieb",
+   "tier": "B",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "cpebach.h220.1",
+     "title": "Solfeggietto",
+     "asset": "midi/commons/cpe_bach_solfeggietto_nieb.mid",
+     "sha1Hex": "d8eed5dd23f85bafdd0c0ac8f226ab91ebeb6691",
+     "bytes": 7605,
+     "durationSec": 67.12,
+     "lowKey": 35,
+     "highKey": 87,
+     "notes": 556,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "cpebach.h288",
+   "composer": "Carl Philipp Emanuel Bach",
+   "composerShort": "C.P.E. Bach",
+   "title": "Rondo in E-flat major, H. 288 (Wq 61/1)",
+   "shortTitle": "Rondo H. 288",
+   "catalogue": "H. 288",
+   "year": 1785,
+   "era": "galant",
+   "shelf": "galant",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "mutopia",
+   "tier": "B",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "cpebach.h288.1",
+     "title": "Rondo",
+     "asset": "midi/mutopia/cpe_bach_rondo_h288.mid",
+     "sha1Hex": "21d397c326b859079e978caa04987338ef7b573e",
+     "bytes": 15220,
+     "durationSec": 450.454,
+     "lowKey": 30,
+     "highKey": 89,
+     "notes": 1722,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "haydn.xvi7",
+   "composer": "Joseph Haydn",
+   "composerShort": "Haydn",
+   "title": "Keyboard Sonata in C major, Hob. XVI:7",
+   "shortTitle": "Sonata Hob. XVI:7",
+   "catalogue": "Hob. XVI:7",
+   "year": 1766,
+   "era": "galant",
+   "shelf": "galant",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "haydn.xvi7.1",
+     "title": "I. Allegro moderato",
+     "asset": "midi/krueger/haydn/haydn_7_1.mid",
+     "sha1Hex": "11c79d448bede2447208aae86511286c1aaa0464",
+     "sha1b32": "CHDZ2REL5XREI4QIVLUGKEJINQNKUBDE",
+     "bytes": 6184,
+     "durationSec": 63.069,
+     "lowKey": 36,
+     "highKey": 86,
+     "notes": 506,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "haydn.xvi7.2",
+     "title": "II. Menuet",
+     "asset": "midi/krueger/haydn/haydn_7_2.mid",
+     "sha1Hex": "b31838d574b7d50f4dbc50a08c406b541610b720",
+     "sha1b32": "WMMDRVLUW7KQ6TN4KCQIYQDLKQLBBNZA",
+     "bytes": 10232,
+     "durationSec": 139.424,
+     "lowKey": 36,
+     "highKey": 86,
+     "notes": 787,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "haydn.xvi7.3",
+     "title": "III. Finale: Allegro",
+     "asset": "midi/krueger/haydn/haydn_7_3.mid",
+     "sha1Hex": "872447c142ebdcdd2003e9d92ac89fa8d4c2face",
+     "sha1b32": "Q4SEPQKC5PON2IAD5HMSVSE7VDKMF6WO",
+     "bytes": 9017,
+     "durationSec": 90.397,
+     "lowKey": 36,
+     "highKey": 86,
+     "notes": 854,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "haydn.xvi8",
+   "composer": "Joseph Haydn",
+   "composerShort": "Haydn",
+   "title": "Keyboard Sonata in G major, Hob. XVI:8",
+   "shortTitle": "Sonata Hob. XVI:8",
+   "catalogue": "Hob. XVI:8",
+   "year": 1766,
+   "era": "galant",
+   "shelf": "galant",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "haydn.xvi8.1",
+     "title": "I. Allegro",
+     "asset": "midi/krueger/haydn/haydn_8_1.mid",
+     "sha1Hex": "c69d6e7dfe97b6ba8c23de7d013c4dbfceea8c8c",
+     "sha1b32": "Y2OW47P6S63LVDBD3Z6QCPCNX7HOVDEM",
+     "bytes": 12178,
+     "durationSec": 122.303,
+     "lowKey": 31,
+     "highKey": 86,
+     "notes": 914,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "haydn.xvi8.2",
+     "title": "II. Menuet",
+     "asset": "midi/krueger/haydn/haydn_8_2.mid",
+     "sha1Hex": "dd69fcdcb03d1e1785a81a124c01d2c6e199d9b2",
+     "sha1b32": "3VU7ZXFQHUPBPBNIDIJEYAOSY3QZTWNS",
+     "bytes": 4479,
+     "durationSec": 57.966,
+     "lowKey": 43,
+     "highKey": 86,
+     "notes": 290,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "haydn.xvi8.3",
+     "title": "III. Andante",
+     "asset": "midi/krueger/haydn/haydn_8_3.mid",
+     "sha1Hex": "0450deb5ebf083116268c96efcded65f7d3480fa",
+     "sha1b32": "ARIN5NPL6CBRCYTIZFXPZXWWL56TJAH2",
+     "bytes": 4528,
+     "durationSec": 88.175,
+     "lowKey": 38,
+     "highKey": 86,
+     "notes": 344,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "haydn.xvi8.4",
+     "title": "IV. Allegro",
+     "asset": "midi/krueger/haydn/haydn_8_4.mid",
+     "sha1Hex": "d9fce5847570c071ad31f6686b69ba41339afefc",
+     "sha1b32": "3H6OLBDVODAHDLJR6ZUGW2N2IEZZV7X4",
+     "bytes": 4655,
+     "durationSec": 40.409,
+     "lowKey": 38,
+     "highKey": 86,
+     "notes": 396,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "haydn.xvi9",
+   "composer": "Joseph Haydn",
+   "composerShort": "Haydn",
+   "title": "Keyboard Sonata in F major, Hob. XVI:9",
+   "shortTitle": "Sonata Hob. XVI:9",
+   "catalogue": "Hob. XVI:9",
+   "year": 1766,
+   "era": "galant",
+   "shelf": "galant",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "haydn.xvi9.1",
+     "title": "I. Allegro",
+     "asset": "midi/krueger/haydn/haydn_9_1.mid",
+     "sha1Hex": "d9d939efe4f4a0b44b99e7964bd58497cae3f48b",
+     "sha1b32": "3HMTT37E6SQLIS4Z46LEXVMES7FOH5EL",
+     "bytes": 14025,
+     "durationSec": 143.584,
+     "lowKey": 29,
+     "highKey": 86,
+     "notes": 1074,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "haydn.xvi9.2",
+     "title": "II. Menuet",
+     "asset": "midi/krueger/haydn/haydn_9_2.mid",
+     "sha1Hex": "f813702e1b805ef2f3ab4e4c4061e09b75c80784",
+     "sha1b32": "7AJXALQ3QBPPF45LJZGEAYPATN24QB4E",
+     "bytes": 14140,
+     "durationSec": 169.82,
+     "lowKey": 34,
+     "highKey": 86,
+     "notes": 1167,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "haydn.xvi9.3",
+     "title": "III. Scherzo",
+     "asset": "midi/krueger/haydn/haydn_9_3.mid",
+     "sha1Hex": "cf780421245dd61b545d630bbb4933ab0b198941",
+     "sha1b32": "Z54AIIJELXLBWVC5MMF3WSJTVMFRTCKB",
+     "bytes": 5501,
+     "durationSec": 50.435,
+     "lowKey": 46,
+     "highKey": 86,
+     "notes": 506,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "haydn.xvi33",
+   "composer": "Joseph Haydn",
+   "composerShort": "Haydn",
+   "title": "Keyboard Sonata in D major, Hob. XVI:33",
+   "shortTitle": "Sonata Hob. XVI:33",
+   "catalogue": "Hob. XVI:33",
+   "year": 1773,
+   "era": "classical",
+   "shelf": "haydn",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "haydn.xvi33.1",
+     "title": "I. Allegro",
+     "asset": "midi/krueger/haydn/haydn_33_1.mid",
+     "sha1Hex": "0871a8afe64bcfded2b5931e270618c4b9f78147",
+     "sha1b32": "BBY2RL7GJPH55UVVSMPCOBQYYS47PAKH",
+     "bytes": 30993,
+     "durationSec": 338.437,
+     "lowKey": 30,
+     "highKey": 88,
+     "notes": 2654,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "haydn.xvi33.2",
+     "title": "II. Adagio",
+     "asset": "midi/krueger/haydn/haydn_33_2.mid",
+     "sha1Hex": "c17756ec8055cb877c09df2785991dc6c85a2afb",
+     "sha1b32": "YF3VN3EAKXFYO7AJ34TYLGI5Y3EFUKX3",
+     "bytes": 16219,
+     "durationSec": 318.305,
+     "lowKey": 29,
+     "highKey": 89,
+     "notes": 1362,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "haydn.xvi33.3",
+     "title": "III. Tempo di Menuet",
+     "asset": "midi/krueger/haydn/haydn_33_3.mid",
+     "sha1Hex": "2e4820696c7011ed26259e3eecf981703c42eaed",
+     "sha1b32": "FZECA2LMOAI62JRFTY7OZ6MBOA6EF2XN",
+     "bytes": 19446,
+     "durationSec": 236.773,
+     "lowKey": 33,
+     "highKey": 89,
+     "notes": 1731,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "haydn.xvi35",
+   "composer": "Joseph Haydn",
+   "composerShort": "Haydn",
+   "title": "Keyboard Sonata in C major, Hob. XVI:35",
+   "shortTitle": "Sonata Hob. XVI:35",
+   "catalogue": "Hob. XVI:35",
+   "year": 1780,
+   "era": "classical",
+   "shelf": "haydn",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "haydn.xvi35.1",
+     "title": "I. Allegro con brio",
+     "asset": "midi/krueger/haydn/haydn_35_1.mid",
+     "sha1Hex": "808d4f12f5777412b05e9cb7df779e1a82eb1ab2",
+     "sha1b32": "QCGU6EXVO52BFMC6TS356546DKBOWGVS",
+     "bytes": 37264,
+     "durationSec": 347.069,
+     "lowKey": 31,
+     "highKey": 89,
+     "notes": 3387,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "haydn.xvi35.2",
+     "title": "II. Adagio",
+     "asset": "midi/krueger/haydn/haydn_35_2.mid",
+     "sha1Hex": "95d218fe4aff4ef52a4494e783fb38eb917da60e",
+     "sha1b32": "SXJBR7SK75HPKKSESTTYH6ZY5OIX3JQO",
+     "bytes": 19805,
+     "durationSec": 395.394,
+     "lowKey": 29,
+     "highKey": 89,
+     "notes": 2090,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "haydn.xvi35.3",
+     "title": "III. Finale: Allegro",
+     "asset": "midi/krueger/haydn/haydn_35_3.mid",
+     "sha1Hex": "991062467915af8da56e5ae23ffff5f765de989f",
+     "sha1b32": "TEIGERTZCWXY3JLOLLRD777V65S55GE7",
+     "bytes": 15699,
+     "durationSec": 144.337,
+     "lowKey": 36,
+     "highKey": 88,
+     "notes": 1290,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "haydn.xvi40",
+   "composer": "Joseph Haydn",
+   "composerShort": "Haydn",
+   "title": "Keyboard Sonata in G major, Hob. XVI:40",
+   "shortTitle": "Sonata Hob. XVI:40",
+   "catalogue": "Hob. XVI:40",
+   "year": 1784,
+   "era": "classical",
+   "shelf": "haydn",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "haydn.xvi40.1",
+     "title": "I. Allegretto innocente",
+     "asset": "midi/krueger/haydn/hay_40_1.mid",
+     "sha1Hex": "70c090cadfe578d824c08c7ef7b62dccb6e0c82f",
+     "sha1b32": "ODAJBSW74V4NQJGARR7PPNRNZS3OBSBP",
+     "bytes": 31235,
+     "durationSec": 394.228,
+     "lowKey": 38,
+     "highKey": 89,
+     "notes": 3156,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "haydn.xvi40.2",
+     "title": "II. Presto",
+     "asset": "midi/krueger/haydn/hay_40_2.mid",
+     "sha1Hex": "f3e1619af0b71a6f5e7a8841f7393c1526fd4ed5",
+     "sha1b32": "6PQWDGXQW4NG6XT2RBA7OOJ4CUTP2TWV",
+     "bytes": 21596,
+     "durationSec": 179.342,
+     "lowKey": 31,
+     "highKey": 89,
+     "notes": 2310,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "haydn.xvi43",
+   "composer": "Joseph Haydn",
+   "composerShort": "Haydn",
+   "title": "Keyboard Sonata in A-flat major, Hob. XVI:43",
+   "shortTitle": "Sonata Hob. XVI:43",
+   "catalogue": "Hob. XVI:43",
+   "year": 1783,
+   "era": "classical",
+   "shelf": "haydn",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "haydn.xvi43.1",
+     "title": "I. Moderato",
+     "asset": "midi/krueger/haydn/haydn_43_1.mid",
+     "sha1Hex": "84c87f60f5e9b476674ae3d65685179c151a2c89",
+     "sha1b32": "QTEH6YHV5G2HMZ2K4PLFNBIXTQKRULEJ",
+     "bytes": 31417,
+     "durationSec": 377.733,
+     "lowKey": 38,
+     "highKey": 89,
+     "notes": 3011,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "haydn.xvi43.2",
+     "title": "II. Menuetto",
+     "asset": "midi/krueger/haydn/haydn_43_2.mid",
+     "sha1Hex": "bec7cfbca3d64346dcf76a8d2f67b5dd7506d42d",
+     "sha1b32": "X3D47PFD2ZBUNXHXNKGS6Z5V3V2QNVBN",
+     "bytes": 9925,
+     "durationSec": 148.798,
+     "lowKey": 44,
+     "highKey": 84,
+     "notes": 845,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "haydn.xvi43.3",
+     "title": "III. Rondo: Presto",
+     "asset": "midi/krueger/haydn/haydn_43_3.mid",
+     "sha1Hex": "322fbfc6aed71949c910d02bc9ef82c351f53a7c",
+     "sha1b32": "GIX37RVO24MUTSIQ2AV4T34CYNI7KOT4",
+     "bytes": 25193,
+     "durationSec": 306.945,
+     "lowKey": 31,
+     "highKey": 87,
+     "notes": 2296,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "mozart.k281",
+   "composer": "Wolfgang Amadeus Mozart",
+   "composerShort": "Mozart",
+   "title": "Piano Sonata No. 3 in B-flat major, K. 281",
+   "shortTitle": "Sonata K. 281",
+   "catalogue": "K. 281",
+   "year": 1775,
+   "era": "classical",
+   "shelf": "mozart",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "bednarek",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "mozart.k281.1",
+     "title": "Sonata (complete)",
+     "asset": "midi/commons/mozart_k281_bednarek.mid",
+     "sha1Hex": "6cf42ed5593a34a0336f12dfb4bd0459bddc7f2c",
+     "bytes": 112952,
+     "durationSec": 672.668,
+     "lowKey": 34,
+     "highKey": 89,
+     "notes": 5707,
+     "hasSustain": true,
+     "hasSoft": true,
+     "hasSostenuto": false,
+     "pedalMode": "CONTINUOUS",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "mozart.k311",
+   "composer": "Wolfgang Amadeus Mozart",
+   "composerShort": "Mozart",
+   "title": "Piano Sonata No. 9 in D major, K. 311",
+   "shortTitle": "Sonata K. 311",
+   "catalogue": "K. 311",
+   "year": 1777,
+   "era": "classical",
+   "shelf": "mozart",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "mozart.k311.1",
+     "title": "I. Allegro con spirito",
+     "asset": "midi/krueger/mozart/mz_311_1.mid",
+     "sha1Hex": "2f78ad87800d338f28a0461ab897c623f1e58a2c",
+     "sha1b32": "F54K3B4ABUZY6KFAIYNLRF6GEPY6LCRM",
+     "bytes": 28963,
+     "durationSec": 259.67,
+     "lowKey": 35,
+     "highKey": 88,
+     "notes": 2970,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "mozart.k311.2",
+     "title": "II. Andante con espressione",
+     "asset": "midi/krueger/mozart/mz_311_2.mid",
+     "sha1Hex": "c4773dc9a451dd51a39df5aa4cb550e16306ba27",
+     "sha1b32": "YR3T3SNEKHOVDI456WVEZNKQ4FRQNORH",
+     "bytes": 15718,
+     "durationSec": 278.419,
+     "lowKey": 35,
+     "highKey": 88,
+     "notes": 1659,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "mozart.k311.3",
+     "title": "III. Rondeau: Allegro",
+     "asset": "midi/krueger/mozart/mz_311_3.mid",
+     "sha1Hex": "02d8a59f30949c64d5f3af587b9d00c036341959",
+     "sha1b32": "ALMKLHZQSSOGJVPTV5MHXHIAYA3DIGKZ",
+     "bytes": 34889,
+     "durationSec": 365.257,
+     "lowKey": 30,
+     "highKey": 88,
+     "notes": 3517,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "mozart.k330",
+   "composer": "Wolfgang Amadeus Mozart",
+   "composerShort": "Mozart",
+   "title": "Piano Sonata No. 10 in C major, K. 330",
+   "shortTitle": "Sonata K. 330",
+   "catalogue": "K. 330",
+   "year": 1783,
+   "era": "classical",
+   "shelf": "mozart",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "mozart.k330.1",
+     "title": "I. Allegro moderato",
+     "asset": "midi/krueger/mozart/mz_330_1.mid",
+     "sha1Hex": "85940255a8f3f50823c6cba583a257e1ae54032c",
+     "sha1b32": "QWKAEVNI6P2QQI6GZOSYHISX4GXFIAZM",
+     "bytes": 41935,
+     "durationSec": 537.763,
+     "lowKey": 43,
+     "highKey": 89,
+     "notes": 4774,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "mozart.k330.2",
+     "title": "II. Andante cantabile",
+     "asset": "midi/krueger/mozart/mz_330_2.mid",
+     "sha1Hex": "bff5b36983a4fdeef6080c5c3850a84c1596ceab",
+     "sha1b32": "X723G2MDUT6655QIBRODQUFIJQKZNTVL",
+     "bytes": 18285,
+     "durationSec": 393.026,
+     "lowKey": 35,
+     "highKey": 84,
+     "notes": 1487,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "mozart.k330.3",
+     "title": "III. Allegretto",
+     "asset": "midi/krueger/mozart/mz_330_3.mid",
+     "sha1Hex": "df6b2dcb721e87dedbeaa2d4af54b09098f8cd9e",
+     "sha1b32": "35VS3S3SD2D55W7KULKK6VFQSCMPRTM6",
+     "bytes": 39449,
+     "durationSec": 482.101,
+     "lowKey": 36,
+     "highKey": 89,
+     "notes": 4360,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "mozart.k331",
+   "composer": "Wolfgang Amadeus Mozart",
+   "composerShort": "Mozart",
+   "title": "Piano Sonata No. 11 in A major, K. 331 “Rondo alla Turca”",
+   "shortTitle": "Sonata K. 331",
+   "catalogue": "K. 331",
+   "year": 1783,
+   "era": "classical",
+   "shelf": "mozart",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "mozart.k331.1",
+     "title": "I. Andante grazioso",
+     "asset": "midi/krueger/mozart/mz_331_1.mid",
+     "sha1Hex": "054bae94beafd59bed4e97976a215ff3a8d33c71",
+     "sha1b32": "AVF25FF6V7KZX3KOS6LWUIK76OUNGPDR",
+     "bytes": 60764,
+     "durationSec": 830.903,
+     "lowKey": 33,
+     "highKey": 89,
+     "notes": 6207,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "mozart.k331.2",
+     "title": "II. Menuetto",
+     "asset": "midi/krueger/mozart/mz_331_2.mid",
+     "sha1Hex": "8a1571c076dd399405adc45cfe8751940a7001db",
+     "sha1b32": "RIKXDQDW3U4ZIBNNYROP5B2RSQFHAAO3",
+     "bytes": 31014,
+     "durationSec": 365.64,
+     "lowKey": 35,
+     "highKey": 88,
+     "notes": 2681,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "mozart.k331.3",
+     "title": "III. Alla turca: Allegretto",
+     "asset": "midi/krueger/mozart/mz_331_3.mid",
+     "sha1Hex": "2e03181699ec3c921e94cb762ce41fd8e730d796",
+     "sha1b32": "FYBRQFUZ5Q6JEHUUZN3CZZA73DTTBV4W",
+     "bytes": 26436,
+     "durationSec": 189.58,
+     "lowKey": 38,
+     "highKey": 88,
+     "notes": 2819,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "mozart.k332",
+   "composer": "Wolfgang Amadeus Mozart",
+   "composerShort": "Mozart",
+   "title": "Piano Sonata No. 12 in F major, K. 332",
+   "shortTitle": "Sonata K. 332",
+   "catalogue": "K. 332",
+   "year": 1783,
+   "era": "classical",
+   "shelf": "mozart",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "mozart.k332.1",
+     "title": "I. Allegro",
+     "asset": "midi/krueger/mozart/mz_332_1.mid",
+     "sha1Hex": "bd29f30a0676d153354d88702a3cf1ec71849fd1",
+     "sha1b32": "XUU7GCQGO3IVGNKNRBYCUPHR5RYYJH6R",
+     "bytes": 51676,
+     "durationSec": 570.729,
+     "lowKey": 30,
+     "highKey": 89,
+     "notes": 5076,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "mozart.k332.2",
+     "title": "II. Adagio",
+     "asset": "midi/krueger/mozart/mz_332_2.mid",
+     "sha1Hex": "aea98b2f62402897ce078ed7c5adef221eb3cf9f",
+     "sha1b32": "V2UYWL3CIAUJPTQHR3L4LLPPEIPLHT47",
+     "bytes": 15279,
+     "durationSec": 263.383,
+     "lowKey": 46,
+     "highKey": 86,
+     "notes": 1387,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "mozart.k332.3",
+     "title": "III. Allegro assai",
+     "asset": "midi/krueger/mozart/mz_332_3.mid",
+     "sha1Hex": "bc539cf5b15b67528acb1b508a7c282d5afbb4d5",
+     "sha1b32": "XRJZZ5NRLNTVFCWLDNIIU7BIFVNPXNGV",
+     "bytes": 58154,
+     "durationSec": 589.926,
+     "lowKey": 34,
+     "highKey": 89,
+     "notes": 5874,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "mozart.k333",
+   "composer": "Wolfgang Amadeus Mozart",
+   "composerShort": "Mozart",
+   "title": "Piano Sonata No. 13 in B-flat major, K. 333",
+   "shortTitle": "Sonata K. 333",
+   "catalogue": "K. 333",
+   "year": 1783,
+   "era": "classical",
+   "shelf": "mozart",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "mozart.k333.1",
+     "title": "I. Allegro",
+     "asset": "midi/krueger/mozart/mz_333_1.mid",
+     "sha1Hex": "53d94bba92f37c8808644b05d6a39c0098c97f28",
+     "sha1b32": "KPMUXOUS6N6IQCDEJMC5NI44ACMMS7ZI",
+     "bytes": 54070,
+     "durationSec": 629.335,
+     "lowKey": 29,
+     "highKey": 91,
+     "notes": 5778,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 6
+     }
+    },
+    {
+     "id": "mozart.k333.2",
+     "title": "II. Andante cantabile",
+     "asset": "midi/krueger/mozart/mz_333_2.mid",
+     "sha1Hex": "2ad5c599698f4858ea74b9f3c4424499463b0dba",
+     "sha1b32": "FLK4LGLJR5EFR2TUXHZ4IQSETFDDWDN2",
+     "bytes": 26669,
+     "durationSec": 522.374,
+     "lowKey": 39,
+     "highKey": 89,
+     "notes": 2863,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "mozart.k333.3",
+     "title": "III. Allegretto grazioso",
+     "asset": "midi/krueger/mozart/mz_333_3.mid",
+     "sha1Hex": "1d37d12fb29b47b629a9c9fce02b52adf26d6252",
+     "sha1b32": "DU35CL5STND3MKNJZH6OAK2SVXZG2YSS",
+     "bytes": 34575,
+     "durationSec": 348.07,
+     "lowKey": 29,
+     "highKey": 89,
+     "notes": 3191,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "mozart.k545",
+   "composer": "Wolfgang Amadeus Mozart",
+   "composerShort": "Mozart",
+   "title": "Piano Sonata No. 16 in C major, K. 545 “facile”",
+   "shortTitle": "Sonata K. 545",
+   "catalogue": "K. 545",
+   "year": 1788,
+   "era": "classical",
+   "shelf": "mozart",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "mozart.k545.1",
+     "title": "I. Allegro",
+     "asset": "midi/krueger/mozart/mz_545_1.mid",
+     "sha1Hex": "9171ac669d31ac4e491dcabac290f449944395d0",
+     "sha1b32": "SFY2YZU5GGWE4SI5ZK5MFEHUJGKEHFOQ",
+     "bytes": 31163,
+     "durationSec": 261.134,
+     "lowKey": 36,
+     "highKey": 89,
+     "notes": 2714,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "mozart.k545.2",
+     "title": "II. Andante",
+     "asset": "midi/krueger/mozart/mz_545_2.mid",
+     "sha1Hex": "ff12b91894e991bb021bc44cc4da559243a22a4c",
+     "sha1b32": "74JLSGEU5GI3WAQ3YRGMJWSVSJB2EKSM",
+     "bytes": 18301,
+     "durationSec": 344.272,
+     "lowKey": 43,
+     "highKey": 87,
+     "notes": 1909,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "mozart.k545.3",
+     "title": "III. Rondo: Allegretto",
+     "asset": "midi/krueger/mozart/mz_545_3.mid",
+     "sha1Hex": "dcfe68463b982cf1c7f46b9d4120cad3d4f97296",
+     "sha1b32": "3T7GQRR3TAWPDR7UNOOUCIGK2PKPS4UW",
+     "bytes": 9971,
+     "durationSec": 104.199,
+     "lowKey": 36,
+     "highKey": 89,
+     "notes": 961,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "mozart.k570",
+   "composer": "Wolfgang Amadeus Mozart",
+   "composerShort": "Mozart",
+   "title": "Piano Sonata No. 17 in B-flat major, K. 570",
+   "shortTitle": "Sonata K. 570",
+   "catalogue": "K. 570",
+   "year": 1789,
+   "era": "classical",
+   "shelf": "mozart",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "mozart.k570.1",
+     "title": "I. Allegro",
+     "asset": "midi/krueger/mozart/mz_570_1.mid",
+     "sha1Hex": "07f91b6f9e8c477929ac91a762c4567dacf27ba7",
+     "sha1b32": "A74RW346RRDXSKNMSGTWFRCWPWWPE65H",
+     "bytes": 44233,
+     "durationSec": 476.067,
+     "lowKey": 34,
+     "highKey": 89,
+     "notes": 4110,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "mozart.k570.2",
+     "title": "II. Adagio",
+     "asset": "midi/krueger/mozart/mz_570_2.mid",
+     "sha1Hex": "52565f984763d6b31d5229c524e54e337daf43af",
+     "sha1b32": "KJLF7GCHMPLLGHKSFHCSJZKOGN626Q5P",
+     "bytes": 21926,
+     "durationSec": 454.453,
+     "lowKey": 34,
+     "highKey": 87,
+     "notes": 1968,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "mozart.k570.3",
+     "title": "III. Allegretto",
+     "asset": "midi/krueger/mozart/mz_570_3.mid",
+     "sha1Hex": "b36b3e6f633d99488f731e36daac837d0d4eb7d6",
+     "sha1b32": "WNVT433DHWMURD3TDY3NVLEDPUGU5N6W",
+     "bytes": 20795,
+     "durationSec": 200.267,
+     "lowKey": 36,
+     "highKey": 89,
+     "notes": 1922,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "mozart.k397",
+   "composer": "Wolfgang Amadeus Mozart",
+   "composerShort": "Mozart",
+   "title": "Fantasia in D minor, K. 397",
+   "shortTitle": "Fantasia K. 397",
+   "catalogue": "K. 397",
+   "year": 1782,
+   "era": "classical",
+   "shelf": "mozart",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "mutopia",
+   "tier": "B",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "mozart.k397.1",
+     "title": "Fantasia",
+     "asset": "midi/mutopia/mozart_k397.mid",
+     "sha1Hex": "6ff90f1284fae3957f3d886a114be3bd469d1fd3",
+     "bytes": 13485,
+     "durationSec": 283.252,
+     "lowKey": 33,
+     "highKey": 89,
+     "notes": 1511,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "mozart.k457",
+   "composer": "Wolfgang Amadeus Mozart",
+   "composerShort": "Mozart",
+   "title": "Piano Sonata No. 14 in C minor, K. 457",
+   "shortTitle": "Sonata K. 457",
+   "catalogue": "K. 457",
+   "year": 1784,
+   "era": "classical",
+   "shelf": "mozart",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "mutopia",
+   "tier": "C",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "mozart.k457.1",
+     "title": "I. Molto allegro",
+     "asset": "midi/mutopia/mozart_k457_1.mid",
+     "sha1Hex": "14e784504ec6ae19a0ef7ded0d8508ea94e6abcf",
+     "bytes": 20899,
+     "durationSec": 263.571,
+     "lowKey": 29,
+     "highKey": 89,
+     "notes": 2160,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "mozart.k457.2",
+     "title": "II. Adagio",
+     "asset": "midi/mutopia/mozart_k457_2.mid",
+     "sha1Hex": "65f99aaadc3988a5db24f757f2af793b21f1922d",
+     "bytes": 17611,
+     "durationSec": 406.323,
+     "lowKey": 32,
+     "highKey": 89,
+     "notes": 1860,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "mozart.k457.3",
+     "title": "III. Allegro assai",
+     "asset": "midi/mutopia/mozart_k457_3.mid",
+     "sha1Hex": "7fafaa11e4979e29bac441cd8fcb962dc5f7a732",
+     "bytes": 21088,
+     "durationSec": 434.545,
+     "lowKey": 30,
+     "highKey": 89,
+     "notes": 2168,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "mozart.k265",
+   "composer": "Wolfgang Amadeus Mozart",
+   "composerShort": "Mozart",
+   "title": "Twelve Variations on “Ah vous dirai-je, Maman”, K. 265",
+   "shortTitle": "Variations K. 265",
+   "catalogue": "K. 265",
+   "year": 1781,
+   "era": "classical",
+   "shelf": "mozart",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "bednarek",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "mozart.k265.1",
+     "title": "Theme and twelve variations",
+     "asset": "midi/commons/mozart_k265_bednarek.mid",
+     "sha1Hex": "83a90bfa157c9dbabfac0935a6fa83de9c1e3cb2",
+     "bytes": 44090,
+     "durationSec": 711.618,
+     "lowKey": 29,
+     "highKey": 89,
+     "notes": 6490,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "clementi.op36",
+   "composer": "Muzio Clementi",
+   "composerShort": "Clementi",
+   "title": "Six Sonatinas, op. 36",
+   "shortTitle": "Sonatinas op. 36",
+   "catalogue": "op. 36",
+   "year": 1797,
+   "era": "classical",
+   "shelf": "clementi",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "clementi.op36.1",
+     "title": "No. 1 in C major: I. Allegro",
+     "asset": "midi/krueger/clementi/clementi_opus36_1_1.mid",
+     "sha1Hex": "9c4d1e64ead022b2b7c23bc10a57a5497c898ec1",
+     "sha1b32": "TRGR4ZHK2ARLFN6CHPAQUV5FJF6ITDWB",
+     "bytes": 11381,
+     "durationSec": 90.473,
+     "lowKey": 36,
+     "highKey": 86,
+     "notes": 666,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "clementi.op36.2",
+     "title": "No. 1 in C major: II. Andante",
+     "asset": "midi/krueger/clementi/clementi_opus36_1_2.mid",
+     "sha1Hex": "2726803165b6f94b5b2404802e42b99b9eb10ba7",
+     "sha1b32": "E4TIAMLFW34UWWZEASAC4QVZTOPLCC5H",
+     "bytes": 4113,
+     "durationSec": 68.216,
+     "lowKey": 36,
+     "highKey": 81,
+     "notes": 355,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "clementi.op36.3",
+     "title": "No. 1 in C major: III. Vivace",
+     "asset": "midi/krueger/clementi/clementi_opus36_1_3.mid",
+     "sha1Hex": "1ad4d0f930534e7cb1dbae8748402a381255a347",
+     "sha1b32": "DLKNB6JQKNHHZMO3V2DUQQBKHAJFLI2H",
+     "bytes": 6124,
+     "durationSec": 55.508,
+     "lowKey": 43,
+     "highKey": 86,
+     "notes": 472,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "clementi.op36.4",
+     "title": "No. 2 in G major: I. Allegretto",
+     "asset": "midi/krueger/clementi/clementi_opus36_2_1.mid",
+     "sha1Hex": "de9b6e58b751dae239ce0294e7b9450a4491dbe0",
+     "sha1b32": "32NW4WFXKHNOEOOOAKKOPOKFBJCJDW7A",
+     "bytes": 14895,
+     "durationSec": 118.521,
+     "lowKey": 38,
+     "highKey": 86,
+     "notes": 1108,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "clementi.op36.5",
+     "title": "No. 2 in G major: II. Allegretto",
+     "asset": "midi/krueger/clementi/clementi_opus36_2_2.mid",
+     "sha1Hex": "a780eb1a1343edd8aaafb786b3cb6453ea070a6d",
+     "sha1b32": "U6AOWGQTIPW5RKVPW6DLHS3EKPVAOCTN",
+     "bytes": 3812,
+     "durationSec": 66.019,
+     "lowKey": 36,
+     "highKey": 84,
+     "notes": 253,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "clementi.op36.6",
+     "title": "No. 2 in G major: III. Allegro",
+     "asset": "midi/krueger/clementi/clementi_opus36_2_3.mid",
+     "sha1Hex": "c646c3921f3d0ce959d9f530c587dafe48066898",
+     "sha1b32": "YZDMHEQ7HUGOSWOZ6UYMLB627ZEAM2EY",
+     "bytes": 9239,
+     "durationSec": 93.283,
+     "lowKey": 43,
+     "highKey": 86,
+     "notes": 732,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "clementi.op36.7",
+     "title": "No. 3 in C major: I. Spiritoso",
+     "asset": "midi/krueger/clementi/clementi_opus36_3_1.mid",
+     "sha1Hex": "b11c2e0d7246a6cd5305e3592fa080e53c3c10e4",
+     "sha1b32": "WEOC4DLSI2TM2UYF4NMS7IEA4U6DYEHE",
+     "bytes": 17816,
+     "durationSec": 173.414,
+     "lowKey": 36,
+     "highKey": 89,
+     "notes": 1534,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "clementi.op36.8",
+     "title": "No. 3 in C major: II. Un poco adagio",
+     "asset": "midi/krueger/clementi/clementi_opus36_3_2.mid",
+     "sha1Hex": "659405ad2799230c2f5327536af85d4180b29da6",
+     "sha1b32": "MWKALLJHTERQYL2TE5JWV6C5IGALFHNG",
+     "bytes": 3655,
+     "durationSec": 87.826,
+     "lowKey": 48,
+     "highKey": 86,
+     "notes": 274,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "clementi.op36.9",
+     "title": "No. 3 in C major: III. Allegro",
+     "asset": "midi/krueger/clementi/clementi_opus36_3_3.mid",
+     "sha1Hex": "052c35da6015e0dc325f1bf13bdf9068aec7a432",
+     "sha1b32": "AUWDLWTACXQNYMS7DPYTXX4QNCXMPJBS",
+     "bytes": 9000,
+     "durationSec": 79.105,
+     "lowKey": 47,
+     "highKey": 88,
+     "notes": 867,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "clementi.op36.10",
+     "title": "No. 4 in F major: I. Con spirito",
+     "asset": "midi/krueger/clementi/clementi_opus36_4_1.mid",
+     "sha1Hex": "8442a3831ce4696959a12c8d35a6aec4624646b2",
+     "sha1b32": "QRBKHAY44RUWSWNBFSGTLJVOYRREMRVS",
+     "bytes": 18199,
+     "durationSec": 198.485,
+     "lowKey": 36,
+     "highKey": 89,
+     "notes": 1714,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "clementi.op36.11",
+     "title": "No. 4 in F major: II. Andante con espressione",
+     "asset": "midi/krueger/clementi/clementi_opus36_4_2.mid",
+     "sha1Hex": "cf848ffa55224619542733d8ed73e250c9fb7b34",
+     "sha1b32": "Z6CI76SVEJDBSVBHGPMO247CKDE7W6ZU",
+     "bytes": 5685,
+     "durationSec": 104.06,
+     "lowKey": 34,
+     "highKey": 86,
+     "notes": 472,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "clementi.op36.12",
+     "title": "No. 4 in F major: III. Rondo: Allegro vivace",
+     "asset": "midi/krueger/clementi/clementi_opus36_4_3.mid",
+     "sha1Hex": "c58a4a75419505ddf2f780de17f4fd1864a24109",
+     "sha1b32": "YWFEU5KBSUC534XXQDPBP5H5DBSKEQIJ",
+     "bytes": 11663,
+     "durationSec": 106.714,
+     "lowKey": 36,
+     "highKey": 88,
+     "notes": 1163,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "clementi.op36.13",
+     "title": "No. 5 in G major: I. Presto",
+     "asset": "midi/krueger/clementi/clementi_opus36_5_1.mid",
+     "sha1Hex": "c2a3d46bc9199883528aad27f765e8c297c8aa55",
+     "sha1b32": "YKR5I26JDGMIGUUKVUT7OZPIYKL4RKSV",
+     "bytes": 26278,
+     "durationSec": 295.569,
+     "lowKey": 35,
+     "highKey": 88,
+     "notes": 2802,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "clementi.op36.14",
+     "title": "No. 5 in G major: II. Air suisse: Allegro moderato",
+     "asset": "midi/krueger/clementi/clementi_opus36_5_2.mid",
+     "sha1Hex": "846cd32a0e704c32aed1267b961424e5607989a1",
+     "sha1b32": "QRWNGKQOOBGDFLWREZ5ZMFBE4VQHTCNB",
+     "bytes": 7770,
+     "durationSec": 106.706,
+     "lowKey": 36,
+     "highKey": 88,
+     "notes": 729,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "clementi.op36.15",
+     "title": "No. 5 in G major: III. Rondo: Allegro di molto",
+     "asset": "midi/krueger/clementi/clementi_opus36_5_3.mid",
+     "sha1Hex": "d8d2f357270642893102e99c5f1e104581068b8b",
+     "sha1b32": "3DJPGVZHAZBISMIC5GOF6HQQIWAQNC4L",
+     "bytes": 15677,
+     "durationSec": 175.96,
+     "lowKey": 38,
+     "highKey": 88,
+     "notes": 1497,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "clementi.op36.16",
+     "title": "No. 6 in D major: I. Allegro con spirito",
+     "asset": "midi/krueger/clementi/clementi_opus36_6_1.mid",
+     "sha1Hex": "dafc260fdebeb240632b7d36aab0a0fd6df34623",
+     "sha1b32": "3L6CMD66X2ZEAYZLPU3KVMFA7VW7GRRD",
+     "bytes": 31903,
+     "durationSec": 320.62,
+     "lowKey": 31,
+     "highKey": 86,
+     "notes": 3134,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "clementi.op36.17",
+     "title": "No. 6 in D major: II. Rondo: Allegretto spiritoso",
+     "asset": "midi/krueger/clementi/clementi_opus36_6_2.mid",
+     "sha1Hex": "8478cb996bc06d5e09907ca16cc6fa8d177df6d1",
+     "sha1b32": "QR4MXGLLYBWV4CMQPSQWZRX2RULX35WR",
+     "bytes": 14507,
+     "durationSec": 136.599,
+     "lowKey": 33,
+     "highKey": 88,
+     "notes": 1405,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "beethoven.op10-1",
+   "composer": "Ludwig van Beethoven",
+   "composerShort": "Beethoven",
+   "title": "Piano Sonata No. 5 in C minor, op. 10 no. 1",
+   "shortTitle": "Sonata op. 10/1",
+   "catalogue": "op. 10/1",
+   "year": 1798,
+   "era": "classical",
+   "shelf": "beethoven",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "beethoven.op10-1.1",
+     "title": "I. Allegro molto e con brio",
+     "asset": "midi/krueger/beethoven/beethoven_opus10_1.mid",
+     "sha1Hex": "fac9510768c2642340df18d29cea5ece9bc0add0",
+     "sha1b32": "7LEVCB3IYJSCGQG7DDJJZ2S6Z2N4BLOQ",
+     "bytes": 35374,
+     "durationSec": 391.351,
+     "lowKey": 31,
+     "highKey": 90,
+     "notes": 2874,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 1
+     }
+    },
+    {
+     "id": "beethoven.op10-1.2",
+     "title": "II. Adagio molto",
+     "asset": "midi/krueger/beethoven/beethoven_opus10_2.mid",
+     "sha1Hex": "8fa02c8102b7d6de4a6491e94c3be5c05080f31d",
+     "sha1b32": "R6QCZAICW7LN4STESHUUYO7FYBIIB4Y5",
+     "bytes": 16900,
+     "durationSec": 388.625,
+     "lowKey": 29,
+     "highKey": 89,
+     "notes": 1616,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "beethoven.op10-1.3",
+     "title": "III. Finale: Prestissimo",
+     "asset": "midi/krueger/beethoven/beethoven_opus10_3.mid",
+     "sha1Hex": "0ff564dfd2a6144c079df6371315ad95c9d42732",
+     "sha1b32": "B72WJX6SUYKEYB456Y3RGFNNSXE5IJZS",
+     "bytes": 28449,
+     "durationSec": 216.978,
+     "lowKey": 29,
+     "highKey": 89,
+     "notes": 2765,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "beethoven.op13",
+   "composer": "Ludwig van Beethoven",
+   "composerShort": "Beethoven",
+   "title": "Piano Sonata No. 8 in C minor, op. 13 “Pathétique”",
+   "shortTitle": "Sonata op. 13 “Pathétique”",
+   "catalogue": "op. 13",
+   "year": 1799,
+   "era": "classical",
+   "shelf": "beethoven",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "beethoven.op13.1",
+     "title": "I. Grave – Allegro di molto e con brio",
+     "asset": "midi/krueger/beethoven/pathetique_1.mid",
+     "sha1Hex": "b645c271ea6b54314637d5f63c13e0e0d2bbdfd8",
+     "sha1b32": "WZC4E4PKNNKDCRRX2X3DYE7A4DJLXX6Y",
+     "bytes": 54025,
+     "durationSec": 558.852,
+     "lowKey": 29,
+     "highKey": 89,
+     "notes": 5954,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "beethoven.op13.2",
+     "title": "II. Adagio cantabile",
+     "asset": "midi/krueger/beethoven/pathetique_2.mid",
+     "sha1Hex": "60d6cc94cd7ec0b1885ccbde8a29e6d9462a6403",
+     "sha1b32": "MDLMZFGNP3ALDCC4ZPPIUKPG3FDCUZAD",
+     "bytes": 15424,
+     "durationSec": 304.032,
+     "lowKey": 29,
+     "highKey": 89,
+     "notes": 1641,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "beethoven.op13.3",
+     "title": "III. Rondo: Allegro",
+     "asset": "midi/krueger/beethoven/pathetique_3.mid",
+     "sha1Hex": "bea257c9ad076f29fa91a3b0a5f2e28459499f35",
+     "sha1b32": "X2RFPSNNA5XST6URUOYKL4XCQRMUTHZV",
+     "bytes": 28484,
+     "durationSec": 256.374,
+     "lowKey": 29,
+     "highKey": 89,
+     "notes": 2395,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "beethoven.op22",
+   "composer": "Ludwig van Beethoven",
+   "composerShort": "Beethoven",
+   "title": "Piano Sonata No. 11 in B-flat major, op. 22",
+   "shortTitle": "Sonata op. 22",
+   "catalogue": "op. 22",
+   "year": 1800,
+   "era": "classical",
+   "shelf": "beethoven",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "beethoven.op22.1",
+     "title": "I. Allegro con brio",
+     "asset": "midi/krueger/beethoven/beethoven_opus22_1.mid",
+     "sha1Hex": "cde35dbf2e3aa407cc5765027319add9035daac3",
+     "sha1b32": "ZXRV3PZOHKSAPTCXMUBHGGNN3EBV3KWD",
+     "bytes": 52185,
+     "durationSec": 399.624,
+     "lowKey": 29,
+     "highKey": 89,
+     "notes": 5189,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "beethoven.op22.2",
+     "title": "II. Adagio con molta espressione",
+     "asset": "midi/krueger/beethoven/beethoven_opus22_2.mid",
+     "sha1Hex": "e2e46585aedb7bfd43b5663f1f739bce346ca719",
+     "sha1b32": "4LSGLBNO3N572Q5VMY7R6443ZY2GZJYZ",
+     "bytes": 20864,
+     "durationSec": 321.13,
+     "lowKey": 31,
+     "highKey": 89,
+     "notes": 2191,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "beethoven.op22.3",
+     "title": "III. Menuetto",
+     "asset": "midi/krueger/beethoven/beethoven_opus22_3.mid",
+     "sha1Hex": "d63c99d9abf9cbcba4aadbb75a0ffe8b30988df1",
+     "sha1b32": "2Y6JTWNL7HF4XJFK3O3VUD76RMYJRDPR",
+     "bytes": 18695,
+     "durationSec": 182.948,
+     "lowKey": 33,
+     "highKey": 86,
+     "notes": 1921,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "beethoven.op22.4",
+     "title": "IV. Rondo: Allegretto",
+     "asset": "midi/krueger/beethoven/beethoven_opus22_4.mid",
+     "sha1Hex": "24b1b8497704e224f949f0d532a9c091ac414d2f",
+     "sha1b32": "ESY3QSLXATRCJ6KJ6DKTFKOASGWECTJP",
+     "bytes": 30309,
+     "durationSec": 282.767,
+     "lowKey": 29,
+     "highKey": 89,
+     "notes": 3502,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "beethoven.op27-2",
+   "composer": "Ludwig van Beethoven",
+   "composerShort": "Beethoven",
+   "title": "Piano Sonata No. 14 in C-sharp minor, op. 27 no. 2 “Moonlight”",
+   "shortTitle": "Sonata op. 27/2 “Moonlight”",
+   "catalogue": "op. 27/2",
+   "year": 1801,
+   "era": "classical",
+   "shelf": "beethoven",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "beethoven.op27-2.1",
+     "title": "I. Adagio sostenuto",
+     "asset": "midi/krueger/beethoven/mond_1.mid",
+     "sha1Hex": "c6bb15ef43b3dec2f0d0609ff1b72dcd64b86cd3",
+     "sha1b32": "Y25RL32DWPPMF4GQMCP7DNZNZVSLQ3GT",
+     "bytes": 15362,
+     "durationSec": 361.984,
+     "lowKey": 29,
+     "highKey": 87,
+     "notes": 1144,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "beethoven.op27-2.2",
+     "title": "II. Allegretto",
+     "asset": "midi/krueger/beethoven/mond_2.mid",
+     "sha1Hex": "6f73f2b3837edd19f29771a10639eb4295cfe224",
+     "sha1b32": "N5Z7FM4DP3ORT4UXOGQQMOPLIKK47YRE",
+     "bytes": 9850,
+     "durationSec": 124.043,
+     "lowKey": 32,
+     "highKey": 82,
+     "notes": 898,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "beethoven.op27-2.3",
+     "title": "III. Presto agitato",
+     "asset": "midi/krueger/beethoven/mond_3.mid",
+     "sha1Hex": "1b2f3b6441e936723a01038f410346395949daaa",
+     "sha1b32": "DMXTWZCB5E3HEOQBAOHUCA2GHFMUTWVK",
+     "bytes": 53082,
+     "durationSec": 410.357,
+     "lowKey": 29,
+     "highKey": 88,
+     "notes": 6538,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "beethoven.op31-2",
+   "composer": "Ludwig van Beethoven",
+   "composerShort": "Beethoven",
+   "title": "Piano Sonata No. 17 in D minor, op. 31 no. 2 “Tempest”, I–II",
+   "shortTitle": "Sonata op. 31/2 “Tempest”",
+   "catalogue": "op. 31/2",
+   "year": 1802,
+   "era": "classical",
+   "shelf": "beethoven",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "mutopia",
+   "tier": "B",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "beethoven.op31-2.1",
+     "title": "I. Largo – Allegro",
+     "asset": "midi/mutopia/beethoven_op31_2_1.mid",
+     "sha1Hex": "e67eb7ca07f4491bff4e9d2d259d283d6673b848",
+     "bytes": 26263,
+     "durationSec": 372.911,
+     "lowKey": 29,
+     "highKey": 89,
+     "notes": 2864,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "beethoven.op31-2.2",
+     "title": "II. Adagio",
+     "asset": "midi/mutopia/beethoven_op31_2_2.mid",
+     "sha1Hex": "54b0e7bf9e9ecb98222a85b550c125d656a3a08d",
+     "bytes": 14632,
+     "durationSec": 469.875,
+     "lowKey": 29,
+     "highKey": 89,
+     "notes": 1626,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "beethoven.op49-2",
+   "composer": "Ludwig van Beethoven",
+   "composerShort": "Beethoven",
+   "title": "Piano Sonata No. 20 in G major, op. 49 no. 2",
+   "shortTitle": "Sonata op. 49/2",
+   "catalogue": "op. 49/2",
+   "year": 1796,
+   "era": "classical",
+   "shelf": "beethoven",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "mutopia",
+   "tier": "B",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "beethoven.op49-2.1",
+     "title": "I. Allegro ma non troppo",
+     "asset": "midi/mutopia/beethoven_op49_2_1.mid",
+     "sha1Hex": "3a9d9e92e75d9364d06c1d49defbe357b79cba94",
+     "bytes": 14953,
+     "durationSec": 204.929,
+     "lowKey": 31,
+     "highKey": 88,
+     "notes": 1626,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "beethoven.op49-2.2",
+     "title": "II. Tempo di Menuetto",
+     "asset": "midi/mutopia/beethoven_op49_2_2.mid",
+     "sha1Hex": "3087c0f0313e2b93266392688e9e5907072c63f6",
+     "bytes": 11560,
+     "durationSec": 160.746,
+     "lowKey": 43,
+     "highKey": 88,
+     "notes": 1280,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "beethoven.op53",
+   "composer": "Ludwig van Beethoven",
+   "composerShort": "Beethoven",
+   "title": "Piano Sonata No. 21 in C major, op. 53 “Waldstein”",
+   "shortTitle": "Sonata op. 53 “Waldstein”",
+   "catalogue": "op. 53",
+   "year": 1804,
+   "era": "classical",
+   "shelf": "beethoven",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "beethoven.op53.1",
+     "title": "I. Allegro con brio",
+     "asset": "midi/krueger/beethoven/waldstein_1.mid",
+     "sha1Hex": "04e4f155f8fbbc80941dd094bcd6597138287e61",
+     "sha1b32": "ATSPCVPY7O6IBFA52CKLZVSZOE4CQ7TB",
+     "bytes": 81048,
+     "durationSec": 618.433,
+     "lowKey": 29,
+     "highKey": 93,
+     "notes": 8576,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 70
+     }
+    },
+    {
+     "id": "beethoven.op53.2",
+     "title": "II. Introduzione: Adagio molto",
+     "asset": "midi/krueger/beethoven/waldstein_2.mid",
+     "sha1Hex": "af9a879f0ecd725f99fbf79422d0cf08e837f7f4",
+     "sha1b32": "V6NIPHYOZVZF7GP366KCFUGPBDUDP57U",
+     "bytes": 5442,
+     "durationSec": 246.166,
+     "lowKey": 29,
+     "highKey": 89,
+     "notes": 493,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "beethoven.op53.3",
+     "title": "III. Rondo: Allegretto moderato",
+     "asset": "midi/krueger/beethoven/waldstein_3.mid",
+     "sha1Hex": "255705a83bc26216609ede421feea61c6ac21926",
+     "sha1b32": "EVLQLKB3YJRBMYE63ZBB73VGDRVMEGJG",
+     "bytes": 76729,
+     "durationSec": 578.099,
+     "lowKey": 29,
+     "highKey": 93,
+     "notes": 7361,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 96
+     }
+    }
+   ]
+  },
+  {
+   "id": "beethoven.op57",
+   "composer": "Ludwig van Beethoven",
+   "composerShort": "Beethoven",
+   "title": "Piano Sonata No. 23 in F minor, op. 57 “Appassionata”",
+   "shortTitle": "Sonata op. 57 “Appassionata”",
+   "catalogue": "op. 57",
+   "year": 1805,
+   "era": "classical",
+   "shelf": "beethoven",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "beethoven.op57.1",
+     "title": "I. Allegro assai",
+     "asset": "midi/krueger/beethoven/appass_1.mid",
+     "sha1Hex": "d819aa699385473f5e9ca983e9a2a0ea5e9dc109",
+     "sha1b32": "3AM2U2MTQVDT6XU4VGB6TIVA5JPJ3QIJ",
+     "bytes": 73000,
+     "durationSec": 558.899,
+     "lowKey": 29,
+     "highKey": 96,
+     "notes": 6377,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 123
+     }
+    },
+    {
+     "id": "beethoven.op57.2",
+     "title": "II. Andante con moto",
+     "asset": "midi/krueger/beethoven/appass_2.mid",
+     "sha1Hex": "e886288cd39b3c7232082191f908cff0161291b3",
+     "sha1b32": "5CDCRDGTTM6HEMQIEGI7SCGP6ALBFENT",
+     "bytes": 21114,
+     "durationSec": 369.884,
+     "lowKey": 30,
+     "highKey": 94,
+     "notes": 1981,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 13
+     }
+    },
+    {
+     "id": "beethoven.op57.3",
+     "title": "III. Allegro ma non troppo",
+     "asset": "midi/krueger/beethoven/appass_3.mid",
+     "sha1Hex": "fe5bc4c4ee8c45c3002d55c283f925e06750acb5",
+     "sha1b32": "7ZN4JRHORRC4GABNKXBIH6JF4BTVBLFV",
+     "bytes": 67826,
+     "durationSec": 464.551,
+     "lowKey": 29,
+     "highKey": 96,
+     "notes": 7223,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 188
+     }
+    }
+   ]
+  },
+  {
+   "id": "beethoven.op81a",
+   "composer": "Ludwig van Beethoven",
+   "composerShort": "Beethoven",
+   "title": "Piano Sonata No. 26 in E-flat major, op. 81a “Les Adieux”",
+   "shortTitle": "Sonata op. 81a “Les Adieux”",
+   "catalogue": "op. 81a",
+   "year": 1810,
+   "era": "classical",
+   "shelf": "beethoven",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "beethoven.op81a.1",
+     "title": "I. Das Lebewohl: Adagio – Allegro",
+     "asset": "midi/krueger/beethoven/beethoven_les_adieux_1.mid",
+     "sha1Hex": "364bef51c0f62b43b62e0ae6fa70275bc8a0125b",
+     "sha1b32": "GZF66UOA6YVUHNROBLTPU4BHLPEKAES3",
+     "bytes": 33014,
+     "durationSec": 341.95,
+     "lowKey": 29,
+     "highKey": 96,
+     "notes": 3308,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 65
+     }
+    },
+    {
+     "id": "beethoven.op81a.2",
+     "title": "II. Abwesenheit: Andante espressivo",
+     "asset": "midi/krueger/beethoven/beethoven_les_adieux_2.mid",
+     "sha1Hex": "c134e3047fbe3337fffe1afa431e7e30d834767a",
+     "sha1b32": "YE2OGBD7XYZTP776DL5EGHT6GDMDI5T2",
+     "bytes": 9313,
+     "durationSec": 173.543,
+     "lowKey": 28,
+     "highKey": 92,
+     "notes": 868,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 4
+     }
+    },
+    {
+     "id": "beethoven.op81a.3",
+     "title": "III. Das Wiedersehen: Vivacissimamente",
+     "asset": "midi/krueger/beethoven/beethoven_les_adieux_3.mid",
+     "sha1Hex": "af9935a480ae684ae99515600f41372c47d9cb95",
+     "sha1b32": "V6MTLJEAVZUEV2MVCVQA6QJXFRD5TS4V",
+     "bytes": 45803,
+     "durationSec": 300.601,
+     "lowKey": 29,
+     "highKey": 101,
+     "notes": 5331,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 187
+     }
+    }
+   ]
+  },
+  {
+   "id": "beethoven.woo59",
+   "composer": "Ludwig van Beethoven",
+   "composerShort": "Beethoven",
+   "title": "Bagatelle in A minor, WoO 59 “Für Elise”",
+   "shortTitle": "Für Elise",
+   "catalogue": "WoO 59",
+   "year": 1810,
+   "era": "classical",
+   "shelf": "beethoven",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "beethoven.woo59.1",
+     "title": "Für Elise",
+     "asset": "midi/krueger/beethoven/elise.mid",
+     "sha1Hex": "cb56778cc1470565c9711de3c14341761d7570ff",
+     "sha1b32": "ZNLHPDGBI4CWLSLRDXR4CQ2BOYOXK4H7",
+     "bytes": 14264,
+     "durationSec": 165.596,
+     "lowKey": 33,
+     "highKey": 100,
+     "notes": 1041,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 11
+     }
+    }
+   ]
+  },
+  {
+   "id": "beethoven.op90",
+   "composer": "Ludwig van Beethoven",
+   "composerShort": "Beethoven",
+   "title": "Piano Sonata No. 27 in E minor, op. 90",
+   "shortTitle": "Sonata op. 90",
+   "catalogue": "op. 90",
+   "year": 1814,
+   "era": "classical",
+   "shelf": "beethoven",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "beethoven.op90.1",
+     "title": "I. Mit Lebhaftigkeit und durchaus mit Empfindung und Ausdruck",
+     "asset": "midi/krueger/beethoven/beethoven_opus90_1.mid",
+     "sha1Hex": "c60024faeffcd298b199d31f705130ef395d33ad",
+     "sha1b32": "YYACJ6XP7TJJRMMZ2MPXAUJQ544V2M5N",
+     "bytes": 23798,
+     "durationSec": 292.933,
+     "lowKey": 28,
+     "highKey": 96,
+     "notes": 2633,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 52
+     }
+    },
+    {
+     "id": "beethoven.op90.2",
+     "title": "II. Nicht zu geschwind und sehr singbar vorgetragen",
+     "asset": "midi/krueger/beethoven/beethoven_opus90_2.mid",
+     "sha1Hex": "b7290402469b0f978f7cc6815ca711009c5c9528",
+     "sha1b32": "W4UQIASGTMHZPD34Y2AVZJYRACOFZFJI",
+     "bytes": 37077,
+     "durationSec": 494.235,
+     "lowKey": 30,
+     "highKey": 93,
+     "notes": 4010,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 16
+     }
+    }
+   ]
+  },
+  {
+   "id": "beethoven.op106",
+   "composer": "Ludwig van Beethoven",
+   "composerShort": "Beethoven",
+   "title": "Piano Sonata No. 29 in B-flat major, op. 106 “Hammerklavier”",
+   "shortTitle": "Sonata op. 106 “Hammerklavier”",
+   "catalogue": "op. 106",
+   "year": 1818,
+   "era": "classical",
+   "shelf": "beethoven",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "beethoven.op106.1",
+     "title": "I. Allegro",
+     "asset": "midi/krueger/beethoven/beethoven_hammerklavier_1.mid",
+     "sha1Hex": "82b9008585b725681262e353d91b590cf2f096ea",
+     "sha1b32": "QK4QBBMFW4SWQETC4NJ5SG2ZBTZPBFXK",
+     "bytes": 74228,
+     "durationSec": 592.239,
+     "lowKey": 29,
+     "highKey": 101,
+     "notes": 8290,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 460
+     }
+    },
+    {
+     "id": "beethoven.op106.2",
+     "title": "II. Scherzo: Assai vivace",
+     "asset": "midi/krueger/beethoven/beethoven_hammerklavier_2.mid",
+     "sha1Hex": "09f4d31f1c60be0e424f66ccae3fb1c632a4ba47",
+     "sha1b32": "BH2NGHY4MC7A4QSPM3GK4P5RYYZKJOSH",
+     "bytes": 19195,
+     "durationSec": 135.837,
+     "lowKey": 29,
+     "highKey": 101,
+     "notes": 1887,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 34
+     }
+    },
+    {
+     "id": "beethoven.op106.3",
+     "title": "III. Adagio sostenuto",
+     "asset": "midi/krueger/beethoven/beethoven_hammerklavier_3.mid",
+     "sha1Hex": "9eff5d9df099df46103eb5f9368f44c78cb195ef",
+     "sha1b32": "T37V3HPQTHPUMEB6WX4TND2EY6GLDFPP",
+     "bytes": 45854,
+     "durationSec": 760.287,
+     "lowKey": 26,
+     "highKey": 97,
+     "notes": 5190,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 162
+     }
+    },
+    {
+     "id": "beethoven.op106.4",
+     "title": "IV. Largo – Allegro risoluto",
+     "asset": "midi/krueger/beethoven/beethoven_hammerklavier_4.mid",
+     "sha1Hex": "af7d300a02af39b6be05264e57798bfb2356fdb3",
+     "sha1b32": "V56TACQCV443NPQFEZHFO6ML7MRVN7NT",
+     "bytes": 81311,
+     "durationSec": 641.854,
+     "lowKey": 24,
+     "highKey": 94,
+     "notes": 8008,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 142
+     }
+    }
+   ]
+  },
+  {
+   "id": "beethoven.op111-1",
+   "composer": "Ludwig van Beethoven",
+   "composerShort": "Beethoven",
+   "title": "Piano Sonata No. 32 in C minor, op. 111, I",
+   "shortTitle": "Sonata op. 111, I",
+   "catalogue": "op. 111",
+   "year": 1822,
+   "era": "classical",
+   "shelf": "beethoven",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "mutopia",
+   "tier": "C",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "beethoven.op111-1.1",
+     "title": "I. Maestoso – Allegro con brio ed appassionato",
+     "asset": "midi/mutopia/beethoven_op111_1.mid",
+     "sha1Hex": "a74e07ad84addab577c61c40bf0e3946e2563e21",
+     "bytes": 47339,
+     "durationSec": 437.308,
+     "lowKey": 24,
+     "highKey": 99,
+     "notes": 5335,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 170
+     }
+    }
+   ]
+  },
+  {
+   "id": "beethoven.op33",
+   "composer": "Ludwig van Beethoven",
+   "composerShort": "Beethoven",
+   "title": "Bagatelles op. 33, Nos. 1 and 4",
+   "shortTitle": "Bagatelles op. 33",
+   "catalogue": "op. 33",
+   "year": 1802,
+   "era": "classical",
+   "shelf": "beethoven",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "bednarek",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "beethoven.op33.1",
+     "title": "No. 1 in E-flat major",
+     "asset": "midi/commons/beethoven_op33_1_bednarek.mid",
+     "sha1Hex": "2ed6f8a987bb25646706d4c1d157318b13d16c8b",
+     "bytes": 9014,
+     "durationSec": 167.035,
+     "lowKey": 32,
+     "highKey": 89,
+     "notes": 1288,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "beethoven.op33.2",
+     "title": "No. 4 in A major",
+     "asset": "midi/commons/beethoven_op33_4_bednarek.mid",
+     "sha1Hex": "5314087595a6316735af740e1d54d722abbc171f",
+     "bytes": 8636,
+     "durationSec": 171.297,
+     "lowKey": 33,
+     "highKey": 88,
+     "notes": 1060,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "beethoven.op126",
+   "composer": "Ludwig van Beethoven",
+   "composerShort": "Beethoven",
+   "title": "Six Bagatelles, op. 126",
+   "shortTitle": "Bagatelles op. 126",
+   "catalogue": "op. 126",
+   "year": 1824,
+   "era": "classical",
+   "shelf": "beethoven",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "bednarek",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "beethoven.op126.1",
+     "title": "Six Bagatelles (complete)",
+     "asset": "midi/commons/beethoven_op126_bednarek.mid",
+     "sha1Hex": "54c2274f055a3d7d59f302e2687c280f77e0f673",
+     "bytes": 185829,
+     "durationSec": 1136.901,
+     "lowKey": 29,
+     "highKey": 96,
+     "notes": 7520,
+     "hasSustain": true,
+     "hasSoft": true,
+     "hasSostenuto": false,
+     "pedalMode": "CONTINUOUS",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 138
+     }
+    }
+   ]
+  },
+  {
+   "id": "beethoven.op129",
+   "composer": "Ludwig van Beethoven",
+   "composerShort": "Beethoven",
+   "title": "Rondo a capriccio in G major, op. 129 “Rage over a lost penny”",
+   "shortTitle": "Rondo a capriccio op. 129",
+   "catalogue": "op. 129",
+   "year": 1795,
+   "era": "classical",
+   "shelf": "beethoven",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright", "harpsichord"],
+   "source": "mutopia",
+   "tier": "B",
+   "velocityPolicy": "flat",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "beethoven.op129.1",
+     "title": "Rondo a capriccio",
+     "asset": "midi/mutopia/beethoven_op129.mid",
+     "sha1Hex": "ddbd842a1bb5fdecb847c6fdd397ceceb025bbaf",
+     "bytes": 46761,
+     "durationSec": 391.249,
+     "lowKey": 29,
+     "highKey": 89,
+     "notes": 5536,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  }
+ ]
+}

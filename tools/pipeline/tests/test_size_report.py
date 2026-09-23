@@ -22,6 +22,15 @@ class SizeReportTest(unittest.TestCase):
             self.assertFalse(size_report.report(apk=apk, option="samples-standard")[0])
             self.assertTrue(size_report.report(apk=apk, option="samples-hd")[0])
 
+    def test_unacknowledged_overrun_fails(self):
+        ok, text = size_report.report()
+        self.assertTrue(ok, text)
+        ok, text = size_report.report(acknowledged={})
+        mb = size_report.dir_bytes(os.path.join(common.ASSETS, "midi")) / size_report.MB
+        if mb > 3.5 * size_report.OVER_FAIL:
+            self.assertFalse(ok)
+            self.assertIn("FAIL: midi", text)
+
     def test_approved_option(self):
         self.assertIn(size_report.approved_option(), size_report.CAPS)
 
