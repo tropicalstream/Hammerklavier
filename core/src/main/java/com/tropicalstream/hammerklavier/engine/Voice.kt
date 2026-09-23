@@ -189,9 +189,10 @@ internal class Voice(@JvmField val slot: Int) {
         else kernelLinear(i0, i1, g0, dg, tL, tR)
     }
 
-    /** The one-pole low-pass over [i0, i1) of the scratch, in place. */
-    fun lowPass(i0: Int, i1: Int, tL: FloatArray, tR: FloatArray) {
-        val a = DecayTables.lpCoef(lpIdx)
+    /** The one-pole low-pass at cutoff index [idx] over [i0, i1) of the scratch, in place. */
+    fun lowPass(i0: Int, i1: Int, tL: FloatArray, tR: FloatArray, idx: Float = lpIdx) {
+        if (i1 <= i0) return
+        val a = DecayTables.lpCoef(idx)
         var yl = lpL; var yr = lpR
         for (i in i0 until i1) {
             yl += a * (tL[i] - yl); tL[i] = yl

@@ -166,12 +166,15 @@ internal class VoicePool(private val sampleRate: Int, private val cursors: Voice
             val key = v.key
             val i0 = if (v.fresh) v.startDelay else 0
             // ── per-block multipliers ──
-            if (v.role == Voice.ROLE_MAIN && (st == Voice.PLAYING || st == Voice.FADING) && dm != null && playing) {
+            var engagedNow = false
+            val lpBefore = v.lpIdx
+            // Damping applies once the note's key has gone down (its key-down is applied in the block of its event frame).
+            if (v.role == Voice.ROLE_MAIN && (st == Voice.PLAYING || st == Voice.FADING) && dm != null && playing && v.eventAt < pf + block) {
                 val d = ks.damping[key]
                 if (d > 0f) {
                     v.damp *= dm.dampOf(key, d)
                     if (spectralAllowed && d > 0.05f) {
-                        if (!v.spectral) { v.spectral = true; v.lpIdx = DecayTables.LP_IDX_18K; v.lpL = v.lastL; v.lpR = v.lastR }
+                        if (!v.spectral) { v.spectral = true; v.lpIdx = DecayTables.LP_IDX_18K; engagedNow = true }
                         val target = dm.fcTargetOf(key, d)
                         val next = v.lpIdx + (target - v.lpIdx) * DecayTables.LP_GLIDE
                         if (next < v.lpIdx) v.lpIdx = next                       // never re-opens
@@ -188,8 +191,9 @@ internal class VoicePool(private val sampleRate: Int, private val cursors: Voice
                 else -> {}
             }
             var fin = 1f
-            if (v.fadeIn < 1f) {
-                if (!v.fresh) { v.fadeIn += v.fadeInStep * block; if (v.fadeIn > 1f) v.fadeIn = 1f }
+            val fadingIn = v.fadeIn < 1f
+            if (fadingIn) {                                   // in step with the sustain's handoff (same block, same x)
+                v.fadeIn += v.fadeInStep * block; if (v.fadeIn > 1f) v.fadeIn = 1f
                 fin = DecayTables.sinQ(v.fadeIn)
             }
             if (v.tFade != v.tTarget) {
@@ -201,13 +205,20 @@ internal class VoicePool(private val sampleRate: Int, private val cursors: Voice
             var gEnd = level * Voice.SHORT_SCALE
             var i1 = block
             if (st == Voice.KILL) { gEnd = 0f; i1 = minOf(block, i0 + KILL_FRAMES) }
-            if (v.fresh) { v.g = if (st == Voice.KILL) v.g else gEnd }
+            if (v.fresh) { v.g = if (st == Voice.KILL) v.g else if (fadingIn) 0f else gEnd }   // a fade-in ramps from silence
             // ── window, synthesis, filter, mix ──
             if (v.needsRefill()) v.refill()
             val lo = if (v.role == Voice.ROLE_MAIN) ks.landOffset[key] else -1
             val rampFrom = if (lo >= 0) lo else i0
             v.synth(i0, rampFrom, i1, gEnd, hermite, tL, tR)
-            if (v.spectral) v.lowPass(i0, i1, tL, tR)
+            if (v.spectral) {
+                // A low-pass engaged by this block's landing starts at the landing frame, seeded with the sample before it.
+                // A cutoff change caused by a landing inside the block starts at the landing frame too.
+                if (engagedNow) {
+                    if (rampFrom > i0) { v.lpL = tL[rampFrom - 1]; v.lpR = tR[rampFrom - 1] } else { v.lpL = v.lastL; v.lpR = v.lastR }
+                } else if (rampFrom > i0) v.lowPass(i0, rampFrom, tL, tR, lpBefore)
+                v.lowPass(if (rampFrom > i0) rampFrom else i0, i1, tL, tR)
+            }
             val outL: FloatArray; val outR: FloatArray
             if (v.bus == Voice.SOFT) { outL = softL; outR = softR } else { outL = dryL; outR = dryR }
             for (i in i0 until i1) { outL[i] += tL[i]; outR[i] += tR[i] }
