@@ -64,3 +64,15 @@ See `docs/contracts-changelog.md` (2026-09-22) and `docs/plan-changelog.md` (202
 - `tools/check_purity.sh`: OK (negative test with android/javax/java.awt references fails as
   expected).
 - `tools/device/lock.sh`: exit codes propagate, a second holder waits, stdin is passed through.
+
+## Contract audit before tagging contracts-v1 (2026-09-22)
+
+Line-by-line audit of `contract/**`, `contract/stub/**`, `contract/android/**` and
+`contract/stub/android/**` against PLAN §2.3, the §2.2 table and the §10 review log (R1–R107),
+plus the build files, the day-0 MeshBuilder subset and the tools. Every type, member, parameter,
+default, nullability, constant, enum entry, package and file matches; every §2.2 stub exists
+(SyntheticSpecs in `contract/ScoreApi.kt` as §2.3 shows); profile values match §3.7, the ladder
+matches §5.11, the room table and placements match §3.12/§5.6, Pal matches §5.9. The only
+departures are the ones already recorded in the contracts and plan changelogs. `check_purity.sh`
+OK; `lock.sh` propagates exit codes; `tools/gw :core:test :app:assembleDebug` green. No gaps
+needed fixing.
