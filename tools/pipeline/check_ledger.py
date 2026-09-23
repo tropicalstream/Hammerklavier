@@ -35,6 +35,8 @@ LICENCE_URLS = {
     "PD-self": "https://creativecommons.org/publicdomain/mark/1.0/",
     "NONE-STATED": "",
 }
+# the manifest's free-text licence column → a ledger licence id
+MANIFEST_LICENCE = {"CC0": "CC0-1.0", "CC BY-SA 3.0 / GFDL": "CC-BY-SA-3.0"}
 SAMPLE_MOD = "trimmed, resampled where needed, level-matched, normalised, Opus-encoded"
 KIT_SOURCES = {
     "grand": ("Salamander Grand Piano V3 (Alexander Holm; Markus Fiedler; kinwie)",
@@ -99,7 +101,7 @@ def rule_row(rel, assets=common.ASSETS):
     man = manifest_rows()
     if rel in man:
         m = man[rel]
-        lic = m["licence"]
+        lic = MANIFEST_LICENCE.get(m["licence"], m["licence"])
         return dict(base, source_name=m["group"], source_url=m["url"], licence_id=lic,
                     licence_url=LICENCE_URLS.get(lic, ""), credit=credit_for(m["group"]), modified="no",
                     how_modified="", notes="cache=" + m["cache_path"])

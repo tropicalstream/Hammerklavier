@@ -143,6 +143,7 @@ def build(src, assets_dir=common.ASSETS, partial=False, generated=None, check_li
         sources = {k: v for k, v in sources.items() if k in used}
     else:
         shelves = [dict(s, works=[x for x in s["works"] if x in known]) for s in shelves]
+        shelves = [s for s in shelves if s["works"]]          # e.g. Handel when HWV 430 is not installed
     gen = generated or datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     cat = {"schema": 1, "generated": gen, "startHere": start, "shelves": shelves,
            "sources": {k: dict(v) for k, v in sources.items()}, "works": works_out}

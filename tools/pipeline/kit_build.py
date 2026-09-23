@@ -151,6 +151,10 @@ def encode_and_verify(unit_regions, path, report, label):
                 raise KitBuildError("%s: region %d truncated in the decoded stream" % (label, r["id"]))
             lag = audio.alignment_lag(r["pcm"], got, max(0, r["onsetFrame"] - 48))
             if abs(lag) > 1:
+                # no sharp attack (a release that starts on the sounding tone): a periodic signal
+                # correlates as well one period away; 0.5 s of decay and noise settles it
+                lag = audio.alignment_lag(r["pcm"], got, max(0, r["onsetFrame"] - 48), length=24000)
+            if abs(lag) > 1:
                 raise KitBuildError("%s: region %d onset moved by %d frames" % (label, r["id"], lag))
             pk = audio.peak_dbfs(got)
             if pk > MAX_DECODED_PEAK_DB:
@@ -242,10 +246,24 @@ def assemble_kit(out_dir, meta, regions, units, report):
 
 # --------------------------------------------------------------------------- analysis (§6.5 steps 4–8)
 
+TOP_OCTAVE_MAX_B = 0.003
+
+
 def measure_pitch(pcm_or_mono, root, octave_mult=1.0):
     mono = audio.to_mono(pcm_or_mono)
     n_max = 24 if root < 48 else (12 if root < 72 else 6)
-    fit = audio.fit_partials(mono[PRE_ROLL:], audio.key_hz(root) * octave_mult, n_max=n_max)
+    # the top octave has decayed into the noise by 0.3 s: measure it earlier
+    t0, t1 = (0.3, 1.3) if root < 90 else (0.05, 0.55)
+    fit = audio.fit_partials(mono[PRE_ROLL:], audio.key_hz(root) * octave_mult, t0=t0, t1=t1, n_max=n_max)
+    if root >= 96:
+        # the top octave: when the partial fit (which searches ±51 cents) is missing or its first
+        # partial disagrees with the fundamental's own peak (±117 cents) by > 10 cents, it locked onto
+        # noise; the peak then gives the pitch, and B (2-3 loose partials under noise) is capped
+        f = audio.fundamental_peak(mono[PRE_ROLL:], audio.key_hz(root) * octave_mult)
+        if f is not None and (fit is None or abs(audio.cents(fit["f0"] * math.sqrt(1 + fit["B"]), f)) > 10.0):
+            fit = dict(fit or {"B": 0.0, "partials": [(1, f)], "resid_cents": 0.0})
+            fit["B"] = min(fit["B"], TOP_OCTAVE_MAX_B)
+            fit["f0"] = f                  # the loose B is not trusted to move the pitch
     if fit is None:
         return None
     return fit
@@ -602,19 +620,30 @@ def build_real_kit(kit, out_dir, report_path):
         last_damper = 88
         release_carries = False
     else:
-        fitted = {}
-        for root, ts in rel_t60.items():
+        fitted, rejected = {}, []
+        for root, ts in sorted(rel_t60.items()):
             ts = [t for t in ts if t]
             if not ts:
                 continue
-            t = float(np.median(ts))
             d = kitmap.default_damper_t60(instrument, root)
-            if instrument == "upright" and _rings_on(root, t):
+            if instrument == "upright" and _rings_on(root, float(np.median(ts))):
                 continue                     # undamped string: evidence for lastDamper, not a damper fit
+            # the fastest take: the recording room only ever lengthens a measured early decay
+            t = float(min(ts))
             if not (0.5 * d <= t <= 2.0 * d):
-                raise KitBuildError("damper T60 at root %d = %.2f s outside 0.5-2x the formula (%.2f s); "
-                                    "knee %s ms" % (root, t, d, dict(knees).get(root)))
+                rejected.append(root)
+                report.append("  damper T60 root %d: measured %.2f s (takes %s) outside 0.5-2x the formula "
+                              "(%.2f s), knee %s ms: formula used" % (
+                                  root, t, ", ".join("%.2f" % x for x in ts), d, dict(knees).get(root)))
+                continue
             fitted[root] = t
+        n_roots = len(fitted) + len(rejected)
+        if n_roots and len(fitted) < n_roots / 2:
+            report.append("  damper T60 evidence inconclusive (%d of %d roots in range): the formula is used "
+                          "for every key" % (len(fitted), n_roots))
+            fitted = {}
+        else:
+            report.append("  damper T60 fitted on %d of %d roots" % (len(fitted), n_roots))
         damper = per_key(fitted, lambda k: kitmap.default_damper_t60(instrument, k))
         release_carries = True
         if instrument == "upright":

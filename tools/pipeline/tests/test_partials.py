@@ -30,6 +30,31 @@ class PartialsTest(unittest.TestCase):
         fit = kit_build.measure_pitch(np.stack([x, x], 1), key)
         self.assertAlmostEqual(audio.pitch_cents(fit["f0"], key), 30.0, delta=1.0)
 
+    def test_top_octave_far_off(self):
+        # Salamander's C8 sounds about +99 cents: outside the partial search, found by the peak
+        import numpy as np
+        key = 108
+        f0 = 440 * 2 ** ((key - 69) / 12) * 2 ** (97 / 1200)
+        t = np.arange(48000) / 48000
+        rng = np.random.default_rng(7)
+        x = np.sin(2 * np.pi * f0 * t) * np.exp(-t / 0.15) + 0.3 * np.sin(2 * np.pi * 2.001 * f0 * t) * np.exp(-t / 0.1)
+        x = x + 0.002 * rng.standard_normal(len(t)) + 0.05 * np.sin(2 * np.pi * 40 * t)   # hiss and rumble
+        fit = kit_build.measure_pitch(np.stack([x, x], 1), key)
+        self.assertAlmostEqual(audio.pitch_cents(fit["f0"], key), 97.0, delta=2.0)
+        self.assertLessEqual(fit["B"], kit_build.TOP_OCTAVE_MAX_B)
+
+    def test_rumble_does_not_set_the_floor(self):
+        # a treble note 30 dB under sub-50 Hz rumble is still fitted
+        import numpy as np
+        key = 100
+        f0 = 440 * 2 ** ((key - 69) / 12)
+        t = np.arange(96000) / 48000
+        x = sum((1 / p) * np.sin(2 * np.pi * p * f0 * (1 + 0.002 * p * p) ** 0.5 * t) for p in range(1, 4)) * 0.03
+        x = x + np.sin(2 * np.pi * 31 * t)
+        fit = kit_build.measure_pitch(np.stack([x, x], 1), key)
+        self.assertIsNotNone(fit)
+        self.assertAlmostEqual(audio.pitch_cents(fit["f0"], key), 0.0, delta=1.0)
+
 
 if __name__ == "__main__":
     unittest.main()
