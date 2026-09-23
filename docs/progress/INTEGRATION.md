@@ -313,3 +313,52 @@ Hall framing review with the M5 venue.
 - T-SYNC absolute (Action view, speaker and Bluetooth) needs a 240 fps camera, a headset and the user; milestone-M4 not tagged.
 - Overlay facts (duration, bar, movement) wait for WP12 FactsAssembler; `stageHidden` hook not yet wired (Display floor card, M6).
 - Section-cap look and cutaway camera height: worth a WP7/WP6 pass before the user review.
+
+## M5 The room (2026-09-23, integrator) — gate PARTIAL, not tagged
+
+### Merged
+- `wp8-venue` (fc4e3ce) and `wp12-session` (958cf30) into main (clean merges). WP3 (a678af9) was already on main.
+
+### Wired
+- `Wiring.scenes.venue()` = one lazy `venue.VenueSceneImpl` (StubVenue gone). `StereoRenderer.build` calls
+  `FlameFieldImpl.setInstrumentOrigin(placement)` (WP8 request: light 3 = nearest N sconce group).
+- Sound follows the view: `AppController.updateRoom()` on engine start and on every `SetView` — WP12
+  `ListenerRooms.resolve` (the §5.6 ear, world-locked only in the Hall) → WP3 `RoomAcoustics.design` → `audio.setRoom(d, 500)`;
+  logs `HKUi setRoom view= ear= worldLocked= width= direct= erGain= reverbGain= preDelay= t60Mid= az=`. Interim until
+  SessionController takes over at M6 (it has the same code path).
+- Soak: `SoakSource.play` now plays (catalogue ids mapped to bundled files until M6); new plan `therm30`
+  (op. 106 i–iv chained, views rotating every 5 min). New `tools/device/smoke_m5.sh`, `apl.sh`, `apl_meter.py`.
+- Fixes: `venue.fittings.gilt` moved to drawSlot 2 so it merges with `venue.gilt` (SceneAssemblerTest found Hall/Salon at
+  29 draws); floor light pools now fall off to 0 by r = 2.6 m around each pool centre (§5.5 floor row) instead of a
+  saturated plateau; flame sprites fade out closer than 0.5–1.2 m to the eye.
+
+### Gate results (glasses A06B4A96A733283, main c39f36f, release md5 f786cd79696e3a676296f80c1d620810 installed and verified)
+| Check | Measured | Result |
+|---|---|---|
+| `tools/ci.sh` | PASS at c39f36f | pass |
+| `smoke.sh M5` venue/levels | Hall → SALON, Player/Action → STAGE; draws max 24 per eye; hitches 0, glErrors 0 | pass |
+| sound follows the view | one setRoom per view change; Player ear (−1.55,1.20,−1.90) width 1.0 direct 1.00 preDelay 144; Action cutaway width 0.8 direct 1.60; overhead direct 1.21; Hall ear (0.40,1.20,3.00) worldLocked=true width 0.4 direct 0.32 erGain 0.54 reverbGain 0.63; design 0.3–0.7 ms (first 99 ms incl. anchors) | pass (logs); stays-put-on-head-turn not measurable over adb |
+| T-APL | Player 22.6%, Action cutaway 24.8%, overhead 32.0% (≤ 9%); Hall 14.7% (≤ 12%). Before the floor fix: 30.2 / 31.3 / 33.7 / 15.2 | **FAIL** |
+| T-THERM (30 min) | therm30 1882 s, 189 rows: Q0 throughout (never Q3), fps 30, underruns 0, late frames 50, no reboot; battery read 24.0 °C flat — **run plugged in** (status 5, USB powered): I cannot unplug the cable, so this is not the §8.5 unplugged run | partial |
+| T12.8 LevelCalibrationTest | still @Ignore: needs a pre-limiter tap in MasterChain and a LoadedBank from exported real regions | open |
+| T-CPU with combs, comb calibration, L-2, L-7, look-around | not run (L-* need the user; look-around needs head motion) | open |
+
+APL breakdown (left eye, six 80-px bands): Player 12/14/27/30/27/26% — the lacquer case alone sits at ≈ 8% (presence
+floor 22,18,15 after lift), the ivory keys strip ≈ 30%, the floor under the keyboard is still inside the west candelabra's
+pool. Overhead: plate/soundboard (196,150,72) and a steel string bed fill the frame, plus a large lit glow on a surface near
+the candelabra flame light (not a sprite). Budget ≤ 9% cannot be met by the venue alone: WP7 (plate/soundboard/key
+brightness, "shadowed ≤ 0.25") and WP6 (LIT shading of venue surfaces near the 4 lights, the parquet texture is not sampled
+by LIT_FS) must take a pass.
+
+Screencaps (docs/shots/): `m5_hall`, `m5_hall_3`, `m5_player`, `m5_action_cutaway`, `m5_action_overhead`. Honest look at
+the Hall: the gilt trellis, cornice, rocaille cartouches, girandoles and two candelabra read well against black; the
+chandelier is cut off at the top of the frame; flames are tiny (candles read as white sticks); the N mirrors show
+shattered-looking dark polygons over the glow (wall glow / reflection geometry artefact, WP8/WP6); the front-row chairs are
+flat beige slabs across the bottom and are the main APL overshoot; the grand is small and low (the M4 Hall framing issue stands).
+
+### Open issues (M5)
+- T-APL fails in every view (numbers above) — WP6/WP7/WP8 pass needed; mirror artefact; chairs; chandelier framing.
+- Unplugged T-THERM needs the user to pull the cable (`tools/device/soak.sh start therm30`, then `pull`); battery reading flat at 24.0 °C plugged.
+- T12.8: pre-limiter peak tap (WP3 MasterChain) + real-region bank for the JVM test.
+- T-CPU with combs re-run, L-2 / L-7 listening with the user; look-around and "stays put when the head turns".
+- Soak CSV `movement` column is still "none" (WP12 facts at M6).
