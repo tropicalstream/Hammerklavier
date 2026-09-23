@@ -100,7 +100,7 @@ class SelfTest(private val ctx: Context, private val w: Wiring, private val main
                 energy.write(f, 0, lanes)
                 k++
                 val due = t0 + k * 100_000L                                       // 10 kHz
-                while (System.nanoTime() < due && !stop.get()) Thread.onSpinWait()
+                while (System.nanoTime() < due && !stop.get()) Thread.yield()
             }
         }, "HKSelfTestW").apply { priority = Thread.MAX_PRIORITY; isDaemon = true }
         writer.start()

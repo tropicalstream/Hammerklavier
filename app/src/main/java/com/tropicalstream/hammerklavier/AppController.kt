@@ -188,7 +188,7 @@ class AppController(private val ctx: Context, private val w: Wiring) {
                 "brightness" -> { brightnessOverride = b.getFloat(k, -1f).let { if (it < 0f) -2f else it.coerceIn(0.05f, 1f) }; if (resumed) applyBrightness() }
                 "debug" -> { debug = b.getBoolean(k); onDebug?.invoke(debug) }
                 "selftest" -> if (b.getBoolean(k)) selfTest.run(gl, b.getInt("selftestsecs", 60).coerceIn(1, 600))
-                "selftestsecs", "soakplan", "mono" -> {}
+                "selftestsecs", "soakplan", "mono", "echo", "n" -> {}                   // parameters of other keys; echo is for the smoke test
                 "gcstats" -> if (b.getBoolean(k)) logGcStats()
                 "dump" -> if (b.getBoolean(k)) dump()
                 "soak" -> if (b.getBoolean(k)) soak.start(b.getString("soakplan")) else soak.stop()

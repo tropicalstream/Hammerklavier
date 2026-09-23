@@ -10,7 +10,8 @@ OUT="$ROOT/build/smoke/$M"; mkdir -p "$OUT"
 SELFTEST_SECS=${HK_SELFTEST_SECS:-60}
 [ "$M" = M0 ] || { echo "[smoke] $M not defined yet" >&2; exit 2; }
 
-exec "$ROOT/tools/device/lock.sh" -- bash -s "$S" "$PKG" "$OUT" "$SELFTEST_SECS" <<'SH'
+# The step script goes to a file (adb shell would swallow a script fed on stdin).
+cat > "$OUT/steps.sh" <<'SH'
 set -uo pipefail
 S=$1; PKG=$2; OUT=$3; SECS=$4
 A="adb -s $S"
@@ -22,6 +23,9 @@ expect() { # expect <description> <grep -E pattern>
 $A shell settings put global device_wearing 1; $A shell wm dismiss-keyguard
 $A shell input keyevent KEYCODE_WAKEUP
 $A logcat -c
+# The device's log ring is only 64 KiB: stream the tags to a file for the whole run.
+$A logcat -v threadtime HKInput:V HKUi:V HKThermal:V HKSelfTest:V HKPerf:V HKRender:V AndroidRuntime:E '*:S' > "$OUT/logcat.txt" &
+LC=$!
 $A shell am start -S -n $PKG/.MainActivity >/dev/null; sleep 4
 shot 01_title
 $A shell input tap 320 240; sleep 1
@@ -40,7 +44,7 @@ ctl --ei faketemp 425; sleep 2
 ctl --ei faketemp -1; sleep 1
 $A shell input keyevent KEYCODE_WAKEUP; $A shell wm dismiss-keyguard; sleep 2
 $A shell input keyevent KEYCODE_BACK; sleep 2
-$A logcat -d -s HKInput HKUi HKThermal HKSelfTest HKPerf HKRender AndroidRuntime:E > "$OUT/logcat.txt"
+sleep 1; kill $LC 2>/dev/null; wait $LC 2>/dev/null
 expect "tap from input tap"            'HKInput.*tap gesture=TAP src=touch'
 expect "tap from DPAD_CENTER"          'HKInput.*tap gesture=TAP src=key'
 expect "double via CONTROL"            'HKInput.*double gesture=DOUBLE'
@@ -94,3 +98,4 @@ PY
 [ $fail = 0 ] && echo "[smoke] $(basename "$OUT") PASS" || echo "[smoke] $(basename "$OUT") FAIL"
 exit $fail
 SH
+exec "$ROOT/tools/device/lock.sh" -- bash "$OUT/steps.sh" "$S" "$PKG" "$OUT" "$SELFTEST_SECS" </dev/null
