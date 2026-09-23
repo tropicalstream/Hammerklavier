@@ -41,6 +41,11 @@ class TextureUploader {
     fun uploadAll(gen: Int) { for (t in byName.values) id(t.name, gen) }
 
     /** Context lost: forget the ids (no glDelete). */
+    /** GLThread, context current: delete every texture made in [gen] (older ones died with their context). */
+    fun deleteAll(gen: Int) {
+        for (t in byName.values) { if (t.glGeneration == gen) GlKit.deleteTexture(t.id); t.glGeneration = -1; t.id = 0 }
+    }
+
     fun discardGl() { for (t in byName.values) { t.glGeneration = -1; t.id = 0 } }
 
     val residentBytes: Long get() { var b = 0L; for (t in byName.values) b += t.rgba.size; return b }

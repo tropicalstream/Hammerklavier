@@ -68,7 +68,12 @@ class HkGlView(ctx: Context, loader: ExecutorService?, private val msaa: Boolean
         val div = divider()
         if (div > 0) {
             if (++vsyncs >= div) { vsyncs = 0; requestRender() }
-        } else if (!restFrameDone) { restFrameDone = true; requestRender() }
+        } else {
+            // display rest: one black frame, then pacing stops until setQuality ends the rest (§5.1)
+            if (!restFrameDone) { restFrameDone = true; requestRender() }
+            paced = false
+            return
+        }
         Choreographer.getInstance().postFrameCallback(this)
     }
 
@@ -117,7 +122,10 @@ class HkGlView(ctx: Context, loader: ExecutorService?, private val msaa: Boolean
         d.quality = q
         val nowResting = q.frameDivider == 0
         if (nowResting && !wasResting) { restFrameDone = false; resting = true; Log.i(HK.TAG_RENDER, "display rest: GL paused") }
-        if (!nowResting && wasResting) { resting = false; d.wokeSerial = d.wokeSerial + 1; Log.i(HK.TAG_RENDER, "display rest over") }
+        if (!nowResting && wasResting) {
+            resting = false; d.wokeSerial = d.wokeSerial + 1; Log.i(HK.TAG_RENDER, "display rest over")
+            if (resumed && !paced) startPacing()
+        }
     }
 
     override fun setSettings(s: RenderSettings) {
@@ -146,7 +154,23 @@ class HkGlView(ctx: Context, loader: ExecutorService?, private val msaa: Boolean
         resumed = false
         stopPacing()
         gaze.stop()
+        // §5.1: leave one black frame on the waveguide. Queued events run before the GL thread
+        // honours the pause, so this lands ahead of it.
+        queueEvent { renderer.presentBlack() }
         super.onPause()
+    }
+
+    /**
+     * Debug (`--ez glreset true`, T-GLRESET): a real context loss on this view and this renderer.
+     * Releasing the context on pause makes the next resume create a new one, so the renderer's
+     * second onSurfaceCreated bumps glGeneration and re-uploads from the resident arrays.
+     */
+    fun resetContext() {
+        if (!resumed) return
+        preserveEGLContextOnPause = false
+        onPause()                        // returns once the GL thread has paused and dropped the context
+        preserveEGLContextOnPause = true
+        onResume()
     }
 
     override fun stats(out: RenderStats) {

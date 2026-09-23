@@ -123,4 +123,41 @@ class StereoRendererFrameTest {
         assertEquals(before, r.drawsPerEye)
         assertNotNull(r.currentInstrument)
     }
+
+    private fun switchDuringRest(id: InstrumentId) {
+        val d = r.desired
+        d.quality = QualityLadder.of(3, 96); frames(1)
+        d.instrument = id; d.instrumentSerial = d.instrumentSerial + 1; r.kickBuild()
+        frames(1)
+        d.quality = QualityLadder.of(0, 96); d.wokeSerial = d.wokeSerial + 1
+        frames(2)
+        assertEquals(id, r.currentInstrument)
+    }
+
+    private fun live() = GlKit.liveBuffers + GlKit.liveTextures
+
+    @Test fun sceneSwitchesDoNotLeakGlHandles() {
+        frames(3)
+        switchDuringRest(InstrumentId.HARPSICHORD)
+        val harpsi = live()
+        switchDuringRest(InstrumentId.GRAND)
+        val grand = live()
+        assertTrue("handles uploaded", grand > 0 && harpsi > 0)
+        repeat(3) {
+            switchDuringRest(InstrumentId.HARPSICHORD); assertEquals(harpsi, live())
+            switchDuringRest(InstrumentId.GRAND); assertEquals(grand, live())
+        }
+    }
+
+    @Test fun uniform4fvWithinBudgetInEveryFraming() {
+        val d = r.desired
+        for (v in ViewId.entries) for (fr in 0..1) {
+            d.view = v; d.framing = fr; d.viewSerial = d.viewSerial + 1
+            d.quality = QualityLadder.of(3, 96); frames(1)                 // rest → the next wake cuts at once
+            d.quality = QualityLadder.of(0, 96); d.wokeSerial = d.wokeSerial + 1
+            frames(3)
+            assertEquals(v, r.shownView)
+            assertTrue("$v/$fr glUniform4fv=${r.uniform4fvPerFrame}", r.uniform4fvPerFrame in 1..20)
+        }
+    }
 }

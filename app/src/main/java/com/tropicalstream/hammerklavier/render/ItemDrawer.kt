@@ -32,6 +32,13 @@ class FrameUniforms {
     /** Instrument (piano → room) and venue (identity) model matrices. */
     @JvmField val instModel = FloatArray(16)
     @JvmField val venueModel = FloatArray(16)
+    /**
+     * Bumped by the renderer once per frame ([frameStamp]) and whenever the view-projection or
+     * eye changes ([eyeStamp]: each eye, the pedal inset); ItemDrawer re-sends shared uniforms
+     * to a program only when its stamp is stale (§5.8 uniform budget).
+     */
+    @JvmField var frameStamp = 0
+    @JvmField var eyeStamp = 0
 
     fun lights(rig: LightRig) {
         val f = rig.flicker
@@ -49,6 +56,13 @@ class ItemDrawer(private val programs: Programs, private val packer: UniformPack
     private val pivots = FloatArray(24)
     private val stringWidths = floatArrayOf(1.5f, 1.2f, 1.0f)
     var trianglesDrawn = 0
+    /** glUniform4fv calls issued (the §5.8 budget: ≤ 20 per frame); the renderer resets it per frame. */
+    var uniform4fvCalls = 0
+    private val progFrame = IntArray(ProgramId.entries.size) { Int.MIN_VALUE }
+    private val progEye = IntArray(ProgramId.entries.size) { Int.MIN_VALUE }
+    private val progModel = IntArray(ProgramId.entries.size) { -1 }
+    /** Per program, a bit per SkinKind whose uState block was sent this frame; bit 31 = uPivot. */
+    private val progBlocks = IntArray(ProgramId.entries.size)
 
     /** The instrument's SkinParams (§5.8), unpacked into per-kind vec4s. Off the hot path. */
     fun setSkin(skin: SkinParams) {
@@ -89,23 +103,34 @@ class ItemDrawer(private val programs: Programs, private val packer: UniformPack
         val p = programs.of(progId)
         val mat = MaterialTable.of(k.material)
         p.use()
-        GLES20.glUniformMatrix4fv(p.uVP, 1, false, f.viewProj, 0)
-        GLES20.glUniformMatrix4fv(p.uModel, 1, false, if (k.instrument) f.instModel else f.venueModel, 0)
-        GLES20.glUniform3f(p.uEye, f.eye[0], f.eye[1], f.eye[2])
-        GLES20.glUniform3fv(p.uLightPos, 4, f.lightPos, 0)
-        GLES20.glUniform3fv(p.uLightRgb, 4, f.lightRgb, 0)
-        GLES20.glUniform3f(p.uAmbient, f.ambient[0], f.ambient[1], f.ambient[2])
+        val pi = progId.ordinal
+        if (progFrame[pi] != f.frameStamp) {
+            progFrame[pi] = f.frameStamp; progBlocks[pi] = 0
+            GLES20.glUniform3fv(p.uLightPos, 4, f.lightPos, 0)
+            GLES20.glUniform3fv(p.uLightRgb, 4, f.lightRgb, 0)
+            GLES20.glUniform3f(p.uAmbient, f.ambient[0], f.ambient[1], f.ambient[2])
+            GLES20.glUniform3f(p.uFloor, f.floorRgb[0], f.floorRgb[1], f.floorRgb[2])
+            GLES20.glUniform4f(p.uFadeC, f.fadeCentre[0], f.fadeCentre[1], f.fadeCentre[2], 0f)
+        }
+        if (progEye[pi] != f.eyeStamp) {
+            progEye[pi] = f.eyeStamp; progModel[pi] = -1
+            GLES20.glUniformMatrix4fv(p.uVP, 1, false, f.viewProj, 0)
+            GLES20.glUniform3f(p.uEye, f.eye[0], f.eye[1], f.eye[2])
+            GLES20.glUniform1f(p.uProjY, f.projY)
+            GLES20.glUniform2f(p.uViewport, f.viewportW, f.viewportH)
+        }
+        val model = if (k.instrument) 1 else 0
+        if (progModel[pi] != model) {
+            progModel[pi] = model
+            GLES20.glUniformMatrix4fv(p.uModel, 1, false, if (k.instrument) f.instModel else f.venueModel, 0)
+        }
         GLES20.glUniform1f(p.uSpecExp, if (mat.specExp > 0f) mat.specExp else 16f)
-        GLES20.glUniform3f(p.uFloor, f.floorRgb[0], f.floorRgb[1], f.floorRgb[2])
         GLES20.glUniform1f(p.uUseFloor, if (mat.presenceFloor && k.instrument) 1f else 0f)
-        GLES20.glUniform4f(p.uFadeC, f.fadeCentre[0], f.fadeCentre[1], f.fadeCentre[2], 0f)
         if (f.stageFade && k.fadeFarM > 0f) GLES20.glUniform2f(p.uFadeR, k.fadeNearM, k.fadeFarM) else GLES20.glUniform2f(p.uFadeR, 0f, 0f)
         GLES20.glUniform1f(p.uBaked, if (k.instrument) 0f else 1f)
         GLES20.glUniform1f(p.uClipX, if (k.clipped && !f.clipX.isNaN()) f.clipX else 1e9f)
         GLES20.glUniform1f(p.uEmissive, mat.emissive)
         GLES20.glUniform1f(p.uLight, 1f)
-        GLES20.glUniform2f(p.uViewport, f.viewportW, f.viewportH)
-        GLES20.glUniform1f(p.uProjY, f.projY)
         when (progId) {
             ProgramId.LACQUER -> {
                 GLES20.glUniform1f(p.uF0, mat.f0)
@@ -123,8 +148,11 @@ class ItemDrawer(private val programs: Programs, private val packer: UniformPack
             }
             ProgramId.SKINNED -> {
                 val ki = k.skin.ordinal
-                GLES20.glUniform4fv(p.uState, UniformPacker.VEC4S, packer.block(k.skin), 0)
-                GLES20.glUniform4fv(p.uPivot, 6, pivots, 0)
+                sendBlock(p, pi, k.skin)
+                if (progBlocks[pi] and PIVOT_BIT == 0) {
+                    progBlocks[pi] = progBlocks[pi] or PIVOT_BIT
+                    GLES20.glUniform4fv(p.uPivot, 6, pivots, 0); uniform4fvCalls++
+                }
                 val p0 = skinP0[ki]
                 GLES20.glUniform4f(p.uP0, p0[0], p0[1], p0[2], p0[3])
                 val engaged = when (k.skin) {
@@ -134,12 +162,12 @@ class ItemDrawer(private val programs: Programs, private val packer: UniformPack
                 }
                 GLES20.glUniform4f(p.uP1, if (engaged != 0) 0f else 1f, 0f, 0f, 0f)
                 GLES20.glUniform1f(p.uKind, ki.toFloat())
-                GLES20.glUniform1f(p.uShiftX, if (k.skin == SkinKind.DAMPER_LIFT) 0f else packer.shiftXM)
+                GLES20.glUniform1f(p.uShiftX, shiftFor(k.skin, packer.shiftXM))
                 GLES20.glUniform1f(p.uRailM, packer.railM)
                 GLES20.glUniform1f(p.uBevel, if (k.skin == SkinKind.KEY_ROT) 1f else 0f)
             }
             ProgramId.STRING -> {
-                GLES20.glUniform4fv(p.uState, UniformPacker.VEC4S, packer.block(SkinKind.STRING), 0)
+                sendBlock(p, pi, SkinKind.STRING)
                 GLES20.glUniform1f(p.uWidthPx, f.stringWidthPx)
                 GLES20.glUniform1f(p.uSwellPx, 2.5f)
             }
@@ -155,6 +183,19 @@ class ItemDrawer(private val programs: Programs, private val packer: UniformPack
         GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0)
         restoreBlend(progId)
         trianglesDrawn += item.triangleCount
+    }
+
+    /**
+     * uState is one uniform per program: re-send only when this program last held a different
+     * block this frame. A single block per program (STRING) goes once a frame, not once per draw.
+     */
+    private val lastKind = IntArray(ProgramId.entries.size) { -1 }
+    private fun sendBlock(p: GlProgram, pi: Int, kind: SkinKind) {
+        val bit = 1 shl kind.ordinal
+        if (lastKind[pi] == kind.ordinal && (progBlocks[pi] and bit) != 0) return
+        lastKind[pi] = kind.ordinal
+        progBlocks[pi] = progBlocks[pi] or bit
+        GLES20.glUniform4fv(p.uState, UniformPacker.VEC4S, packer.block(kind), 0); uniform4fvCalls++
     }
 
     private fun blendFor(p: ProgramId) {
@@ -205,6 +246,19 @@ class ItemDrawer(private val programs: Programs, private val packer: UniformPack
     }
 
     companion object {
+        private const val PIVOT_BIT = 1 shl 31
+
+        /**
+         * The una corda shift (§5.8) moves only the keys, hammers, the action set and the
+         * harpsichord's jacks and tongues; dampers, pedals, the sostenuto, the hammer rail and
+         * the lid stay with the case.
+         */
+        fun shiftFor(kind: SkinKind, shiftXM: Float): Float = when (kind) {
+            SkinKind.KEY_ROT, SkinKind.HAMMER_ROT, SkinKind.JACK_LIFT, SkinKind.JACK4_LIFT,
+            SkinKind.TONGUE_ROT, SkinKind.TONGUE4_ROT, SkinKind.ACTION_SET -> shiftXM
+            else -> 0f
+        }
+
         /** Fresnel rim colour EBONY_RIM (120,78,40), linear 0..1 (§5.9). */
         private val RIM = floatArrayOf(120f / 255f, 78f / 255f, 40f / 255f)
     }

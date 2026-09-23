@@ -45,11 +45,11 @@ class PedalInset(private val drawer: ItemDrawer) {
         System.arraycopy(f.viewProj, 0, savedVP, 0, 16); System.arraycopy(f.eye, 0, savedEye, 0, 3)
         val vw = f.viewportW; val vh = f.viewportH; val py = f.projY
         val e = rig.eye(0)
-        System.arraycopy(e.viewProj, 0, f.viewProj, 0, 16); System.arraycopy(e.pos, 0, f.eye, 0, 3)
+        System.arraycopy(e.viewProj, 0, f.viewProj, 0, 16); System.arraycopy(e.pos, 0, f.eye, 0, 3); f.eyeStamp++
         f.viewportW = W.toFloat(); f.viewportH = H.toFloat(); f.projY = e.proj[5]
         var n = 0
         for (i in items) { drawer.draw(scene.items[i], f, gen); n++ }
-        System.arraycopy(savedVP, 0, f.viewProj, 0, 16); System.arraycopy(savedEye, 0, f.eye, 0, 3)
+        System.arraycopy(savedVP, 0, f.viewProj, 0, 16); System.arraycopy(savedEye, 0, f.eye, 0, 3); f.eyeStamp++
         f.viewportW = vw; f.viewportH = vh; f.projY = py
         GLES20.glDisable(GLES20.GL_SCISSOR_TEST)
         return n

@@ -31,6 +31,21 @@ precision mediump float;
      */
     @Volatile var skipStatusChecks = false
 
+    /** Buffers and textures made and not yet deleted in the current context (leak checks). */
+    @Volatile var liveBuffers = 0; private set
+    @Volatile var liveTextures = 0; private set
+
+    /** The context was lost: its handles are gone with it. */
+    fun contextLost() { liveBuffers = 0; liveTextures = 0 }
+
+    private val one = IntArray(1)
+
+    /** GLThread: delete a buffer made by [makeVbo] / [makeIbo] in the current context. */
+    fun deleteBuffer(id: Int) { one[0] = id; GLES20.glDeleteBuffers(1, one, 0); liveBuffers-- }
+
+    /** GLThread: delete a texture made by [makeTexture] in the current context. */
+    fun deleteTexture(id: Int) { one[0] = id; GLES20.glDeleteTextures(1, one, 0); liveTextures-- }
+
     fun floatBuffer(data: FloatArray, count: Int = data.size): FloatBuffer {
         val b = ByteBuffer.allocateDirect(count * 4).order(ByteOrder.nativeOrder()).asFloatBuffer()
         b.put(data, 0, count); b.position(0); return b
@@ -48,6 +63,7 @@ precision mediump float;
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, ids[0])
         GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, count * 4, floatBuffer(data, count), GLES20.GL_STATIC_DRAW)
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0)
+        liveBuffers++
         return ids[0]
     }
 
@@ -58,6 +74,7 @@ precision mediump float;
         GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, ids[0])
         GLES20.glBufferData(GLES20.GL_ELEMENT_ARRAY_BUFFER, count * 2, shortBuffer(data, count), GLES20.GL_STATIC_DRAW)
         GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0)
+        liveBuffers++
         return ids[0]
     }
 
@@ -74,6 +91,7 @@ precision mediump float;
         buf.put(rgba); buf.position(0)
         GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, width, height, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
+        liveTextures++
         return ids[0]
     }
 

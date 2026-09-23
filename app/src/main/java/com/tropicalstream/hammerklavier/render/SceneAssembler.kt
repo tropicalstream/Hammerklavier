@@ -58,6 +58,14 @@ class AssembledScene(val items: Array<DrawItem>, private val lists: Array<IntArr
 
     fun upload(gen: Int) { for (it in items) it.upload(gen) }
 
+    /** GLThread, context current: delete the handles made in [gen]; older ones died with their context. */
+    fun deleteGl(gen: Int) {
+        for (it in items) {
+            if (it.glGeneration == gen) { GlKit.deleteBuffer(it.vbo); GlKit.deleteBuffer(it.ibo) }
+            it.glGeneration = -1; it.vbo = 0; it.ibo = 0
+        }
+    }
+
     companion object { const val LEVELS = 4; const val VIEW_CODES = 6 }
 }
 

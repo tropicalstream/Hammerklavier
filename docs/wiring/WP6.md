@@ -11,8 +11,9 @@
   `setQuality` (every governor change, including Q3 = display rest), `setSettings`, `setPerformance` for every new
   Performance (the renderer keeps two slots by generation), `setIdle(paused)`, `setSyncFlash`, `setTitle`,
   `setStageHidden`, `setOverrides`, `recenter()` on triple tap. All calls are main-thread, fields only.
-- `--ez glreset true` (debug): MainActivity recreates the GLSurfaceView (remove the view, `wiring.glHost(...)` again,
-  re-bind, re-send the desired state). The renderer's GL generation path handles the new context.
+- `--ez glreset true` (debug): MainActivity calls `(gl as? HkGlView)?.resetContext()` on the same view (a real context
+  loss: pause with `preserveEGLContextOnPause = false`, then resume). The same StereoRenderer gets a second
+  `onSurfaceCreated`, bumps glGeneration and re-uploads from the resident arrays; nothing is re-bound or rebuilt.
 - `HkGlView.renderer.debugAlloc` is on in debug builds; `diagnostics()["glAllocs"]` is the GL-thread allocation count
   since frame 120 (must stay 0).
 - No settings keys, permissions or manifest changes. The sensor (game rotation vector) is registered in `onResume`.
@@ -24,6 +25,6 @@
 - T-FPS: `dumpsys gfxinfo` / RenderStats.divider 2 / 3 / 6 at Q0, Q2 (`--ei quality 2`) and idle (paused).
 - T-Q3SWITCH: `--ei quality 3` (black, GL paused, `display rest: GL paused` logged), switch instrument,
   `--ei quality -1`: the new instrument is on the first frame, no dip.
-- T-GLRESET: `--ez glreset true`: `glGeneration=1` logged, scene back within 1 s, `glErrors` 0 in diagnostics.
+- T-GLRESET: `--ez glreset true` (via `resetContext()`): `renderer=… glGeneration=1` logged, no new `scene … items=` line, scene back within 1 s, `glErrors` 0 in diagnostics.
 - JVM: `tools/gw :core:test --tests 'com.tropicalstream.hammerklavier.geom.*'` and
   `tools/gw :app:testDebugUnitTest --tests 'com.tropicalstream.hammerklavier.render.*'`.

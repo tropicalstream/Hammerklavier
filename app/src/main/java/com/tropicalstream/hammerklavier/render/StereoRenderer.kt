@@ -156,6 +156,10 @@ class StereoRenderer(private val loader: ExecutorService?,
     private var resumedGap = true
     private var realSec = 0f
     private var lastGazeYaw = 0f
+    private var lastGazePitch = 0f
+    /** The cutaway note label's anchor (piano frame y, z) for the instrument on screen (§5.6, §5.10). */
+    private var labelY = 0.93f
+    private var labelZ = -0.24f
 
     // ── stats (written on GL, read on main) ──
     @Volatile var fps = 0f; private set
@@ -171,6 +175,8 @@ class StereoRenderer(private val loader: ExecutorService?,
     @Volatile var glAllocs = -1; private set
     @Volatile var glInfo = ""; private set
     @Volatile var maxDrawsPerEye = 0; private set
+    /** glUniform4fv calls in the last frame (§5.8: ≤ 20). */
+    @Volatile var uniform4fvPerFrame = 0; private set
     private val cpuUs = IntArray(128)
     private val lateUs = IntArray(128)
     private var ringI = 0
@@ -206,6 +212,7 @@ class StereoRenderer(private val loader: ExecutorService?,
             // Context loss: every handle belonged to the old context. Drop them without glDelete.
             gen++
             programs.discard(); current?.assembled?.discardGl(); textures.discardGl(); glyphs.release()
+            com.tropicalstream.hammerklavier.render.gl.GlKit.contextLost()
             uploadedGen = -1
         }
         val uv = IntArray(1)
@@ -225,6 +232,18 @@ class StereoRenderer(private val loader: ExecutorService?,
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
         glErrors += com.tropicalstream.hammerklavier.render.gl.GlKit.checkError("onSurfaceCreated")
         director.cutImmediately()
+    }
+
+    /** GLThread, outside a frame (a queued event): clear to black and present it (§5.1 pause). */
+    fun presentBlack() {
+        val dpy = android.opengl.EGL14.eglGetCurrentDisplay()
+        val srf = android.opengl.EGL14.eglGetCurrentSurface(android.opengl.EGL14.EGL_DRAW)
+        if (dpy == null || srf == null || srf == android.opengl.EGL14.EGL_NO_SURFACE) return
+        GLES20.glDisable(GLES20.GL_SCISSOR_TEST)
+        GLES20.glViewport(0, 0, width, height)
+        GLES20.glClearColor(0f, 0f, 0f, 1f)
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
+        android.opengl.EGL14.eglSwapBuffers(dpy, srf)
     }
 
     override fun onSurfaceChanged(gl: GL10?, w: Int, h: Int) { width = w; height = h; GLES20.glViewport(0, 0, w, h) }
@@ -277,7 +296,8 @@ class StereoRenderer(private val loader: ExecutorService?,
         gaze.pitch = if (gz != null && look) gz.pitch else 0f
         gz?.worldLocked = director.worldLocked
         val dy = gaze.yaw - lastGazeYaw; lastGazeYaw = gaze.yaw
-        headStill = dy < HEAD_STILL_RAD && dy > -HEAD_STILL_RAD
+        val dp = gaze.pitch - lastGazePitch; lastGazePitch = gaze.pitch
+        headStill = dy < HEAD_STILL_RAD && dy > -HEAD_STILL_RAD && dp < HEAD_STILL_RAD && dp > -HEAD_STILL_RAD
         if (d.viewSerial != seenViewSerial) { seenViewSerial = d.viewSerial; director.request(d.view, d.framing) }
         val ov = d.overrides
         director.setOverrides(ov.ipdScale ?: Float.NaN, ov.vFovDeg ?: lifeSizeFov(settings))
@@ -314,6 +334,8 @@ class StereoRenderer(private val loader: ExecutorService?,
         val list = scn.assembled.list(viewCode, level)
         var draws = 0
         drawer.trianglesDrawn = 0
+        drawer.uniform4fvCalls = 0
+        frame.frameStamp++
         for (e in 0 until eyes) {
             val ex = e * ew
             GLES20.glViewport(ex, 0, ew, height)
@@ -321,6 +343,7 @@ class StereoRenderer(private val loader: ExecutorService?,
             frame.viewProj = eye.viewProj
             frame.eye[0] = eye.pos[0]; frame.eye[1] = eye.pos[1]; frame.eye[2] = eye.pos[2]
             frame.projY = eye.proj[5]
+            frame.eyeStamp++
             var n = 0
             if (!d.stageHidden) {
                 for (i in list) { drawer.draw(scn.assembled.items[i], frame, gen); n++ }
@@ -333,6 +356,7 @@ class StereoRenderer(private val loader: ExecutorService?,
             if (e == 0) draws = n
         }
         drawsPerEye = draws
+        uniform4fvPerFrame = drawer.uniform4fvCalls
         if (draws > maxDrawsPerEye) maxDrawsPerEye = draws
         trisPerEye = drawer.trianglesDrawn / eyes
         if ((frames and 255L) == 0L) glErrors += com.tropicalstream.hammerklavier.render.gl.GlKit.checkError("frame")
@@ -408,11 +432,16 @@ class StereoRenderer(private val loader: ExecutorService?,
     }
 
     private fun install(s: BuiltScene) {
+        // The context is current here: free the outgoing scene's buffers and textures (handles from
+        // an older generation died with their context and are only forgotten).
+        val old = current
+        if (old != null && old !== s) { old.assembled.deleteGl(gen); textures.deleteAll(gen) }
         current = s
         textures.install(s.textures); textures.add(s.probe)
-        s.assembled.discardGl()
+        s.assembled.deleteGl(gen)
         uploadedGen = -1
         drawer.setSkin(s.instrument.skin)
+        labelAnchor(s.id, tmp3); labelY = tmp3[0]; labelZ = tmp3[1]
         director.setScene(s.instrument.anchors, s.placement, s.profile.lowKey, s.profile.highKey)
         val c = SinTable.cos(s.placement.yawRad); val sn = SinTable.sin(s.placement.yawRad)
         Mat4.rigidY(frame.instModel, s.placement.originRoom, c, sn)
@@ -485,18 +514,14 @@ class StereoRenderer(private val loader: ExecutorService?,
     private fun lifeSizeFov(s: RenderSettings?): Float =
         if (s != null && director.view == ViewId.HALL && director.framing == 1 && s.lifeSizeVFov > 0f) s.lifeSizeVFov else Float.NaN
 
-    private fun levelFor(d: Desired, view: ViewId): Int {
-        val auto = if (view == ViewId.HALL) RoomLevel.SALON else RoomLevel.STAGE
-        val chosen = d.settings?.roomOverride ?: auto
-        val cap = d.quality.roomCap
-        return maxOf(chosen.ordinal, cap.ordinal)
-    }
+    private fun levelFor(d: Desired, view: ViewId): Int = levelFor(d.settings?.roomOverride, view, d.quality.roomCap)
+
 
     private fun drawLabels(d: Desired, s: BuiltScene, view: FloatArray, proj: FloatArray): Int {
         var n = 0
         if (director.view == ViewId.ACTION && director.framing == 0) {
             val key = (director.xToKey(director.cutSpring.x) + 0.5f).toInt().coerceIn(s.profile.lowKey, s.profile.highKey)
-            tmp3[0] = director.cutSpring.x + 0.035f; tmp3[1] = 0.93f; tmp3[2] = -0.24f
+            tmp3[0] = director.cutSpring.x + 0.035f; tmp3[1] = labelY; tmp3[2] = labelZ
             Mat4.transformPoint(frame.instModel, tmp3, tmp3)
             val dx = tmp3[0] - rig.centre[0]; val dy = tmp3[1] - rig.centre[1]; val dz = tmp3[2] - rig.centre[2]
             val dist = kotlin.math.sqrt(dx * dx + dy * dy + dz * dz)
@@ -515,6 +540,22 @@ class StereoRenderer(private val loader: ExecutorService?,
 
     companion object {
         private val NOTE = arrayOf("C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B")
+        /** §5.9: the thermal cap overrides Auto; an explicit user choice overrides both. */
+        internal fun levelFor(userOverride: RoomLevel?, view: ViewId, cap: RoomLevel): Int {
+            if (userOverride != null) return userOverride.ordinal
+            val auto = if (view == ViewId.HALL) RoomLevel.SALON else RoomLevel.STAGE
+            return maxOf(auto.ordinal, cap.ordinal)
+        }
+
+        /** Cutaway label anchor (piano frame y, z) per instrument: beside the hammer or jack (§5.6 targets). */
+        internal fun labelAnchor(id: InstrumentId, out: FloatArray) {
+            when (id) {
+                InstrumentId.HARPSICHORD -> { out[0] = 0.86f; out[1] = -0.42f }
+                InstrumentId.UPRIGHT -> { out[0] = 0.93f; out[1] = -0.20f }
+                else -> { out[0] = 0.93f; out[1] = -0.24f }
+            }
+        }
+
         const val HEAD_STILL_RAD = 0.2f * 0.017453292f
         const val INSET_VIEW = 1          // PLAYER, framing 1
         const val LABEL_PX = 16f

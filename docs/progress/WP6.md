@@ -69,3 +69,28 @@ Branch `wp6-render` (from `contracts-v1`), worktree `/Users/me/Projects/hk-wp6`.
 8. The allocation test takes the least of three 300-frame windows: HotSpot shows one-off JIT/OSR transients even in a pure
    spin loop; a per-frame allocation would appear in every window.
 9. Pairing tests find WP7/WP8 classes by reflection (test-only `RealScenes`) so no test is ignored and WP6 edits no file it does not own.
+
+## Review fixes (round 2)
+
+- GL leak on scene switch: `install()` now deletes the outgoing scene's VBOs/IBOs (`AssembledScene.deleteGl(gen)`) and
+  textures (`TextureUploader.deleteAll(gen)`) while the context is current; handles of an older generation are only
+  forgotten. `GlKit.liveBuffers/liveTextures` count live handles; `sceneSwitchesDoNotLeakGlHandles` switches 8 times and
+  checks the count is constant per instrument.
+- T-GLRESET: `HkGlView.resetContext()` forces a real context loss on the same view and renderer (pause with
+  `preserveEGLContextOnPause = false`, resume). Wiring note and `docs/requests/WP0.md` changed to ask MainActivity to call
+  it instead of recreating the view; the smoke line now matches (`glGeneration=1`, no rebuild).
+- Room level: user override > thermal cap > Auto (§5.9), `StereoRenderer.levelFor(override, view, cap)`, tested in `RenderRulesTest`.
+- Uniform traffic: shared uniforms (lights, ambient, floor, fade centre) go once per program per frame; VP, eye, projY,
+  viewport once per program per eye (the inset bumps `eyeStamp`); the model matrix only when it changes; uState once per
+  (program, skin kind) per frame while that program still holds it; uPivot once per frame. `uniform4fvPerFrame` is asserted
+  ≤ 20 in every view/framing (`uniform4fvWithinBudgetInEveryFraming`). Note: the SKINNED program re-sends uState whenever
+  the draw list alternates skin kinds; the draw order (by drawSlot) keeps kinds grouped.
+- Una corda: `ItemDrawer.shiftFor` shifts only KEY_ROT, HAMMER_ROT, JACK*, TONGUE*, ACTION_SET; tested.
+- headStill needs both |Δyaw| and |Δpitch| < 0.2° per frame.
+- Cutaway label anchor per instrument (`labelAnchor`: grand 0.93/−0.24, upright 0.93/−0.20, harpsichord 0.86/−0.42, piano
+  frame y/z, plus the existing +3.5 cm x offset beside the cut).
+- Pacing: in display rest `doFrame` requests the one black frame and stops re-posting; `setQuality` restarts pacing when the
+  rest ends (if resumed). `onPause` queues `presentBlack()` (clear + eglSwapBuffers on the GL thread) before `super.onPause()`;
+  queued events run before the GL thread honours the pause.
+- Tests: `tools/gw :app:testDebugUnitTest --tests 'com.tropicalstream.hammerklavier.render.*'` 30/30 pass. Device checks of
+  resetContext and the pause black frame still need the glasses.
