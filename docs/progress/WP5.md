@@ -14,11 +14,10 @@ Branch `wp5-mech` (from `contracts-v1`). Package `com.tropicalstream.hammerklavi
 - `MechanicsEvaluatorImpl()` implements `MechanicsEvaluator`; `exposureEnabled` switch (T5.10).
 
 ## Tests (JVM, `tools/gw :core:test --tests 'com.tropicalstream.hammerklavier.mech.*'`)
-37 tests: 36 pass, 1 ignored. T5.1 TouchTest; T5.2/T5.3 GrandActionTest; T5.4 HarpsichordActionTest;
+36 tests, all pass, none ignored (after merging main / contracts-v1.1). T5.1 TouchTest; T5.2/T5.3 GrandActionTest; T5.4 HarpsichordActionTest;
 T5.5 UprightActionTest; T5.6 StringVisualTest; T5.7 ExposureSamplerTest; T5.8–T5.11 + focus MechanicsEvaluatorTest.
 T5.9 on this Mac: 0.03–0.05 ms per frame (88 keys, CHORD_STORM_64), zero allocation with escape analysis off.
-Ignored: `ExposureSamplerTest.centredWindowsFromVisualClock` ("needs contracts-v1.1": the v1 VisualClock stub's
-windows are not centred). Every other T5.7 case drives its own tiling, centred windows.
+`ExposureSamplerTest.centredWindowsFromVisualClock` now runs against v1.1's VisualClock and passes.
 
 ## Decisions / deviations
 - Harpsichord cloth damper: lift = clamp((dip·6 − 1.5)/1.5, 0, 1) instead of the literal clamp(dip·6/1.5): only
@@ -34,4 +33,4 @@ windows are not centred). Every other T5.7 case drives its own tiling, centred w
 - FocusTracker: "down" = governing note held; "struck" = last contact within 0.5 s of song time.
 
 ## Remaining
-- Un-ignore the VisualClock test when contracts-v1.1 lands. No WP11 fixtures needed.
+- None in code. Device checks (M3/M4/M7) are run by the integrator; wiring in docs/wiring/WP5.md.

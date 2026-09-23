@@ -10,7 +10,6 @@ import com.tropicalstream.hammerklavier.mech.MechTestKit.PRE
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Test
 
 /** T5.7 */
@@ -75,7 +74,6 @@ class ExposureSamplerTest {
     }
 
     /** With the real VisualClock's centred windows: mean display offset ≈ 0 at 20 fps. */
-    @Ignore("needs contracts-v1.1")
     @Test fun centredWindowsFromVisualClock() {
         val g = InstrumentProfile.GRAND
         val pf = MechTestKit.synthetic(SyntheticScore.REPEAT_15, g)
