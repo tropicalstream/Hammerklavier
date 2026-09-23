@@ -230,7 +230,7 @@ function pump() {
       it.bar.value = 1;
       var parts = [];
       (d.saved || []).forEach(function (s) { parts.push("✓ " + s.title + " (" + fmt(s.durationSec) + ", " + s.notes + " notes)"); });
-      (d.rejected || []).forEach(function (r) { parts.push("✗ " + r.name + ": " + (REASONS[r.reason] || r.reason) + (r.detail && r.reason === "DUPLICATE" ? " — " + r.detail : "")); });
+      (d.rejected || []).forEach(function (r) { parts.push("✗ " + r.name + ": " + (r.reasonText || REASONS[r.reason] || r.reason) + (r.detail && r.reason === "DUPLICATE" ? " — " + r.detail : "")); });
       it.line.textContent = it.rel + " — " + (parts.join(" · ") || "nothing imported");
       it.line.className = (d.saved && d.saved.length) ? "ok" : "bad";
       loadLibrary();

@@ -6,6 +6,7 @@ import com.tropicalstream.hammerklavier.contract.ImportResult
 import com.tropicalstream.hammerklavier.contract.InstrumentId
 import com.tropicalstream.hammerklavier.contract.LibraryModel
 import com.tropicalstream.hammerklavier.contract.LibraryService
+import com.tropicalstream.hammerklavier.contract.RejectReason
 import com.tropicalstream.hammerklavier.contract.ViewId
 import com.tropicalstream.hammerklavier.library.CatalogCodec
 import com.tropicalstream.hammerklavier.library.ImportRules
@@ -63,7 +64,12 @@ class CompanionServer(
         val uri = s.uri ?: "/"
         if (uri == "/" || uri == "/index.html") {
             if (s.method != Method.GET && s.method != Method.HEAD) return error(ST_405, "method")
-            return bytes(Response.Status.OK, "text/html; charset=utf-8", page().toByteArray(Charsets.UTF_8))
+            val body = page().toByteArray(Charsets.UTF_8)
+            if (s.method == Method.HEAD) {
+                return newFixedLengthResponse(Response.Status.OK, "text/html; charset=utf-8", ByteArrayInputStream(ByteArray(0)), 0L)
+                    .also { it.addHeader("Content-Length", body.size.toString()) }
+            }
+            return bytes(Response.Status.OK, "text/html; charset=utf-8", body)
         }
         if (!uri.startsWith("/api/")) return error(Response.Status.NOT_FOUND, "not found")
         authorise(s)?.let { return it }
@@ -169,15 +175,15 @@ class CompanionServer(
             } else listOf(library.importFile(tmp, name))
             val saved = JSONArray(); val rejected = JSONArray()
             val saves = results.filter { it.ok && it.movementId != null }
-            val m = if (saves.isNotEmpty()) library.load() else null
+            val facts = library as? ImportedFacts
             for (r in results) {
                 val mid = r.movementId
                 if (r.ok && mid != null) {
-                    val mv = m?.movements?.get(mid)
-                    saved.put(JSONObject().put("id", mid).put("title", mv?.title ?: r.name)
-                        .put("durationSec", Math.round((mv?.durationSec ?: 0f) * 10.0) / 10.0)
-                        .put("notes", (library as? ImportedFacts)?.importedNotes(mid) ?: 0))
+                    saved.put(JSONObject().put("id", mid).put("title", facts?.importedTitle(mid) ?: r.name)
+                        .put("durationSec", Math.round((facts?.importedDurationSec(mid) ?: 0f) * 10.0) / 10.0)
+                        .put("notes", facts?.importedNotes(mid) ?: 0))
                 } else rejected.put(JSONObject().put("name", r.name).put("reason", r.reason?.name ?: "IO_ERROR")
+                    .put("reasonText", reasonText(r.reason ?: RejectReason.IO_ERROR))
                     .put("detail", r.detail ?: ""))
             }
             if (saves.isNotEmpty()) post(Runnable { commands.importsChanged() })
@@ -224,6 +230,21 @@ class CompanionServer(
         json(st, JSONObject().put("error", st.requestStatus).put("detail", msg).toString())
 
     private fun json(st: Response.IStatus, body: String) = bytes(st, "application/json; charset=utf-8", body.toByteArray(Charsets.UTF_8))
+
+    /** Human-readable rejection text for the page (§1.6); the enum code is sent alongside. */
+    private fun reasonText(r: RejectReason): String = when (r) {
+        RejectReason.NOT_MIDI -> "Not a MIDI file"
+        RejectReason.TRUNCATED -> "File is truncated"
+        RejectReason.BAD_HEADER -> "Damaged MIDI header"
+        RejectReason.TOO_LARGE -> "File is too large"
+        RejectReason.TOO_MANY_EVENTS -> "Too many events"
+        RejectReason.NO_KEYBOARD_NOTES -> "No keyboard notes"
+        RejectReason.DUPLICATE -> "Already imported"
+        RejectReason.ZIP_LIMIT -> "Zip exceeds the import limits"
+        RejectReason.ZIP_TRAVERSAL -> "Unsafe path inside zip"
+        RejectReason.PERMISSION_DENIED -> "Cannot read file"
+        RejectReason.IO_ERROR -> "Read or write error"
+    }
 
     private fun bytes(st: Response.IStatus, mime: String, b: ByteArray): Response =
         newFixedLengthResponse(st, mime, ByteArrayInputStream(b), b.size.toLong())

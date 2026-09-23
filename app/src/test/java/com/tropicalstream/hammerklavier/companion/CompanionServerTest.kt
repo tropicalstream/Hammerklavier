@@ -74,6 +74,8 @@ class CompanionServerTest {
         override fun delete(movementId: String) = store.delete(movementId)
         override val scoresDir: File get() = store.scoresDir
         override fun importedNotes(movementId: String) = store.importedNotes(movementId)
+        override fun importedTitle(movementId: String) = store.importedTitle(movementId)
+        override fun importedDurationSec(movementId: String) = store.importedDurationSec(movementId)
     }
 
     private val commands = object : CompanionCommands {

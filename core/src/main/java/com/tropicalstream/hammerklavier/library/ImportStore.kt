@@ -22,6 +22,10 @@ import java.util.zip.ZipFile
 interface ImportedFacts {
     /** The note count of an imported movement, or null when it is not an import. */
     fun importedNotes(movementId: String): Int?
+    /** The title of an imported movement, or null when it is not an import. */
+    fun importedTitle(movementId: String): String? = null
+    /** The duration in seconds of an imported movement, or null when it is not an import. */
+    fun importedDurationSec(movementId: String): Float? = null
 }
 
 /**
@@ -49,6 +53,14 @@ class ImportStore(val importsDir: File, val scoresDir: File, private val compile
 
     override fun importedNotes(movementId: String): Int? = synchronized(lock) {
         ensureLoaded(); items.firstOrNull { it.movementId == movementId }?.notes
+    }
+
+    override fun importedTitle(movementId: String): String? = synchronized(lock) {
+        ensureLoaded(); items.firstOrNull { it.movementId == movementId }?.title
+    }
+
+    override fun importedDurationSec(movementId: String): Float? = synchronized(lock) {
+        ensureLoaded(); items.firstOrNull { it.movementId == movementId }?.durationSec
     }
 
     /** Forgets the in-memory index so the next call re-reads index.json (tests; after an external change). */
@@ -276,7 +288,12 @@ class ImportStore(val importsDir: File, val scoresDir: File, private val compile
         if (bytes.size > ImportRules.MAX_MIDI_BYTES) return reject(name, RejectReason.TOO_LARGE, "${bytes.size} bytes")
         if (!compiler.sniff(bytes.copyOf(minOf(bytes.size, 16)))) return reject(name, RejectReason.NOT_MIDI, "no MThd or RIFF RMID header")
         val facts = try { compiler.inspect(bytes) } catch (e: Throwable) { return reject(name, RejectReason.IO_ERROR, e.toString()) }
-        if (!facts.ok) return reject(name, facts.error ?: RejectReason.BAD_HEADER, "")
+        if (!facts.ok) {
+            // §4.8: keep the parser's detail and byte offset; inspect() carries neither, compile() does.
+            val c = try { compiler.compile(bytes, "user.reject", 0, InstrumentProfile.HARPSICHORD) } catch (e: Throwable) { null }
+            if (c is CompileResult.Failed) return reject(name, facts.error ?: c.reason, "${c.detail} @${c.byteOffset}")
+            return reject(name, facts.error ?: RejectReason.BAD_HEADER, "")
+        }
         if (facts.noteCount < 1) return reject(name, RejectReason.NO_KEYBOARD_NOTES, "")
         val sha = Sha1.hex(bytes)
         val existingIdx = items.indexOfFirst { it.sha1Hex == sha }
@@ -341,7 +358,8 @@ class ImportStore(val importsDir: File, val scoresDir: File, private val compile
 
     private fun record(source: String, size: Long, mtime: Long, r: ImportResult): ImportResult {
         val reason = r.reason ?: return r
-        if (reason == RejectReason.PERMISSION_DENIED || reason == RejectReason.IO_ERROR) return r
+        // DUPLICATE is not recorded either: once the original is deleted the file is no longer a duplicate.
+        if (reason == RejectReason.PERMISSION_DENIED || reason == RejectReason.IO_ERROR || reason == RejectReason.DUPLICATE) return r
         rejected.removeAll { it.source == source }
         rejected += RejectRecord(source, size, mtime, reason, r.detail ?: "")
         return r

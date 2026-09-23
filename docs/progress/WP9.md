@@ -36,3 +36,11 @@
 
 ## Remaining
 - None in code. The full-catalogue assertion turns on automatically when `assets/catalog.json` lands (M6); device checks run by the integrator.
+
+## Review fixes (round 2)
+- Test shelf: `assets/midi/test/*.mid` shelf ("Test scores") is added only when `BuildConfig.DEBUG` or when no catalogue parsed (M2 bundled-only). Test ids never enter `startHere`. `test:` ids always resolve in `readBytes`. Release library keeps the §1.5 15 shelves.
+- Import rejections from a failed `inspect()` now call `compile()` and store `"<detail> @<byteOffset>"` in RejectRecord.detail (§4.8).
+- DUPLICATE rejections are no longer recorded (like PERMISSION_DENIED / IO_ERROR), so a pushed copy re-imports after the original is deleted.
+- Upload reply takes title/duration from ImportStore via `ImportedFacts.importedTitle/importedDurationSec` (default-null interface methods) instead of `library.load()`.
+- `HEAD /` returns headers only (Content-Length of the page). `rejected[]` carries `reasonText` (local table in CompanionServer, since UiText is WP10's; page prefers it over its own table).
+- Wiring: `model = { null }` so `/api/library` reflects imports immediately.

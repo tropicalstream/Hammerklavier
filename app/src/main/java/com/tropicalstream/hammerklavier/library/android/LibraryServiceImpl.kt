@@ -71,6 +71,8 @@ class LibraryServiceImpl(ctx: Context, private val compiler: ScoreCompiler) : Li
     override fun delete(movementId: String): Boolean = synchronized(lock) { store.delete(movementId) }
 
     override fun importedNotes(movementId: String): Int? = store.importedNotes(movementId)
+    override fun importedTitle(movementId: String): String? = store.importedTitle(movementId)
+    override fun importedDurationSec(movementId: String): Float? = store.importedDurationSec(movementId)
 
     fun setLastInstrument(movementId: String, id: InstrumentId): Boolean = synchronized(lock) { store.setLastInstrument(movementId, id) }
 
@@ -85,8 +87,11 @@ class LibraryServiceImpl(ctx: Context, private val compiler: ScoreCompiler) : Li
         bundled?.let { return it }
         val catalogue = asset(CATALOG)?.let { bytes ->
             try { CatalogCodec.parse(String(bytes, Charsets.UTF_8), ::assetExists) } catch (e: Exception) { null }
-        } ?: LibraryModel(emptyList(), emptyMap(), emptyMap(), emptyMap(), emptyList())
-        val model = withTestShelf(catalogue)
+        }
+        val base = catalogue ?: LibraryModel(emptyList(), emptyMap(), emptyMap(), emptyMap(), emptyList())
+        // The test shelf is an engineering aid: only in debug builds or when no catalogue parsed (M2 bundled-only).
+        // test: ids still resolve in readBytes either way (§1.5 fixes the release library at 15 shelves).
+        val model = if (com.tropicalstream.hammerklavier.BuildConfig.DEBUG || catalogue == null) withTestShelf(base) else base
         bundled = model
         return model
     }
@@ -112,7 +117,7 @@ class LibraryServiceImpl(ctx: Context, private val compiler: ScoreCompiler) : Li
         val sources = LinkedHashMap(m.sources)
         sources["hk"] = Source("hk", "Hammerklavier test scores", "CC0-1.0", "", "", null, "synthetic", "test", true)
         return LibraryModel(m.shelves + Shelf(TEST, "Test scores", listOf(TEST)), works, movements, sources,
-            m.startHere.ifEmpty { ids.take(3) })
+            m.startHere)
     }
 
     companion object {

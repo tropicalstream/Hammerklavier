@@ -7,7 +7,7 @@
 
 ## Hook-ups
 - `HammerklavierApp` owns one `companion.CompanionServer(port = CompanionServer.PORT, token = { settings.getString("companion.token", "") },
-  library = wiring.library, model = { <SessionController's last loaded LibraryModel> }, commands = <SessionController>,
+  library = wiring.library, model = { null }, commands = <SessionController>,
   page = { assets.open("companion.html").use { String(it.readBytes(), Charsets.UTF_8) } }, post = wiring.post)`;
   `start(5000, true)` with the engine, `stop()` when the activity finishes.
 - Token: if `companion.token` is empty or `!CompanionServer.isToken(it)`, store `CompanionServer.newToken()` (String, default "").
@@ -29,3 +29,5 @@
   Wi-Fi, upload a .mid → it appears on the Imported shelf; upload a text file renamed .mid → rejected with its reason;
   wrong token 10x → 429; `tools/device/push_scores.sh <dir>` then rescan → the folder appears as one work;
   Wi-Fi off → `no Wi-Fi: use push_scores.sh`; `curl -w '%{time_total}' .../api/state` < 50 ms.
+
+- `model = { null }` is deliberate: the server then calls `library.load()`, so `/api/library` reflects an upload immediately rather than waiting for `importsChanged` to reload on HKLoader.
