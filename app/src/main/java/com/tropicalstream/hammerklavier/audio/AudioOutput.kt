@@ -163,6 +163,8 @@ class AudioOutput internal constructor(
     private val supervisor = TrackSupervisor()
     private val renderGuard = RenderGuard()
     private val headroom = HeadroomGuard()
+    /** The last accepted timestamp (absolute output frame, nanos); -1 = none this session. */
+    private var tsFrame = -1L; private var tsNanos = 0L
     private val tuner = LatencyTuner()
     private val wakeLock = Object()
     @Volatile private var wakeFlag = false
@@ -242,20 +244,45 @@ class AudioOutput internal constructor(
         offer(Cmd.ROUTE, route.route.ordinal.toLong(), latAllowance.get(route.route.ordinal) / 48f)
     }
 
+    /**
+     * Bank and key-map tables are built off main (EngineCoreApi.prepare* are any-thread; the stub
+     * bank's took ≈ 1 s on the AR1 and stalled the UI at M1), in order, on [prepareWorker]; the
+     * result is published on main. [prepareSeq] drops a prepare overtaken by a newer setBank.
+     * Without a main Handler (JVM tests) it runs inline as before.
+     */
+    private val prepareWorker: java.util.concurrent.ExecutorService? = if (main == null) null else
+        java.util.concurrent.Executors.newSingleThreadExecutor { r -> Thread(r, "HKPrepare").apply { isDaemon = true } }
+    private var prepareSeq = 0
+
+    /** [newBank]: a setBank (bumps the sequence); a key map keeps it and is dropped only by a newer bank. */
+    private fun offMain(newBank: Boolean, work: () -> Any, publish: (Any) -> Unit) {
+        val w = prepareWorker ?: return publish(work())
+        val seq = if (newBank) ++prepareSeq else prepareSeq
+        w.execute {
+            val token = work()
+            post(Runnable { if (seq == prepareSeq) publish(token) })
+        }
+    }
+
+    private var requestedBank: LoadedBank? = null; private var requestedProfile: InstrumentProfile? = null
+
     override fun setBank(bank: LoadedBank, keyMap: KeyMap, profile: InstrumentProfile) {
-        val token = core.prepareBank(bank, keyMap, profile)
-        lastBank = bank; lastProfile = profile; lastBankToken = token; lastKeyMapToken = null
-        prefetcher.bank = bank; prefetcher.keyMap = keyMap; prefetcher.wake()
-        offer(Cmd.SET_BANK, ref = token)
+        requestedBank = bank; requestedProfile = profile                   // setKeyMap may follow before the publish
+        offMain(true, { core.prepareBank(bank, keyMap, profile) }) { token ->
+            lastBank = bank; lastProfile = profile; lastBankToken = token; lastKeyMapToken = null
+            prefetcher.bank = bank; prefetcher.keyMap = keyMap; prefetcher.wake()
+            offer(Cmd.SET_BANK, ref = token)
+        }
     }
 
     override fun setKeyMap(keyMap: KeyMap) {
-        val bank = lastBank ?: return
-        val profile = lastProfile ?: return
-        val token = core.prepareKeyMap(keyMap, bank.info, profile)
-        lastKeyMapToken = token
-        prefetcher.keyMap = keyMap
-        offer(Cmd.SET_KEYMAP, ref = token)
+        val bank = requestedBank ?: lastBank ?: return
+        val profile = requestedProfile ?: lastProfile ?: return
+        offMain(false, { core.prepareKeyMap(keyMap, bank.info, profile) }) { token ->
+            lastKeyMapToken = token
+            prefetcher.keyMap = keyMap
+            offer(Cmd.SET_KEYMAP, ref = token)
+        }
     }
 
     override fun setPerformance(p: Performance?, startUs: Long, autoPlay: Boolean) {
@@ -392,7 +419,7 @@ class AudioOutput internal constructor(
     /** clock.reset → play → prime one silent block (SpyHunt rule: never prime before play). */
     private fun beginSession() {
         audioClock.reset(); energy.reset(); cursors.clearAll()
-        gotTs = false; idleFrames = 0; parked = false; headroom.reset(); tuner.reset()
+        gotTs = false; tsFrame = -1L; idleFrames = 0; parked = false; headroom.reset(); tuner.reset()
         val s = sink ?: return
         s.play()
         java.util.Arrays.fill(out, 0f)
@@ -449,6 +476,7 @@ class AudioOutput internal constructor(
                 val now = clockSource.now()
                 if (audioClock.publishTimestamp(trackBaseFrame + tsBuf[0], tsBuf[1])) {
                     gotTs = true
+                    tsFrame = trackBaseFrame + tsBuf[0]; tsNanos = tsBuf[1]
                     val h = trackBaseFrame + tsBuf[0] + (now - tsBuf[1]) * HK.SR / 1_000_000_000L
                     val lat = (framesAccepted - h).toInt()
                     if (lat in 1..96_000) noteLatency(routeOrdinal.coerceIn(0, OutputRoute.entries.size - 1), lat)
@@ -462,8 +490,12 @@ class AudioOutput internal constructor(
         }
         if (!gotTs) audioClock.publishEstimate(framesAccepted, latAllowance.get(routeOrdinal.coerceIn(0, OutputRoute.entries.size - 1)), clockSource.now())
         // Headroom.
-        val queued = (framesAccepted - (trackBaseFrame + s.playbackHeadPosition())).toInt()
-        when (headroom.sample(framesAccepted, queued, baseCap)) {
+        // Frames written but not yet presented at the DAC (M1: this route drains the client buffer in
+        // 7,680-frame chunks, so framesAccepted − playbackHeadPosition dips to one block after every
+        // pull although ~16k frames are in the pipe). Client queue only until the first timestamp.
+        val queued = if (gotTs && tsFrame >= 0) (framesAccepted - (tsFrame + (clockSource.now() - tsNanos) * HK.SR / 1_000_000_000L)).toInt()
+            else (framesAccepted - (trackBaseFrame + s.playbackHeadPosition())).toInt()
+        when (if (gotTs) headroom.sample(framesAccepted, queued, baseCap) else 0) {       // warm-up: from the first timestamp
             1 -> { val cap = headroom.cap(baseCap); core.on(Cmd.VOICE_CAP, cap.toLong(), 0f, null); overloadPayload = cap; post(overloadRunnable) }
             -1 -> core.on(Cmd.VOICE_CAP, headroom.cap(baseCap).toLong(), 0f, null)
         }

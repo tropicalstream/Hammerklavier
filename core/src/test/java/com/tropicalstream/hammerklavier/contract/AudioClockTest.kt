@@ -199,4 +199,21 @@ class AudioClockTest {
         stop.set(true); writer.join()
         assertEquals(0, torn); assertEquals(0, misses); assertTrue("anchor checks $anchorChecks", anchorChecks > 1000)
     }
+
+    /** M1 on the glasses: an off-line start-up pair must not block the consistent ones after it. */
+    @Test fun offLineFirstTimestampIsDroppedAfterReseed() {
+        val c = AudioClock()
+        for (k in 0 until 64) block(c, k * B, 0L)
+        assertTrue(c.publishTimestamp(3840, 1_000_000_000L))                  // start-up pair, off the line below
+        var ok = 0
+        for (i in 1..20) {
+            val f = 10_080L + (i - 1) * 7680L
+            val nanos = 1_234_225_260L + (i - 1) * 160_000_000L
+            if (c.publishTimestamp(f, nanos)) ok++
+        }
+        val st = ClockStats(); c.stats(st)
+        assertTrue("accepted $ok", ok >= 16)
+        assertEquals(1, c.reseeds)
+        assertEquals(48000f, st.fsFit, 1f)
+    }
 }

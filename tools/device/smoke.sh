@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # PLAN §8.3: tools/device/smoke.sh M<n>. Runs the milestone's CONTROL script under lock.sh, grabs a
 # screencap per step into build/smoke/M<n>/, runs the self-test and fails on FAIL, AndroidRuntime,
-# FRAME HITCH or missing expected log lines. Only M0 is defined so far (later milestones add theirs).
+# FRAME HITCH or missing expected log lines. M0 here; M1 in smoke_m1.sh (later milestones add theirs).
 set -euo pipefail
 ROOT=$(git rev-parse --show-toplevel); . "$ROOT/tools/env.sh"
 M=${1:-M0}
 S=${HK_SERIAL:-A06B4A96A733283}; PKG=com.tropicalstream.hammerklavier
 OUT="$ROOT/build/smoke/$M"; mkdir -p "$OUT"
 SELFTEST_SECS=${HK_SELFTEST_SECS:-60}
-[ "$M" = M0 ] || { echo "[smoke] $M not defined yet" >&2; exit 2; }
+case "$M" in M0) ;; M1) exec "$ROOT/tools/device/smoke_m1.sh" "$OUT" "$S" "$PKG" "$SELFTEST_SECS";; *) echo "[smoke] $M not defined yet" >&2; exit 2;; esac
 
 # The step script goes to a file (adb shell would swallow a script fed on stdin).
 cat > "$OUT/steps.sh" <<'SH'

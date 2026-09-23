@@ -152,8 +152,36 @@ class Playback(private val w: Wiring) {
         return if (best > 0) best else 2000
     }
 
+    private var lastTicks = -1L; private var lastTickNs = 0L
+    private val lastTis = HashMap<Int, Long>()
+
+    /** HKAudio utime+stime (clock ticks, 100 Hz) from /proc; −1 if unreadable. */
+    private fun taskTicks(tid: Int): Long = runCatching {
+        val st = File("/proc/self/task/$tid/stat").readText()
+        val f = st.substring(st.lastIndexOf(')') + 2).split(' ')
+        f[11].toLong() + f[12].toLong()                                       // fields 14, 15
+    }.getOrDefault(-1L)
+
+    /** Mean policy0 frequency (MHz) since the last call, from time_in_state deltas; −1 if unreadable. */
+    private fun meanMhz(): Int = runCatching {
+        var sum = 0.0; var t = 0L
+        File("/sys/devices/system/cpu/cpufreq/policy0/stats/time_in_state").forEachLine { line ->
+            val p = line.trim().split(Regex("\\s+")); if (p.size < 2) return@forEachLine
+            val khz = p[0].toInt(); val c = p[1].toLong()
+            val d = c - (lastTis.put(khz, c) ?: c); sum += d.toDouble() * khz / 1000.0; t += d
+        }
+        if (t > 0) (sum / t).toInt() else -1
+    }.getOrDefault(-1)
+
     fun logStats() {
         w.audio.stats(stats); w.audio.clockStats(cs)
+        val ticks = if (stats.tid > 0) taskTicks(stats.tid) else -1L
+        val now = System.nanoTime()
+        val mhz = meanMhz()
+        val threadPct = if (ticks >= 0 && lastTicks >= 0 && now > lastTickNs) (ticks - lastTicks) * 10_000_000.0 * 100.0 / (now - lastTickNs) else -1.0
+        lastTicks = ticks; lastTickNs = now
+        val norm = if (threadPct >= 0 && mhz > 0) threadPct * mhz / 2000.0 else -1.0
+        Log.i(HK.TAG_PERF, "hkaudio thread=${"%.1f".format(threadPct)}% meanMHz=$mhz normalised=${"%.1f".format(norm)}% (of a 2.0 GHz core)")
         Log.i(HK.TAG_AUDIO, "stats voices=${stats.voices} peak=${stats.voicesPeak} cap=${stats.voiceCap} noise=${stats.noiseVoices} stolen=${stats.stolen} " +
             "dropped=${stats.dropped} combs=${stats.combsActive} p50=${stats.blockP50Us} p99=${stats.blockP99Us} max=${stats.blockMaxUs} " +
             "cpu=${"%.1f".format(stats.cpuPct)} ur=${stats.underruns} slow=${stats.slowReads} head=${stats.headroomMinFrames} buf=${stats.bufferFrames} " +
