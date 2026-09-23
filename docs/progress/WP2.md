@@ -43,7 +43,7 @@ Private test helpers: `EngineTestKit.kt` (`Harness`, `IdentityMaster`, `TestBank
 
 ## Test results
 
-`tools/gw :core:test`: 102 tests (WP0's 37 + WP2's 65), 0 failures, 0 skipped. `tools/check_purity.sh`: OK.
+`tools/gw :core:test`: 103 tests (WP0's 37 + WP2's 66), 0 failures, 0 skipped. `tools/check_purity.sh`: OK.
 JVM bench on this Mac (PassThroughDsp): Hermite ≈ 8 ns, linear ≈ 5 ns, copy ≈ 4 ns per voice-frame.
 
 ## Remaining
