@@ -10,6 +10,7 @@ import com.tropicalstream.hammerklavier.contract.FallbackReason
 import com.tropicalstream.hammerklavier.contract.HK
 import com.tropicalstream.hammerklavier.contract.InstrumentId
 import com.tropicalstream.hammerklavier.contract.InstrumentProfile
+import com.tropicalstream.hammerklavier.contract.Performance
 import com.tropicalstream.hammerklavier.contract.KitCallback
 import com.tropicalstream.hammerklavier.contract.LoadedBank
 import com.tropicalstream.hammerklavier.contract.RouteInfo
@@ -40,6 +41,8 @@ class Playback(private val w: Wiring) {
     var onVoiceCap: ((Int) -> Unit)? = null
     /** Set by AppController: a performance started (playback hint to the kits). */
     var onPlaying: (() -> Unit)? = null
+    /** M3: every new Performance also goes to the renderer (RenderControl.setPerformance). */
+    var onPerformance: ((Performance, InstrumentProfile) -> Unit)? = null
 
     private val kitCb = object : KitCallback {
         override fun onProgress(id: InstrumentId, fraction: Float) {
@@ -113,6 +116,7 @@ class Playback(private val w: Wiring) {
             w.main.post {
                 if (perf == null) { Log.w(HK.TAG_LOADER, "play $name: nothing to play"); return@post }
                 playingName = name
+                onPerformance?.invoke(perf, prof)
                 w.audio.setPerformance(perf, 0L, true)
                 onPlaying?.invoke()
                 Log.i(HK.TAG_LOADER, "play $name gen=$gen notes=${perf.onUs.size} durationMs=${perf.durationUs / 1000} compiled in ${"%.1f".format(ms)} ms")

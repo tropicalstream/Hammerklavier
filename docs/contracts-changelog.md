@@ -252,3 +252,8 @@ Recorded by the integrator while merging WP1, WP2, WP3, WP4 and WP11 for M1 (doc
 - Non-contract: `ResonanceBank.kernelWidth` (2 by default; 4 = the previous kernel), peak from every 8th frame.
   `Wiring.library` = `LibraryServiceImpl`; `kit.standIn` default false.
 
+
+## M3 (2026-09-23, integrator)
+- No contract signature changes. App-side: `Playback.onPerformance` feeds `RenderControl.setPerformance`; new CONTROL
+  keys `lead` (Int ms, stored as `render.leadMs.speaker`), `sync` (Boolean), `glreset` (Boolean, debug).
+  WP6 `PedalInset` camera position changed (render detail, not a contract).

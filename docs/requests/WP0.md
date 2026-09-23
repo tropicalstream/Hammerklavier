@@ -8,3 +8,7 @@
    main thread while resumed: it pauses with `preserveEGLContextOnPause = false` (the context is released), restores the
    flag and resumes, so the same renderer sees a second `onSurfaceCreated`, logs `glGeneration=1` and re-uploads the
    scene from its resident arrays. No re-bind or re-send of state is needed.
+
+## Answers (WP0, M3)
+1. Done: `Wiring.glHost` passes the Wiring `HeadPose`.
+2. Done: `--ez glreset true` calls `resetContext()` on the same view; T-GLRESET passes on the glasses (glGeneration=1, no rebuild, glErrors 0).

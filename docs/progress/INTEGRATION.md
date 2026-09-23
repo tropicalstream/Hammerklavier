@@ -176,3 +176,51 @@ release build (`isDebuggable=false`, `cmd package compile -m speed -f`, md5 veri
 - Still open: T-DEC (14-15 s/unit at 691 MHz, ~8.5 s at 2 GHz; > 120 s total), T-CPU at Q0 (cpu 56-60%, p99
   4.55-4.75 ms with ~10 voices, 88 combs), storm64/T-PF/T-ALIGN/reboot not re-run; the idle overlay reads
   "paused" while the M1 playback driver plays (WP12 SessionController not wired). M2 not tagged.
+
+## M3 Keys move (2026-09-23) — not tagged (gate partial)
+
+### Merged
+- `wp5-mech` (e49b628), `wp6-render` (636864b), `wp7-instruments` (1cd7a4b): all three merged with no conflicts.
+
+### Wired
+- `Wiring`: `mechanics()` = `mech.MechanicsEvaluatorImpl()` (per GL view); `glHost` = `render.HkGlView(ctx, loader, msaa, head)`
+  (WP6 request 1: the Wiring `HeadPose` is passed); `scenes` = WP7 `Instruments.create` + `StubVenue` (WP8 not merged).
+- `Playback.onPerformance` → `gl.setPerformance(perf, profile)` for every new Performance (the GL host never received one
+  before); re-sent on `attach`. `setSettings` (displayLeadMs from `render.leadMs.speaker`, default 30), `setSyncFlash`,
+  and `setIdle` (follows the clock on the 500 ms poll, so pacing drops to 10 fps when paused).
+- CONTROL: `--ei lead N` (stores the speaker lead), `--ez sync true` (flash on + `synth:sync`), `--ez glreset true`
+  (`HkGlView.resetContext()` on the same view, WP6 request 2).
+- `HKRender fps= late= lateP99Us= hitches= divider= draws= maxDraws= tris= glGen= glErrors=` every 5 s while resumed (T-FPS).
+- `PedalInset` camera moved closer ((0.14, 0.30, 0.12) → (0, 0.08, −0.28)): at WP6's 0.8 m the pedals were ~10 px wide in
+  the 200 × 150 box; now ~40 px, clearly legible.
+- New: `tools/device/smoke.sh M3` (→ `smoke_m3.sh`), `tools/device/avsync.py` (§8.6 coarse check on a scrcpy recording).
+
+### Gate results (glasses A06B4A96A733283, release build, md5 verified)
+| Check | Measured | Result |
+|---|---|---|
+| `tools/ci.sh` | PASS (one run hit a flaky `AudioOutputTest.stopAndStartRestoreThePausedPosition`, green on rerun) | pass |
+| `smoke.sh M3` | all 9 checks PASS | pass |
+| T-FPS | Q0 30.0, Q2 20.0, idle (paused) 9.9–10.0; hitches 0; late > 8 ms: 1 frame in ~2,100 | pass |
+| draws ≤ 28 | max 15 per eye (Player overview 11, Follow 14–15 incl. inset); scene grand 19 items, 2.1 MiB resident | pass |
+| T-GLRESET | `glGeneration=1` logged, no second `scene grand` line, glErrors 0, 30 fps within 1 s | pass |
+| T-SYNC coarse (scrcpy, lead 30) | Q0 −42.4 ms (p90−p10 24.3), Q2 −41.4 ms (26.2) in the same session; later sessions Q0 −39.7 / −19.4, Q2 −18.3 (37.0) | Q0 ≈ Q2 (no frame-rate bias); spread ≤ 33 ms at Q0; **absolute not measured** |
+| T-SYNC absolute (240 fps phone film) | not run: needs a camera and a hand | open |
+| T-SYNC / T-UND on Bluetooth | not run: no headset paired/connected to the glasses | open |
+| L-1 presence floor | needs the user | open |
+
+Screencaps: `docs/shots/m3_player_overview.png` (whole keyboard, keys dipping, lid, lyre, brass pedals, identical eyes),
+`docs/shots/m3_player_follow.png` (three octaves around the centroid, keys pressed, pedal inset bottom right of each eye).
+Honest look: both framings render correctly in both eyes; the stub venue's floor is a flat bright tan (WP8 not merged,
+APL is an M5 check); the StubOverlay title/status text sits over the keys (WP10 not merged); the one-frame sync disc was
+not caught by screencap but is detected at every click in the scrcpy recordings (98/98).
+
+### Why M3 is not tagged (precise)
+- T-SYNC needs the absolute check (phone at 240 fps filming the lens) to calibrate `--ei lead`; scrcpy's audio capture
+  latency varies ~20 ms between sessions, so it cannot give the absolute offset.
+- T-SYNC and T-UND 5 min on a Bluetooth headset need a headset connected to the glasses.
+- L-1 is a listening/looking check with the user.
+
+### Open issues (M3)
+- Flaky `AudioOutputTest.stopAndStartRestoreThePausedPosition` (AudioOutputTest.kt:255), WP4.
+- WP7 request (harpsichord action-set layout) still to be decided by the plan owner before M7.
+- Pass the bank's `lastDamper` to `setInstrument` when WP12 lands (profile default 88 is correct for Salamander).

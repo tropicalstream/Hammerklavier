@@ -25,10 +25,14 @@ import com.tropicalstream.hammerklavier.engine.EngineCore
 import com.tropicalstream.hammerklavier.midi.ScoreCompilerImpl
 import com.tropicalstream.hammerklavier.contract.HK
 import com.tropicalstream.hammerklavier.library.android.LibraryServiceImpl
-import com.tropicalstream.hammerklavier.contract.stub.StubMechanics
-import com.tropicalstream.hammerklavier.contract.stub.StubScenes
+import com.tropicalstream.hammerklavier.mech.MechanicsEvaluatorImpl
+import com.tropicalstream.hammerklavier.contract.InstrumentId
+import com.tropicalstream.hammerklavier.contract.InstrumentLook
+import com.tropicalstream.hammerklavier.contract.InstrumentScene
+import com.tropicalstream.hammerklavier.contract.VenueScene
+import com.tropicalstream.hammerklavier.contract.stub.StubVenue
 import com.tropicalstream.hammerklavier.contract.stub.StubUi
-import com.tropicalstream.hammerklavier.contract.stub.android.StubGlHost
+import com.tropicalstream.hammerklavier.render.HkGlView
 import com.tropicalstream.hammerklavier.contract.stub.android.StubOverlay
 import java.io.File
 import java.util.concurrent.ExecutorService
@@ -39,8 +43,8 @@ import java.util.concurrent.ExecutorService
  * app names a concrete component. Built once by HammerklavierApp (process singletons); the GL view,
  * the overlay and the GL-thread mechanics are made per activity.
  *
- * Current state (M2): WP1 compiler, WP2 engine, WP3 DSP and designer, WP4 audio and kits (real grand), WP9 library are real;
- * scenes, mechanics, UI, GL host and overlay are still contract stubs.
+ * Current state (M3): WP1, WP2, WP3, WP4 (real grand), WP5 mechanics, WP6 GL host, WP7 instruments, WP9 library are real;
+ * venue, UI and overlay are still contract stubs.
  */
 class Wiring(val app: Application, val loader: ExecutorService, val voicer: ExecutorService, val main: Handler) {
     val post: (Runnable) -> Unit = { r -> main.post(r) }
@@ -58,14 +62,18 @@ class Wiring(val app: Application, val loader: ExecutorService, val voicer: Exec
     val audio: AudioControl = AudioOutput(app, engine, cursors, head, settings)   // WP4
     val library: LibraryService = LibraryServiceImpl(app, compiler)      // WP9 (bundled-only at M2)
     val designer: RoomDesigner = RoomAcoustics                            // WP3
-    val scenes: SceneFactory = StubScenes()                              // WP7/WP8: Instruments + VenueSceneImpl()
+    val scenes: SceneFactory = object : SceneFactory {                  // WP7 instruments; WP8 venue still stub
+        override fun instrument(id: InstrumentId, look: InstrumentLook, lastDamper: Int): InstrumentScene =
+            com.tropicalstream.hammerklavier.instrument.Instruments.create(id, look, lastDamper)
+        override fun venue(): VenueScene = StubVenue()                  // WP8: venue.VenueSceneImpl()
+    }
     val ui: UiStateMachine = StubUi()                                    // WP10: ui.model.UiStateMachineImpl()
 
     /** GLThread-owned; one per GL view. WP5: mech.MechanicsEvaluatorImpl(). */
-    fun mechanics(): MechanicsEvaluator = StubMechanics()
+    fun mechanics(): MechanicsEvaluator = MechanicsEvaluatorImpl()
 
     /** WP6: render.HkGlView(ctx, loader, msaa). */
-    fun glHost(ctx: Context, msaa: Boolean): GlHost = StubGlHost(ctx)
+    fun glHost(ctx: Context, msaa: Boolean): GlHost = HkGlView(ctx, loader = loader, msaa = msaa, head = head)
 
     /** WP10: ui.OverlayViews(ctx). */
     fun overlay(ctx: Context): OverlayHost = StubOverlay(ctx)

@@ -40,3 +40,7 @@ Until then T7.7's harpsichord assertions are the reference for the paired T6.4 d
 
 ## To WP0 / WP12
 - Pass the bank's `lastDamper` to `setInstrument` (see `docs/wiring/WP7.md`).
+
+## Answers (WP0, M3)
+- lastDamper: kept at the profile default (88, correct for Salamander) until WP12 lands.
+- Harpsichord action-set request: open for the plan owner, before M7.

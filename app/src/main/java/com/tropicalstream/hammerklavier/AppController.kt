@@ -75,6 +75,7 @@ class AppController(private val ctx: Context, private val w: Wiring) {
     /** M1 interim playback driver (kits → audio, `play`, `bench`, stats lines); WP12 replaces it. */
     val playback = Playback(w).also { pb ->
         pb.onVoiceCap = { cap -> q0Cap = cap; applyQuality(quality.level) }
+        pb.onPerformance = { p, prof -> lastPerf = p; lastProfile = prof; gl?.setPerformance(p, prof) }
         pb.onPlaying = { runCatching { w.kits.setPlaybackHint(true, InstrumentId.GRAND, quality, governor.effectiveTenths) } }
     }
     /** Re-sends the playback hint on every play/pause edge (pause and end paths do not call back). */
@@ -83,6 +84,8 @@ class AppController(private val ctx: Context, private val w: Wiring) {
         if (!engineRunning) return
         val p = isPlaying()
         if (p != hintPlaying) { hintPlaying = p; runCatching { w.kits.setPlaybackHint(p, InstrumentId.GRAND, quality, governor.effectiveTenths) } }
+        syncIdle()
+        if (resumed && ++renderTicks % 10 == 0) logRender()
         w.main.postDelayed(this, 500)
     } }
     private val debugTick = object : Runnable { override fun run() { if (!debug) return; refreshOverlay(); w.main.postDelayed(this, 500) } }
@@ -113,8 +116,39 @@ class AppController(private val ctx: Context, private val w: Wiring) {
         gl.setInstrument(InstrumentId.GRAND, InstrumentLook(UprightFinish.WALNUT, edgeOverlay = false), InstrumentProfile.GRAND.lastDamper)
         gl.setView(view, framing)
         gl.setQuality(quality)
+        gl.setSettings(renderSettings())
+        gl.setSyncFlash(syncFlash)
+        gl.setIdle(!isPlaying())
+        lastPerf?.let { gl.setPerformance(it, lastProfile) }
         refreshOverlay()
     }
+
+    // ── Render wiring (M3) ──
+    private var lastPerf: com.tropicalstream.hammerklavier.contract.Performance? = null
+    private var lastProfile: InstrumentProfile = InstrumentProfile.GRAND
+    private var syncFlash = false
+    private var lastIdle: Boolean? = null
+    private var renderTicks = 0
+
+    /** T-FPS: `HKRender fps= late=` every 5 s while resumed. */
+    private fun logRender() {
+        val g = gl ?: return
+        g.stats(renderStats)
+        val d = g.diagnostics()
+        Log.i(HK.TAG_RENDER, "fps=${"%.1f".format(renderStats.fps)} late=${renderStats.lateFrames} lateP99Us=${renderStats.lateP99Us} " +
+            "hitches=${renderStats.hitches} divider=${renderStats.divider} draws=${renderStats.draws} maxDraws=${d["maxDrawsPerEye"]} tris=${renderStats.tris} " +
+            "cpuUsP99=${renderStats.cpuUsP99} glGen=${renderStats.glGeneration} glErrors=${d["glErrors"]} glAllocs=${d["glAllocs"]} view=$view/$framing q=${quality.level} idle=$lastIdle")
+    }
+    private val KEY_LEAD = "render.leadMs.speaker"
+
+    /** §8.6: the speaker's displayLeadMs (default 30 ms), `--ei lead N` stores it. Route classes arrive with WP12. */
+    private fun renderSettings() = com.tropicalstream.hammerklavier.contract.RenderSettings(
+        stereoDepth = 1f, lookAround = true, roomOverride = null, palette = com.tropicalstream.hammerklavier.contract.Palette.SANSSOUCI_1747,
+        presenceFloor = 22, displayLeadMs = w.settings.getInt(KEY_LEAD, 30), lifeSizeVFov = 0f,
+        look = InstrumentLook(UprightFinish.WALNUT, edgeOverlay = false), msaa = false)
+
+    /** Called from the 500 ms hint poll: idle pacing follows the clock. */
+    fun syncIdle() { val idle = !isPlaying(); if (idle != lastIdle) { lastIdle = idle; gl?.setIdle(idle) } }
 
     fun detach() { gl = null; overlay = null }
 
@@ -211,6 +245,9 @@ class AppController(private val ctx: Context, private val w: Wiring) {
                 "align" -> if (b.getBoolean(k)) playback.align()
                 "wavdump" -> playback.captureWav(b.getInt(k, 20).coerceIn(1, 60))
                 "selftest" -> if (b.getBoolean(k)) selfTest.run(gl, b.getInt("selftestsecs", 60).coerceIn(1, 600))
+                "lead" -> { w.settings.putInt(KEY_LEAD, b.getInt(k, 30).coerceIn(-200, 400)); gl?.setSettings(renderSettings()); Log.i(HK.TAG_UI, "lead=${w.settings.getInt(KEY_LEAD, 30)} ms") }
+                "sync" -> { syncFlash = b.getBoolean(k); gl?.setSyncFlash(syncFlash); if (syncFlash) playback.play("synth:sync") }
+                "glreset" -> if (b.getBoolean(k)) (gl as? com.tropicalstream.hammerklavier.render.HkGlView)?.resetContext()
                 "selftestsecs", "benchsecs", "soakplan", "mono", "echo", "n" -> {}                   // parameters of other keys; echo is for the smoke test
                 "gcstats" -> if (b.getBoolean(k)) logGcStats()
                 "dump" -> if (b.getBoolean(k)) dump()
