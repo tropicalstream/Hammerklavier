@@ -152,6 +152,8 @@ class StereoRenderer(private val loader: ExecutorService?,
     private var surfaces = 0
     private var uploadedGen = -1
     private var lastNanos = 0L
+    /** The first frame after a pause or rest is not a hitch. */
+    private var resumedGap = true
     private var realSec = 0f
     private var lastGazeYaw = 0f
 
@@ -236,7 +238,8 @@ class StereoRenderer(private val loader: ExecutorService?,
         val vs = d.vsyncNanos
         val frameNanos = if (vs in 1..t0) vs else t0
         var dt = if (lastNanos == 0L) 0.033f else (t0 - lastNanos) * 1e-9f
-        if (lastNanos != 0L && dt > 0.12f) hitches++
+        if (lastNanos != 0L && dt > 0.12f && d.quality.frameDivider != 0 && !resumedGap && d.wokeSerial == seenWoke) { hitches++; Log.w(HK.TAG_RENDER, "FRAME HITCH") }
+        resumedGap = false
         lastNanos = t0
         if (dt < 0f) dt = 0f else if (dt > 0.05f) dt = 0.05f
         realSec += dt
@@ -244,7 +247,7 @@ class StereoRenderer(private val loader: ExecutorService?,
             reconcile(d, true); director.cutImmediately(); finish(t0, t0 - frameNanos); return
         }
         var woke = false
-        if (d.wokeSerial != seenWoke) { seenWoke = d.wokeSerial; director.cutImmediately(); woke = true }
+        if (d.wokeSerial != seenWoke) { seenWoke = d.wokeSerial; director.cutImmediately(); woke = true; resumedGap = true }
         reconcile(d, woke)
         val sc = current
         if (sc == null || !programs.ready || width == 0) { finish(t0, t0 - frameNanos); return }
