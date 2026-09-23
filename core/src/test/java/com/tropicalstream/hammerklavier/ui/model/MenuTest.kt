@@ -71,6 +71,18 @@ class MenuTest {
         assertEquals(UiContext.PLAYING, ui.context)
     }
 
+    @Test fun importedFirstEvenWhenLastInTheLibrary() {
+        val lib0 = UiFixtures.library
+        val imp = Shelf(MenuTree.SHELF_IMPORTED, "Imported", listOf(lib0.works.keys.first()))
+        val lib = LibraryModel(shelves = lib0.shelves.filter { it.id != MenuTree.SHELF_IMPORTED } + imp, works = lib0.works,
+            movements = lib0.movements, sources = lib0.sources, startHere = emptyList())
+        val f = facts(library = lib, recent = listOf("scarlatti.k141.1"))
+        val ui = open(f)
+        ui.to(f, 5); ui.go(f, Gesture.TAP)
+        val rows = ui.render(f, 0).menu!!.rows
+        assertEquals(listOf("Imported (1)", "Recently played"), rows.take(2))
+    }
+
     @Test fun startHereAndRecentCarryTheirShelfIds() {
         val f = facts(recent = listOf("scarlatti.k141.1"))
         val ui = open(f); ui.to(f, 5); ui.go(f, Gesture.TAP)
@@ -149,7 +161,7 @@ class MenuTest {
         assertEquals(listOf<UiAction>(UiAction.SetSight(autoRoom = true)), (room[0].choice as Choice.Do).actions)
     }
 
-    @Test fun panelsPageBySevenAndImportTapRotatesToken() {
+    @Test fun panelsPageBySevenAndImportRotatesOnlyWhenArmed() {
         val f = facts()
         val ui = UiFixtures.entered(f)
         ui.creditsText = (1..20).joinToString("\n") { "line $it" }
@@ -163,8 +175,12 @@ class MenuTest {
         ui.openPanel(PanelKind.IMPORT)
         val lines = ui.render(f, 0).panel!!.lines
         assertTrue(lines.contains("Token: K7QM4TZP")); assertTrue(lines.contains("adb: tools/device/push_scores.sh"))
+        assertEquals(emptyList<UiAction>(), ui.onGesture(Gesture.TRIPLE, f, 0))     // arm
+        assertTrue(ui.render(f, 0).panel!!.lines.contains("Tap now: rotate token"))
         assertEquals(listOf<UiAction>(UiAction.RotateToken), ui.onGesture(Gesture.TAP, f, 0))
         assertEquals(UiContext.PANEL, ui.context)
+        assertEquals(emptyList<UiAction>(), ui.onGesture(Gesture.TAP, f, 0))        // disarmed: tap closes
+        assertTrue(ui.context != UiContext.PANEL)
         ui.openPanel(PanelKind.ABOUT)
         assertTrue(ui.render(f, 0).panel!!.lines[0].startsWith("Hammerklavier 1.0"))
     }

@@ -12,19 +12,20 @@ import org.junit.runners.Parameterized
 /** T10.1: the complete §1.3 table, context × gesture → actions and the context afterwards. */
 @RunWith(Parameterized::class)
 class GestureTableTest(private val ctx: UiContext, private val g: Gesture, private val expected: List<UiAction>,
-                       private val after: UiContext) {
+                       private val after: UiContext, private val kind: String) {
 
     companion object {
         private val PRE = HK.PRE_ROLL_US
         private val SEEK = UiAction.Seek(192_000L * 1000 + PRE)
 
-        private fun row(c: UiContext, vararg cells: Pair<Gesture, Pair<List<UiAction>, UiContext>>) =
-            cells.map { (g, r) -> arrayOf<Any>(c, g, r.first, r.second) }
+        private fun row(c: UiContext, vararg cells: Pair<Gesture, Pair<List<UiAction>, UiContext>>) = rowK(c, "", *cells)
+        private fun rowK(c: UiContext, k: String, vararg cells: Pair<Gesture, Pair<List<UiAction>, UiContext>>) =
+            cells.map { (g, r) -> arrayOf<Any>(c, g, r.first, r.second, k) }
 
         private infix fun List<UiAction>.to(c: UiContext) = Pair(this, c)
         private val none = emptyList<UiAction>()
 
-        @JvmStatic @Parameterized.Parameters(name = "{0} × {1}")
+        @JvmStatic @Parameterized.Parameters(name = "{0}{4} × {1}")
         fun table(): List<Array<Any>> {
             val t = UiContext.TITLE; val p = UiContext.PLAYING; val m = UiContext.MENU; val a = UiContext.ADJUST
             val c = UiContext.CARD; val pa = UiContext.PANEL; val r = UiContext.REST
@@ -45,14 +46,19 @@ class GestureTableTest(private val ctx: UiContext, private val g: Gesture, priva
             out += row(a, Gesture.FORWARD to (none to a), Gesture.BACK to (none to a), Gesture.UP to (none to a),
                 Gesture.DOWN to (none to a), Gesture.TAP to (listOf<UiAction>(SEEK) to m), Gesture.DOUBLE to (none to m),
                 Gesture.TRIPLE to (none to a), Gesture.SYSTEM_BACK to (none to m))
-            out += row(c, Gesture.FORWARD to (listOf<UiAction>(UiAction.SetAvLead(35)) to c),
-                Gesture.BACK to (listOf<UiAction>(UiAction.SetAvLead(25)) to c),
-                Gesture.UP to (listOf<UiAction>(UiAction.SetAvLead(35)) to c),
-                Gesture.DOWN to (listOf<UiAction>(UiAction.SetAvLead(25)) to c),
+            out += rowK(c, "(SYNC)", Gesture.FORWARD to (none to c), Gesture.BACK to (none to c),
+                Gesture.UP to (none to c), Gesture.DOWN to (none to c),
                 Gesture.TAP to (listOf(UiAction.SetAvLead(30), UiAction.SyncTest(false)) to m),
                 Gesture.DOUBLE to (listOf<UiAction>(UiAction.SyncTest(false)) to m), Gesture.TRIPLE to (none to c),
                 Gesture.SYSTEM_BACK to (listOf<UiAction>(UiAction.SyncTest(false)) to m))
-            out += row(pa, Gesture.FORWARD to (none to pa), Gesture.BACK to (none to pa), Gesture.UP to (none to pa),
+            out += rowK(c, "(FLOOR)", Gesture.FORWARD to (none to c), Gesture.BACK to (none to c),
+                Gesture.UP to (none to c), Gesture.DOWN to (none to c),
+                Gesture.TAP to (listOf<UiAction>(UiAction.SetPresenceFloor(22)) to m),
+                Gesture.DOUBLE to (none to m), Gesture.TRIPLE to (none to c), Gesture.SYSTEM_BACK to (none to m))
+            out += rowK(pa, "(IMPORT)", Gesture.FORWARD to (none to pa), Gesture.BACK to (none to pa), Gesture.UP to (none to pa),
+                Gesture.DOWN to (none to pa), Gesture.TAP to (none to m), Gesture.DOUBLE to (none to m),
+                Gesture.TRIPLE to (none to pa), Gesture.SYSTEM_BACK to (none to m))
+            out += rowK(pa, "(CREDITS)", Gesture.FORWARD to (none to pa), Gesture.BACK to (none to pa), Gesture.UP to (none to pa),
                 Gesture.DOWN to (none to pa), Gesture.TAP to (none to m), Gesture.DOUBLE to (none to m),
                 Gesture.TRIPLE to (none to pa), Gesture.SYSTEM_BACK to (none to m))
             out += row(r, Gesture.FORWARD to (listOf<UiAction>(UiAction.SetView(ViewId.ACTION, 0)) to r),
@@ -63,7 +69,7 @@ class GestureTableTest(private val ctx: UiContext, private val g: Gesture, priva
         }
 
         /** A machine standing in [c]: menus, cards and panels are reached the way a user reaches them. */
-        fun machineIn(c: UiContext, f: UiFacts): UiStateMachineImpl {
+        fun machineIn(c: UiContext, f: UiFacts, kind: String = ""): UiStateMachineImpl {
             val ui = UiStateMachineImpl()
             if (c == UiContext.TITLE) return ui
             ui.onEvent(UiEvent.ENTERED, f, 0)
@@ -73,9 +79,9 @@ class GestureTableTest(private val ctx: UiContext, private val g: Gesture, priva
                 UiContext.ADJUST -> { g(Gesture.DOUBLE); repeat(3) { g(Gesture.FORWARD) }; g(Gesture.TAP) }        // Position ›
                 UiContext.CARD -> { g(Gesture.DOUBLE); repeat(6) { g(Gesture.FORWARD) }; g(Gesture.TAP)              // More ›
                                     g(Gesture.FORWARD); g(Gesture.FORWARD); g(Gesture.TAP)                             // Calibrate ›
-                                    g(Gesture.FORWARD); g(Gesture.TAP) }                                              // A/V sync
+                                    if (kind != "(FLOOR)") g(Gesture.FORWARD); g(Gesture.TAP) }                      // A/V sync or Display floor
                 UiContext.PANEL -> { g(Gesture.DOUBLE); repeat(6) { g(Gesture.FORWARD) }; g(Gesture.TAP)
-                                     repeat(4) { g(Gesture.FORWARD) }; g(Gesture.TAP) }                               // Credits
+                                     repeat(if (kind == "(IMPORT)") 3 else 4) { g(Gesture.FORWARD) }; g(Gesture.TAP) } // Import or Credits
                 UiContext.REST -> ui.onEvent(UiEvent.REST_ON, f, 0)
                 else -> {}
             }
@@ -86,7 +92,7 @@ class GestureTableTest(private val ctx: UiContext, private val g: Gesture, priva
 
     @Test fun cell() {
         val f = facts()
-        val ui = machineIn(ctx, f)
+        val ui = machineIn(ctx, f, kind)
         assertEquals("$ctx × $g", expected, ui.onGesture(g, f, 1_000))
         assertEquals("$ctx × $g → context", after, ui.context)
     }

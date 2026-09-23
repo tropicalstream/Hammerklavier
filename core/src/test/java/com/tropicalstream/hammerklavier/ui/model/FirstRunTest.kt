@@ -23,10 +23,35 @@ class FirstRunTest {
         assertEquals(UiContext.TITLE, ui.context)
         assertEquals("voicing grand 42%", ui.render(f, 200).title!!.pill)       // a tap before then shows the voicing pill
         ui.onEvent(UiEvent.KIT_PLAYABLE, f, 300)
-        assertEquals("Tap to enter the Konzertzimmer · voicing 42%", ui.render(f, 400).title!!.line)
-        assertEquals(listOf<UiAction>(UiAction.Enter), ui.onGesture(Gesture.TAP, f, 500))
+        assertEquals("Voicing the grand… 42%", ui.render(f, 350).title!!.line)    // the event alone is not the truth
+        val p = facts(kitStates = playable, sessions = 1, movementId = null)
+        ui.onEvent(UiEvent.KIT_PLAYABLE, p, 300)
+        assertEquals("Tap to enter the Konzertzimmer · voicing 55%", ui.render(p, 400).title!!.line)
+        assertEquals(listOf<UiAction>(UiAction.Enter), ui.onGesture(Gesture.TAP, p, 500))
         assertEquals(UiContext.PLAYING, ui.context)
-        assertNull(ui.render(f, 600).title)
+        assertNull(ui.render(p, 600).title)
+    }
+
+    @Test fun anotherInstrumentsPlayableKitDoesNotOpenTheDoor() {
+        val f = facts(kitStates = voicing + (InstrumentId.HARPSICHORD to KitState.Complete))
+        val ui = UiStateMachineImpl()
+        ui.onEvent(UiEvent.KIT_PLAYABLE, f, 0)
+        assertEquals(emptyList<UiAction>(), ui.onGesture(Gesture.TAP, f, 10))
+    }
+
+    @Test fun creditTimerStartsAtEnterNotOnTheTitle() {
+        val f = facts()
+        val ui = UiStateMachineImpl()
+        ui.render(f, 0)                                            // movement preloaded on the title
+        ui.onGesture(Gesture.TAP, f, 20_000)
+        assertEquals(HudModel.credit(f), ui.render(f, 21_000).credit)
+    }
+
+    @Test fun hintOnFirstRunEvenWithSessionsZero() {
+        val f = facts(sessions = 0)
+        val ui = UiStateMachineImpl()
+        ui.onGesture(Gesture.TAP, f, 0)
+        assertEquals(UiText.HINT, ui.render(f, 1_000).hint)
     }
 
     @Test fun playableFactsAlsoOpenTheDoorAndCompleteDropsThePercent() {

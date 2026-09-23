@@ -33,10 +33,10 @@ class CardsTest {
         assertEquals(listOf<UiAction>(UiAction.SyncTest(true)), ui.openCard(CardKind.SYNC, f))
         assertEquals(390, ui.render(f, 0).sync!!.leadMs)
         assertEquals("Sony WH", ui.render(f, 0).sync!!.route)
-        assertEquals(listOf<UiAction>(UiAction.SetAvLead(395)), ui.onGesture(Gesture.FORWARD, f, 0))
-        assertEquals(listOf<UiAction>(UiAction.SetAvLead(400)), ui.onGesture(Gesture.UP, f, 0))
-        assertEquals(emptyList<UiAction>(), ui.onGesture(Gesture.UP, f, 0))            // clamped at 400
-        assertEquals(listOf(UiAction.SetAvLead(390), UiAction.SyncTest(false)), ui.onGesture(Gesture.DOUBLE, f, 0))   // cancel restores
+        assertEquals(emptyList<UiAction>(), ui.onGesture(Gesture.FORWARD, f, 0))      // no storing preview
+        ui.onGesture(Gesture.UP, f, 0); ui.onGesture(Gesture.UP, f, 0)
+        assertEquals(400, ui.cardLevel)                                                // clamped at 400
+        assertEquals(listOf<UiAction>(UiAction.SyncTest(false)), ui.onGesture(Gesture.DOUBLE, f, 0))   // cancel stores nothing
 
         val s = facts(settings = UiFixtures.settings(avLeadMs = mapOf("bt:AA:BB" to 390)))       // speaker: default 30
         ui.openCard(CardKind.SYNC, s)
@@ -44,5 +44,15 @@ class CardsTest {
         repeat(10) { ui.onGesture(Gesture.BACK, s, 0) }
         assertEquals(0, ui.cardLevel)
         assertEquals(listOf(UiAction.SetAvLead(0), UiAction.SyncTest(false)), ui.onGesture(Gesture.TAP, s, 0))
+    }
+
+    @Test fun bluetoothWithNoStoredKeyStepAndCancelEmitsNoSetAvLead() {
+        val f = facts(route = UiFixtures.BT)
+        val ui = UiFixtures.entered(f)
+        ui.openCard(CardKind.SYNC, f)
+        val acts = ArrayList<UiAction>()
+        repeat(3) { acts += ui.onGesture(Gesture.FORWARD, f, 0) }
+        acts += ui.onGesture(Gesture.DOUBLE, f, 0)
+        assertFalse(acts.any { it is UiAction.SetAvLead })
     }
 }

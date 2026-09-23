@@ -218,16 +218,17 @@ object MenuTree {
         val out = ArrayList<MenuRow>()
         if (lib.startHere.isNotEmpty()) out.add(MenuRow("Start here (${lib.startHere.size})", Choice.Open(MenuLevel(MenuId.SHELF, SHELF_START))))
         val recent = f.recent.filter { lib.movements.containsKey(it) }
-        var recentAdded = recent.isEmpty()
-        for (s in lib.shelves) {
-            if (s.id == SHELF_START || s.id == SHELF_RECENT) continue
-            val works = s.workIds.count { lib.works.containsKey(it) }
-            if (works == 0) continue
-            val label = if (s.id == SHELF_IMPORTED) "${s.title} ($works)" else s.title
-            out.add(MenuRow(label, Choice.Open(MenuLevel(MenuId.SHELF, s.id))))
-            if (s.id == SHELF_IMPORTED && !recentAdded) { out.add(recentRow()); recentAdded = true }
+        fun count(sh: com.tropicalstream.hammerklavier.contract.Shelf) = sh.workIds.count { lib.works.containsKey(it) }
+        lib.shelves.firstOrNull { it.id == SHELF_IMPORTED }?.let { s ->
+            val works = count(s)
+            if (works > 0) out.add(MenuRow("${s.title} ($works)", Choice.Open(MenuLevel(MenuId.SHELF, s.id))))
         }
-        if (!recentAdded) out.add(if (out.isEmpty()) 0 else 1, recentRow())
+        if (recent.isNotEmpty()) out.add(recentRow())
+        for (s in lib.shelves) {
+            if (s.id == SHELF_START || s.id == SHELF_RECENT || s.id == SHELF_IMPORTED) continue
+            if (count(s) == 0) continue
+            out.add(MenuRow(s.title, Choice.Open(MenuLevel(MenuId.SHELF, s.id))))
+        }
         return out
     }
 

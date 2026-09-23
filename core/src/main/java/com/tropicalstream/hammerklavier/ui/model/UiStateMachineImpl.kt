@@ -22,7 +22,6 @@ class UiStateMachineImpl : UiStateMachine {
 
     private var entered = false
     private var resting = false
-    private var kitPlayableEvent = false
     private val menus = ArrayList<MenuLevel>()
 
     private var adjust: AdjustKind? = null
@@ -35,6 +34,7 @@ class UiStateMachineImpl : UiStateMachine {
 
     private var panel: PanelKind? = null
     private var panelPage = 0
+    private var rotateArmed = false
 
     private val framingOf = IntArray(ViewId.entries.size)
     private var hudUntilMs = Long.MIN_VALUE
@@ -77,11 +77,12 @@ class UiStateMachineImpl : UiStateMachine {
         }
     }
 
-    fun playable(facts: UiFacts): Boolean = kitPlayableEvent || HudModel.kitPlayable(facts.kitStates[facts.instrument])
+    fun playable(facts: UiFacts): Boolean = HudModel.kitPlayable(facts.kitStates[facts.instrument])
 
     private fun title(g: Gesture, f: UiFacts, now: Long): List<UiAction> = when (g) {
         Gesture.TAP -> if (playable(f)) {
             entered = true; hudUntilMs = now + HudModel.HUD_MS
+            if (f.movementId != null) startMovement(f.movementId, now)
             listOf(UiAction.Enter)
         } else { titlePillUntilMs = now + 3_000; emptyList() }
         Gesture.TRIPLE -> listOf(UiAction.Recenter)
@@ -241,7 +242,7 @@ class UiStateMachineImpl : UiStateMachine {
                 CardKind.FLOOR -> { cardValue = stepFloor(cardValue, dir); emptyList() }
                 CardKind.SYNC -> {
                     val v = (cardValue + dir * LEAD_STEP).coerceIn(LEAD_MIN, LEAD_MAX)
-                    if (v == cardValue) emptyList() else { cardValue = v; listOf(UiAction.SetAvLead(v)) }   // live preview
+                    cardValue = v; emptyList()   // no live preview: SetAvLead stores, so only the tap emits it
                 }
             }
         }
@@ -257,8 +258,7 @@ class UiStateMachineImpl : UiStateMachine {
                 card = null
                 when (kind) {
                     CardKind.FLOOR -> emptyList()
-                    CardKind.SYNC -> if (cardValue != cardOrig) listOf(UiAction.SetAvLead(cardOrig), UiAction.SyncTest(false))
-                                     else listOf(UiAction.SyncTest(false))
+                    CardKind.SYNC -> listOf(UiAction.SyncTest(false))
                 }
             }
             else -> emptyList()
@@ -272,9 +272,10 @@ class UiStateMachineImpl : UiStateMachine {
         return when (g) {
             Gesture.FORWARD, Gesture.DOWN -> { panelPage = (panelPage + 1).coerceAtMost(pages - 1); emptyList() }
             Gesture.BACK, Gesture.UP -> { panelPage = (panelPage - 1).coerceAtLeast(0); emptyList() }
-            Gesture.TAP -> if (panel == PanelKind.IMPORT) listOf(UiAction.RotateToken) else { panel = null; emptyList() }
-            Gesture.DOUBLE, Gesture.SYSTEM_BACK -> { panel = null; emptyList() }
-            Gesture.TRIPLE -> emptyList()
+            Gesture.TAP -> if (panel == PanelKind.IMPORT && rotateArmed) { rotateArmed = false; listOf(UiAction.RotateToken) }
+                           else { panel = null; rotateArmed = false; emptyList() }
+            Gesture.TRIPLE -> { if (panel == PanelKind.IMPORT) rotateArmed = !rotateArmed; emptyList() }
+            Gesture.DOUBLE, Gesture.SYSTEM_BACK -> { panel = null; rotateArmed = false; emptyList() }
         }
     }
 
@@ -293,7 +294,7 @@ class UiStateMachineImpl : UiStateMachine {
             val out = ArrayList<String>()
             out.add(if (f.companionUrl != null) "Phone: " + f.companionUrl else UiText.NO_WIFI)
             out.add("Token: " + f.companionToken)
-            out.add("Tap: Rotate token")
+            out.add(if (rotateArmed) "Tap now: rotate token" else "Triple-tap: arm token rotation")
             out.add("adb: " + UiText.PUSH_COMMAND)
             out.add("Last import: " + (lastImportText ?: "none"))
             val n = f.library?.works?.values?.count { it.imported } ?: 0
@@ -315,8 +316,8 @@ class UiStateMachineImpl : UiStateMachine {
 
     override fun onEvent(e: UiEvent, facts: UiFacts, nowMs: Long) {
         when (e) {
-            UiEvent.KIT_PLAYABLE -> kitPlayableEvent = true
-            UiEvent.ENTERED -> { entered = true; hudUntilMs = nowMs + HudModel.HUD_MS }
+            UiEvent.KIT_PLAYABLE -> {}   // a re-render trigger; playable() reads kitStates[instrument]
+            UiEvent.ENTERED -> { entered = true; hudUntilMs = nowMs + HudModel.HUD_MS; if (facts.movementId != null) startMovement(facts.movementId, nowMs) }
             UiEvent.MOVEMENT_STARTED -> startMovement(facts.movementId, nowMs)
             UiEvent.VIEW_CHANGED -> viewChanged(facts, nowMs)
             UiEvent.PAUSED, UiEvent.RESUMED -> hudUntilMs = nowMs + HudModel.HUD_MS
@@ -339,7 +340,7 @@ class UiStateMachineImpl : UiStateMachine {
     // ─── render ───
 
     override fun render(facts: UiFacts, nowMs: Long): UiOverlayState {
-        if (facts.movementId != lastMovement) {
+        if (facts.movementId != lastMovement && context != UiContext.TITLE) {
             if (facts.movementId != null) startMovement(facts.movementId, nowMs) else lastMovement = null
         }
         if (lastView == null) { lastView = facts.view; lastFraming = facts.framing }
@@ -367,13 +368,13 @@ class UiStateMachineImpl : UiStateMachine {
             val p = panelPage.coerceIn(0, pages - 1)
             PanelCard(title = when (k) { PanelKind.CREDITS -> "Credits"; PanelKind.ABOUT -> "About"; PanelKind.IMPORT -> "Import" },
                 lines = lines.drop(p * MenuTree.PAGE).take(MenuTree.PAGE), page = p, pages = pages,
-                footer = if (k == PanelKind.IMPORT) "⇄ page · tap rotate token · double-tap close" else "⇄ page · tap close")
+                footer = if (k == PanelKind.IMPORT && rotateArmed) "tap rotate token · double-tap close" else if (k == PanelKind.IMPORT) "⇄ page · tap close · triple-tap arm rotate" else "⇄ page · tap close")
         }
 
         val toast = if (showStage && nowMs < toastUntilMs) toastText else null
         val credit = if (showStage && nowMs < creditUntilMs && creditMovement == facts.movementId) HudModel.credit(facts) else null
         val status = if (showStage || ctx == UiContext.TITLE) UiText.pickStatus(facts.status, nowMs)?.let { UiText.status(it) } else null
-        val hint = if (hudVisible && facts.sessions in 1..HudModel.HINT_SESSIONS) UiText.HINT else null
+        val hint = if (hudVisible && (facts.firstRun || facts.sessions in 1..HudModel.HINT_SESSIONS)) UiText.HINT else null
         return UiOverlayState(context = ctx, title = title, hud = hud, menu = menuCard, adjust = adjustCard, floor = floor,
             sync = sync, panel = panelCard, toast = toast, credit = credit, status = status, hint = hint, debug = facts.debug,
             stageHidden = card == CardKind.FLOOR, resting = resting)
