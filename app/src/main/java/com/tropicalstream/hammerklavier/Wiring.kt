@@ -14,7 +14,9 @@ import com.tropicalstream.hammerklavier.contract.SettingsStore
 import com.tropicalstream.hammerklavier.contract.UiStateMachine
 import com.tropicalstream.hammerklavier.contract.android.GlHost
 import com.tropicalstream.hammerklavier.contract.android.OverlayHost
-import com.tropicalstream.hammerklavier.contract.stub.MemSettings
+import com.tropicalstream.hammerklavier.contract.HeadPose
+import com.tropicalstream.hammerklavier.contract.VoiceCursorBoard
+import com.tropicalstream.hammerklavier.system.Settings
 import com.tropicalstream.hammerklavier.contract.stub.NullAudio
 import com.tropicalstream.hammerklavier.contract.stub.StubKits
 import com.tropicalstream.hammerklavier.contract.stub.StubLibrary
@@ -34,13 +36,16 @@ import java.util.concurrent.ExecutorService
  * app names a concrete component. Built once by HammerklavierApp (process singletons); the GL view,
  * the overlay and the GL-thread mechanics are made per activity.
  *
- * Current state (contracts-v1): every component is a contract stub.
+ * Current state (contracts-v1.1): every component is a contract stub except Settings (system/).
  */
 class Wiring(private val app: Application, val loader: ExecutorService, val voicer: ExecutorService, val main: Handler) {
     val post: (Runnable) -> Unit = { r -> main.post(r) }
 
-    /** system/Settings (typed SharedPreferences) replaces MemSettings in contracts-v1.1. */
-    val settings: SettingsStore = MemSettings()
+    val settings: SettingsStore = Settings(app)                           // system/Settings (typed SharedPreferences)
+    /** Written by main (GazeCamera, WP6), read by HKAudio and GLThread. */
+    val head = HeadPose()
+    /** Written by HKAudio, read by HKPrefetch (WP4). */
+    val cursors = VoiceCursorBoard()
     val compiler: ScoreCompiler = StubScoreCompiler()                    // WP1: midi.ScoreCompilerImpl()
     val kits: KitService = StubKits(post)                                // WP4: audio.KitManager(ctx, voicer, loader)
     val audio: AudioControl = NullAudio()                                // WP4: audio.AudioOutput(ctx, EngineCore(...), cursors, head, settings)
