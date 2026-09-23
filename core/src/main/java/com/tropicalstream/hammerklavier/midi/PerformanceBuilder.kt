@@ -96,6 +96,8 @@ object PerformanceBuilder {
         // 6. Sostenuto latches at the 0.5 crossings.
         val lt = ArrayList<Long>(); val llo = ArrayList<Long>(); val lhi = ArrayList<Long>()
         if (!sostenuto.isEmpty) {
+            val prefixMaxOff = LongArray(n)
+            for (i in 0 until n) prefixMaxOff[i] = if (i == 0) offUs[0] else maxOf(prefixMaxOff[i - 1], offUs[i])
             val lag = (profile.damperLagMs * 1000f).toLong()
             var from = 0L
             var rising = true
@@ -104,9 +106,13 @@ object PerformanceBuilder {
                 if (c == Long.MAX_VALUE) break
                 var lo = 0L; var hi = 0L
                 if (rising) {
-                    for (i in 0 until n) {
-                        if (onUs[i] > c) break
+                    // Notes begun at or before c, scanned backwards until no earlier note can still be down.
+                    var a = 0; var b = n
+                    while (a < b) { val mid = (a + b) ushr 1; if (onUs[mid] <= c) a = mid + 1 else b = mid }
+                    var i = a - 1
+                    while (i >= 0 && prefixMaxOff[i] + lag > c) {
                         if (c < offUs[i] + lag) { val k = key[i].toInt(); if (k < 64) lo = lo or (1L shl k) else hi = hi or (1L shl (k - 64)) }
+                        i--
                     }
                     if (sustain.valueAt(c) >= PedalMotion.CLEAR) for (k in 0..minOf(127, profile.lastDamper)) {
                         if (k < 64) lo = lo or (1L shl k) else hi = hi or (1L shl (k - 64))
@@ -132,15 +138,23 @@ object PerformanceBuilder {
         for (j in latchUs.indices) { evT[o] = latchUs[j]; evE[o++] = Performance.pack(Performance.EV_LATCH, j) }
         for (j in noiseT.indices) { evT[o] = noiseT[j]; evE[o++] = Performance.pack(Performance.EV_PEDAL_NOISE, noiseA[j]) }
         evT[o] = lastUp; evE[o++] = Performance.pack(Performance.EV_END, 0)
-        val eo = IdxSort.sort(IntArray(m) { it }) { a, b ->
-            val c = evT[a].compareTo(evT[b])
-            if (c != 0) c else {
-                val ta = Performance.type(evE[a]); val tb = Performance.type(evE[b])
-                if (ta != tb) ta.compareTo(tb) else Performance.arg(evE[a]).compareTo(Performance.arg(evE[b]))
+        val evUs: LongArray; val evs: IntArray
+        var tMin = Long.MAX_VALUE; var tMax = Long.MIN_VALUE
+        for (j in 0 until m) { if (evT[j] < tMin) tMin = evT[j]; if (evT[j] > tMax) tMax = evT[j] }
+        if (tMax - tMin < (1L shl 31)) {
+            // (time − tMin) in the high word, the packed event (type, arg; unsigned order) in the low word.
+            val k = LongArray(m) { ((evT[it] - tMin) shl 32) or (evE[it].toLong() and 0xFFFFFFFFL) }
+            k.sort()
+            evUs = LongArray(m) { (k[it] ushr 32) + tMin }
+            evs = IntArray(m) { k[it].toInt() }
+        } else {
+            val eo = IdxSort.sort(IntArray(m) { it }) { a, b ->
+                val c = evT[a].compareTo(evT[b])
+                if (c != 0) c else Integer.compareUnsigned(evE[a], evE[b])
             }
+            evUs = LongArray(m) { evT[eo[it]] }
+            evs = IntArray(m) { evE[eo[it]] }
         }
-        val evUs = LongArray(m) { evT[eo[it]] }
-        val evs = IntArray(m) { evE[eo[it]] }
 
         // Bars, info.
         val durationUs = lastUp + TAIL_US

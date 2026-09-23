@@ -29,3 +29,17 @@
    curves by their reference-level crossings (± 1 ms) and by value (± 0.02) away from ramps, and ignores
    pedal-noise speed classes (the fixture calls every raw step class 2; the builder measures continuous slopes).
    No change needed unless WP0 prefers the fixture to measure the class the same way.
+
+## To WP0: a RejectReason for internal compiler failures
+`ScoreCompilerImpl` turns any exception (and OutOfMemoryError / StackOverflowError) into a rejection so it never
+throws, but `RejectReason` has no value for "the file parsed but the compiler failed on it", so these are reported
+as `TRUNCATED` with a detail starting `internal:`. Please add `RejectReason.MALFORMED` (or `INTERNAL`) to
+`contract/Status.kt` with a UiText string; WP1 will map internal failures to it (one-line change in
+`SmfModel.kt`/`ScoreCompilerImpl.internalFailure`).
+
+## To WP0: fold-collision merge in either order (§4.3 step 4)
+Review asked that a real note landing ≤ 20 ms after a folded note on the same key merge too ("a folded note that
+collides with a sounding note" covers both orders). `PerfFixtures` merges only when the later note is folded, and
+T1.8 requires the builder to equal it exactly (the change alters CHORD_STORM_64 on the harpsichord). If WP0 agrees,
+change `PerfFixtures` line 64 to `(flg[i] or flg[p]) and F_FOLDED != 0` and WP1 makes the same one-token change in
+`NotePairing.serialise` (and adds the fold-first T1.3 case).

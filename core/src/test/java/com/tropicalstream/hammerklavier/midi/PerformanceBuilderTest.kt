@@ -66,6 +66,21 @@ class PerformanceBuilderTest {
         assertTrue(p.info.warnings.contains(PerfWarning.FOLDED))
     }
 
+    @Test fun shiftedRestrikesKeepOnsetOrder() {
+        // Three strikes of 60 five ms apart (moved to 20 ms + 1 µs and 40 ms + 2 µs) around a 62 at 30 ms.
+        val p = perf(file(Track().on(0, 0, 60, 80).on(5, 1, 60, 80).on(5, 2, 60, 80).on(20, 3, 62, 80)
+            .off(470, 0, 60).off(0, 1, 60).off(0, 2, 60).off(0, 3, 62)))
+        assertEquals(4, p.noteCount)
+        for (i in 1 until p.noteCount) assertTrue("onUs sorted at $i", p.onUs[i] >= p.onUs[i - 1])
+        assertEquals(listOf(60, 60, 62, 60), (0 until 4).map { p.key[it].toInt() })
+        assertEquals(ms(20) + 1, p.onUs[1])
+        assertEquals(ms(40) + 2, p.onUs[3])
+        for (k in 0 until 128) for (j in p.keyFirst[k] + 1 until p.keyFirst[k + 1]) {
+            val a = p.keyNotes[j - 1]; val b = p.keyNotes[j]
+            assertTrue("CSR order on key $k", a < b && p.onUs[a] <= p.onUs[b] && p.offUs[a] < p.onUs[b])
+        }
+    }
+
     @Test fun sostenutoLatchesHeldKeysOnlyBelowClear() {
         val p = MidiTestUtil.compiler.synthetic(SyntheticScore.SOSTENUTO, InstrumentProfile.GRAND, 0)
         assertEquals(4, p.latchUs.size)

@@ -100,4 +100,15 @@ class VoiceDemandTest {
         File("build").mkdirs()
         File("build/voice_demand_catalogue.txt").writeText(sb.toString())
     }
+
+    @Test fun damperLandingWaitsThroughManyLatchChanges() {
+        // 200 latch changes that all keep key 60 latched (other keys toggle), then one that releases it.
+        val m = 201
+        val t = LongArray(m) { 1_000_000L + it * 10_000L }
+        val lo = LongArray(m) { if (it == m - 1) 0L else (1L shl 60) or (if (it % 2 == 0) 1L shl 40 else 0L) }
+        val hi = LongArray(m)
+        val land = VoiceDemand.damperLanding(1_000_500L, 60, com.tropicalstream.hammerklavier.contract.PedalCurve.EMPTY, t, lo, hi)
+        assertEquals(t[m - 1], land)
+        assertEquals(1_000_500L, VoiceDemand.damperLanding(1_000_500L, 61, com.tropicalstream.hammerklavier.contract.PedalCurve.EMPTY, t, lo, hi))
+    }
 }

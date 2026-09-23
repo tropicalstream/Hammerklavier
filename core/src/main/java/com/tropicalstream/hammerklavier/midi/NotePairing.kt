@@ -26,7 +26,16 @@ class NoteList(capacity: Int) {
         for (i in 0 until size) if (keep[i]) m++
         val idx = IntArray(m)
         m = 0
-        for (i in 0 until size) if (keep[i]) idx[m++] = i
+        var minOn = Long.MAX_VALUE; var maxOn = Long.MIN_VALUE
+        for (i in 0 until size) if (keep[i]) { idx[m++] = i; if (on[i] < minOn) minOn = on[i]; if (on[i] > maxOn) maxOn = on[i] }
+        // Fast path: one primitive sort of (on − minOn, key, index) packed in a Long (31 + 7 + 25 bits).
+        if (m > 0 && maxOn - minOn < (1L shl 31) && size <= (1 shl 25)) {
+            val packed = LongArray(m)
+            for (j in 0 until m) { val i = idx[j]; packed[j] = ((on[i] - minOn) shl 32) or (key[i].toLong() and 0x7F shl 25) or i.toLong() }
+            packed.sort()
+            for (j in 0 until m) idx[j] = (packed[j] and 0x1FFFFFF).toInt()
+            return idx
+        }
         return IdxSort.sort(idx) { a, b ->
             val c = on[a].compareTo(on[b]); if (c != 0) c else key[a].compareTo(key[b])
         }
@@ -43,7 +52,8 @@ class NoteList(capacity: Int) {
  * - [serialise]: all channels drive one keyboard; a note-on for a key still down ends the previous
  *   note at `newOn − 2 ms`, never before `prevOn + 20 ms` (the new note moves just past that, and
  *   gets F_RESTRIKE). A note folded onto a key that sounds a note begun ≤ 20 ms earlier merges into
- *   it (higher velocity kept).
+ *   it (higher velocity kept). Only the later note being folded triggers the merge, as in the
+ *   contract's PerfFixtures (T1.8 parity); widening it to either order is requested from WP0.
  */
 object NotePairing {
     const val MIN_LENGTH_US = 30_000L

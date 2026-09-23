@@ -17,7 +17,7 @@ class ScoreCompilerImpl : ScoreCompiler {
 
     override fun inspect(bytes: ByteArray): ScoreFacts {
         val r = try { compileRaw(bytes, "inspect", 0, InstrumentProfile.GRAND, CompileOptions()) }
-                catch (e: RuntimeException) { Outcome.Failed(SmfError.TRUNCATED, "internal: ${e.javaClass.simpleName}", 0) }
+                catch (e: Throwable) { internalFailure(e) }
         return when (r) {
             is Outcome.Failed -> ScoreFacts(ok = false, error = r.error.reason, title = null, durationSec = 0f, lowKey = 0, highKey = 0,
                 noteCount = 0, hasSustain = false, hasSoft = false, hasSostenuto = false, pedalMode = PedalMode.NONE,
@@ -34,7 +34,7 @@ class ScoreCompilerImpl : ScoreCompiler {
 
     override fun compile(bytes: ByteArray, id: String, generation: Int, profile: InstrumentProfile, opts: CompileOptions): CompileResult {
         val r = try { compileRaw(bytes, id, generation, profile, opts) }
-                catch (e: RuntimeException) { Outcome.Failed(SmfError.TRUNCATED, "internal: ${e.javaClass.simpleName}", 0) }
+                catch (e: Throwable) { internalFailure(e) }
         return when (r) {
             is Outcome.Failed -> CompileResult.Failed(r.error.reason, r.detail, r.byteOffset)
             is Outcome.Ok -> CompileResult.Ok(r.perf)
@@ -47,6 +47,18 @@ class ScoreCompilerImpl : ScoreCompiler {
     internal sealed class Outcome {
         class Ok(val perf: Performance, val raw: PerformanceBuilder.RawFacts) : Outcome()
         class Failed(val error: SmfError, val detail: String, val byteOffset: Int) : Outcome()
+    }
+
+    /**
+     * The "never throws" net: any exception, and the two errors a hostile file can provoke
+     * (OutOfMemoryError from an allocation sized from file fields, StackOverflowError), become a
+     * rejection. Other VirtualMachineErrors (InternalError, UnknownError) mean the VM is broken and
+     * are rethrown. RejectReason has no internal/malformed value yet (requested from WP0 in
+     * docs/requests/WP1.md), so the reason stays TRUNCATED and the detail starts with "internal:".
+     */
+    private fun internalFailure(e: Throwable): Outcome {
+        if (e is VirtualMachineError && e !is OutOfMemoryError && e !is StackOverflowError) throw e
+        return Outcome.Failed(SmfError.TRUNCATED, "internal: ${e.javaClass.simpleName}", 0)
     }
 
     internal fun compileRaw(bytes: ByteArray, id: String, generation: Int, profile: InstrumentProfile, opts: CompileOptions): Outcome =

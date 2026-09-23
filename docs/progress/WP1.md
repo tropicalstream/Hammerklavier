@@ -58,3 +58,30 @@ Branch `wp1-midi` (from `contracts-v1`), worktree `/Users/me/Projects/hk-wp1`. P
     WP11's golden facts and `catalog.json` so imported and bundled movements report the same number.
 12. Unpaired note-ons end at last event + 1 s here; `smf_stats.py` ends them at their track end. None of the twins
     has one; revisit if a corpus file disagrees in T1.7.
+
+## Review fixes (second review)
+- **T1.6 speed (major), fixed.** Profiled the 20k-note build (JVM, loaded host): 20 ms → 8 ms (builder 15 → 6 ms).
+  Changes: `NoteList.order()` and the event sort use one primitive `LongArray.sort` of packed keys (time offset in the
+  high bits; falls back to the stable IdxSort when a span exceeds 2^31 µs ≈ 35 min); sostenuto latches find the
+  held notes by binary search + a backward scan bounded by a prefix max of key-ups instead of scanning every note
+  per rising edge; `VoiceDemand.ends` computes the T60/trim constants (pow) once per key instead of per note.
+  `CurveBuilder.valueAt` was not a hotspot (it scans from the end, where ramps append). Speed tests now take the best
+  of 30 runs after 10 warm-ups and print the time; the hard 60 ms gate applies with `HK_PERF_STRICT=1` (the dedicated
+  perf run) or whenever load average < cores; on a loaded host only a 3× regression (180 ms) fails.
+  Measured under load 11: 20k notes 8.2 ms, storm64 (46k notes) 11.2 ms.
+- **storm64 mutations (minor), fixed.** All files, storm64 included, get 10,000 mutations; on storm64 each edit lands
+  in the first or last 4 KB so the run stays bounded while every mutation parses the whole file.
+- **Never-throws net (minor), fixed in part.** Catches Throwable; OutOfMemoryError and StackOverflowError become a
+  rejection, other VirtualMachineErrors are rethrown. The reason stays TRUNCATED (detail `internal: …`) because
+  `RejectReason` has no internal value; requested from WP0 in docs/requests/WP1.md.
+- **Fold merge in either order (minor), not applied.** The contract's PerfFixtures merges only when the later note is
+  folded and T1.8 demands exact parity; applying it broke CHORD_STORM_64/HARPSICHORD. Requested from WP0.
+- **PerfInfo event counts (minor), no change.** The contract has no KDoc for the fields; PerfFixtures (the contract's
+  reference) counts sustain 0.33 crossings in both directions and `sostenutoEvents = latchUs.size` (both edges), so
+  the builder keeps that meaning: *edges*, not presses. HUD code wanting presses should halve (rounding up).
+- **damperLanding cap (minor), fixed.** The loop now runs until it returns: each pass moves t strictly forward to a
+  later latch entry, so it ends within latch-count passes; no 64-pass cap.
+- **Shifted re-strike onsets (minor), tested.** `order()` is recomputed after serialisation, so shifted notes sort by
+  their new onset; new T1.3 case `shiftedRestrikesKeepOnsetOrder` (three strikes 5 ms apart around another key)
+  checks onUs is non-decreasing and CSR per-key order equals onset order.
+- Tests: `tools/gw :core:test` -> 131 tests, 0 failures, 0 skipped.

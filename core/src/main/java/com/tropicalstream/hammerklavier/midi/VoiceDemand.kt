@@ -60,12 +60,19 @@ object VoiceDemand {
         val n = onUs.size
         val end = LongArray(n)
         val lagUs = Math.round(profile.damperLagMs * 1000.0)
+        // Per-key constants, computed once per key that is used (the profile's T60 curves use pow).
+        val t60fK = DoubleArray(128); val t60dK = DoubleArray(128); val lifeK = LongArray(128); val have = BooleanArray(128)
         for (i in 0 until n) {
             val k = key[i].toInt()
-            val t60f = profile.defaultFreeT60(0, k).toDouble()
-            val t60d = profile.defaultDamperT60(k).toDouble()
+            if (!have[k]) {
+                have[k] = true
+                t60fK[k] = profile.defaultFreeT60(0, k).toDouble(); t60dK[k] = profile.defaultDamperT60(k).toDouble()
+                lifeK[k] = Math.round(minOf(trimSec(profile, k), CULL_DB / 60.0 * t60fK[k]) * 1e6)
+            }
+            val t60f = t60fK[k]
+            val t60d = t60dK[k]
             val on = onUs[i]
-            var e = on + Math.round(minOf(trimSec(profile, k), CULL_DB / 60.0 * t60f) * 1e6)
+            var e = on + lifeK[k]
             if (k <= profile.lastDamper) {
                 val land = damperLanding(offUs[i] + lagUs, k, sustain, latchUs, latchLo, latchHi)
                 if (land < e) {
@@ -106,7 +113,9 @@ object VoiceDemand {
     /** First time ≥ [t0] with sustain < 0.33 and key [k] not latched; Long.MAX_VALUE if never. */
     fun damperLanding(t0: Long, k: Int, sustain: PedalCurve, latchUs: LongArray, latchLo: LongArray, latchHi: LongArray): Long {
         var t = t0
-        for (iter in 0 until 64) {
+        // Terminates: every pass either returns or moves t strictly forward to a later sustain
+        // crossing or a later latch entry, and both are finite.
+        while (true) {
             if (!sustain.isEmpty && sustain.valueAt(t) > PedalMotion.LIFT_START) {
                 t = sustain.nextCrossing(t, PedalMotion.LIFT_START, rising = false)
                 if (t == Long.MAX_VALUE) return t
@@ -117,9 +126,9 @@ object VoiceDemand {
             var j = li + 1
             while (j < latchUs.size && latched(latchLo[j], latchHi[j], k)) j++
             if (j >= latchUs.size) return Long.MAX_VALUE
+            if (latchUs[j] <= t) return Long.MAX_VALUE     // cannot happen (latch times increase); guards the loop
             t = latchUs[j]
         }
-        return t
     }
 
     private fun latched(lo: Long, hi: Long, k: Int) = if (k < 64) (lo ushr k) and 1L == 1L else (hi ushr (k - 64)) and 1L == 1L
