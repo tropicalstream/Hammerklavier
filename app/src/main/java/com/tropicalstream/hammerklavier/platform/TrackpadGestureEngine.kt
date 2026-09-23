@@ -69,6 +69,8 @@ class TrackpadGestureEngine {
     var onSwipeHorizontal: ((direction: Int) -> Unit)? = null
     /** Every recognised gesture as the contract enum, with its source ("touch", "key", "scroll"). */
     var onGesture: ((Gesture, String) -> Unit)? = null
+    /** Uptime ms of the finger's ACTION_DOWN and of the input event that completed the last touch swipe (0 = none). */
+    @Volatile var lastSwipeDownMs = 0L; @Volatile var lastSwipeEventMs = 0L
     /** Raw input trace for on-device diagnosis (shown on title/debug HUD). */
     var debugSink: ((String) -> Unit)? = null
 
@@ -192,7 +194,7 @@ class TrackpadGestureEngine {
                         touchMovedTooFar = true
                         handler.removeCallbacks(touchLongCheck)
                     }
-                    maybeFireSwipe()
+                    maybeFireSwipe(event)
                 }
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
@@ -210,8 +212,9 @@ class TrackpadGestureEngine {
         return true
     }
 
-    private fun maybeFireSwipe() {
+    private fun maybeFireSwipe(event: MotionEvent) {
         if (swipeFiredForGesture) return
+        lastSwipeDownMs = event.downTime; lastSwipeEventMs = event.eventTime
         // Raw pad coords are not always screen-normalized; use generous
         // absolute thresholds scaled against whatever metrics we were fed.
         val minSwipe = max(SWIPE_MIN_PX, 0.06f * minOf(screenW, screenH))

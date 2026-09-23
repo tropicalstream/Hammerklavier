@@ -272,6 +272,43 @@ Honest look: the cutaway now reads as a section, but the section caps are flat b
 and the camera sits low enough that the key frame fills the lower third; the neighbouring actions recede but are small. The
 overlay reads "bar 1" and "0:10 / 0:00" (duration 0): the facts are still the M1 minimal set until WP12.
 
+### M4 rework after the independent verifier (2026-09-23)
+Fixes, each re-checked on the glasses:
+- **Section caps drawn at x = 0** (the "beige slabs" in `m4_repeat15_3`): the caps are built in the plane x = 0 and are meant
+  to be drawn at the cut plane (MeshRaster already shifted them), but GL drew them unshifted, so they floated in the middle
+  of the keyboard whenever the cut was near C4. LIT_VS gained `uShiftX` (0 for every other program); ItemDrawer sets it to
+  `clipX - 0.5 mm` for SECTION_CAP. The caps now close the clipped key frame and belly rail at the cut. No contract change.
+- **Cutaway blocked by the fallboard and music desk**: WP7 GrandCase split them (plus the key-well back) out of `grand.case`
+  into `grand.fallboard` (slot 7, `VM.PLAYER_HALL`), lettering decal too; the music desk left `grand.lidstick`. Both Action
+  framings drop them as a cutaway drawing would. Draws went down (max 18 per eye).
+- **Overlay facts**: `durationUs` and `bar` come from the bound Performance (`durationUs`, `barAt(songUs)`), instrument from
+  it too; the overlay now re-renders once a second (time line, bar, toast expiry). Shots read e.g. "bar 4", "0:11 / 3:47".
+  WP12's FactsAssembler still replaces the stub facts at M6.
+- **Overhead "no view label"**: the label is WP10's 1.5 s view toast; the old smoke shot was 11 s after the swipe. Smoke now
+  shoots every view 1 s after its gesture (toast visible) plus a `_later` shot.
+- **Smoke checks**: title card = `HKUi overlay context=TITLE titleCard=true` (logged on each overlay context change);
+  dampers = new `HKRender damper audit` (a damper landing on a ringing string, sustain up, must bring the drawn amplitude
+  under 0.1 within 1500 ms); two swipes now go through the real pad path (`input touchscreen swipe` -> TrackpadGestureEngine)
+  and the renderer logs `fromPad ms=` from the MotionEvent's time to the first fade; HKInput logs `fingerMs` / `recogMs`.
+- **APK md5**: the release APK embeds `BuildConfig.GIT_COMMIT`, so every commit changes the md5; the verifier's rebuild at
+  3f51d5a differs from the number recorded before the final commit. run.sh verifies installed == local each time.
+
+Gate re-run (main, glasses A06B4A96A733283): ci PASS; `smoke.sh M4` 13/13 PASS.
+| Check | Measured | Result |
+|---|---|---|
+| strikes drawn exactly once | repeat15 Q0 30.0 fps 90/90, Q2 20.0 fps 90/90, sameKeySameFrame 0 | pass |
+| dampers stop strings | 24 landings on ringing strings, 12 settled under 0.1 (max 333 ms), 12 re-struck first, 0 late | pass |
+| swipe-to-first-fade | 10 swipes, max 30.8 ms from setView; pad event to first fade 34.1 / 26.4 ms (recognition 16 / 8 ms) | pass |
+| draws <= 28 | max 18 per eye; hitches 0, glErrors 0, no crash | pass |
+| T-SYNC in the Action view | not measured (240 fps camera, headset, user) | open |
+
+Honest look at the new shots: cutaway shows keys, hammers, struck string and the cut section (flat beige, a cut face by
+design, §5.3 row 17); camera height is per the §5.6 table. Hall shows the piano small and low because the tabled camera aims
+at the room, which is black until WP8's venue at M5 (flag for WP6/WP7 review then). Overhead now shows its label.
+
+Still open: T-SYNC absolute (user + 240 fps camera + Bluetooth headset), so milestone-M4 stays untagged; `stageHidden` hook (M6);
+Hall framing review with the M5 venue.
+
 ### Open issues (M4)
 - T-SYNC absolute (Action view, speaker and Bluetooth) needs a 240 fps camera, a headset and the user; milestone-M4 not tagged.
 - Overlay facts (duration, bar, movement) wait for WP12 FactsAssembler; `stageHidden` hook not yet wired (Display floor card, M6).

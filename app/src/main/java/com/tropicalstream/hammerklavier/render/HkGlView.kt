@@ -111,8 +111,12 @@ class HkGlView(ctx: Context, loader: ExecutorService?, private val msaa: Boolean
         renderer.kickBuild()
     }
 
+    /** Set by the controller just before a touch-swipe's setView: the pad event's time (System.nanoTime base). */
+    @Volatile var pendingInputNanos = 0L
+
     override fun setView(v: ViewId, framing: Int) {
         val d = renderer.desired
+        d.inputNanos = pendingInputNanos; pendingInputNanos = 0L
         d.view = v; d.framing = framing.coerceIn(0, 1); d.viewNanos = System.nanoTime(); d.viewSerial = d.viewSerial + 1
     }
 

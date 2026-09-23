@@ -76,6 +76,7 @@ class StereoRenderer(private val loader: ExecutorService?,
         @Volatile var framing = 0
         @Volatile var viewSerial = 0L
         @Volatile var viewNanos = 0L
+        @Volatile var inputNanos = 0L       // the pad event behind this view change (0 = CONTROL)
         @Volatile var quality: QualityProfile = QualityLadder.of(0, 96)
         @Volatile var settings: RenderSettings? = null
         @Volatile var stereo = true
@@ -301,14 +302,15 @@ class StereoRenderer(private val loader: ExecutorService?,
         val dy = gaze.yaw - lastGazeYaw; lastGazeYaw = gaze.yaw
         val dp = gaze.pitch - lastGazePitch; lastGazePitch = gaze.pitch
         headStill = dy < HEAD_STILL_RAD && dy > -HEAD_STILL_RAD && dp < HEAD_STILL_RAD && dp > -HEAD_STILL_RAD
-        if (d.viewSerial != seenViewSerial) { seenViewSerial = d.viewSerial; director.request(d.view, d.framing); fadeReqNanos = d.viewNanos }
+        if (d.viewSerial != seenViewSerial) { seenViewSerial = d.viewSerial; director.request(d.view, d.framing); fadeReqNanos = d.viewNanos; fadeInputNanos = d.inputNanos }
         val ov = d.overrides
         director.setOverrides(ov.ipdScale ?: Float.NaN, ov.vFovDeg ?: lifeSizeFov(settings))
         director.update(dt, pose, gaze, cam)
         if (director.cutThisFrame) onCut()
         dipping = director.dipping
         if (fadeReqNanos != 0L && dipping) {
-            Log.i(HK.TAG_RENDER, "swipe to first fade ms=" + "%.1f".format((t0 - fadeReqNanos) / 1e6) + " view=" + d.view + "/" + d.framing)
+            val pad = if (fadeInputNanos in 1..fadeReqNanos) " fromPad ms=" + "%.1f".format((t0 - fadeInputNanos) / 1e6) else ""
+            Log.i(HK.TAG_RENDER, "swipe to first fade ms=" + "%.1f".format((t0 - fadeReqNanos) / 1e6) + " view=" + d.view + "/" + d.framing + pad)
             fadeReqNanos = 0L
         }
         val stereo = d.stereo
@@ -515,6 +517,8 @@ class StereoRenderer(private val loader: ExecutorService?,
     // ── M4 strike audit: every contact in a frame's exposure window is drawn exactly once (pose.flash) ──
     private var boundPerf: Performance? = null
     private var fadeReqNanos = 0L
+    private val DAMPER_STOP_MS = 1500f
+    private var fadeInputNanos = 0L
     private var auditGen = Int.MIN_VALUE
     private var auditNext = 0
     private var auditExpected = 0
@@ -528,6 +532,8 @@ class StereoRenderer(private val loader: ExecutorService?,
         if (p.generation != auditGen || vis.reseed) {
             if (!auditLogged && auditExpected > 0) logAudit("reset")
             auditGen = p.generation; auditExpected = 0; auditDrawn = 0; auditSameKey = 0; auditLogged = false
+            damperLands = 0; damperStopped = 0; damperMaxMs = 0f; damperLate = 0
+            java.util.Arrays.fill(damperLandUs, -1L); java.util.Arrays.fill(prevDamper, 0f)
             var lo = 0; var hi = p.onUs.size
             while (lo < hi) { val m = (lo + hi) ushr 1; if (p.onUs[m] <= vis.exposeToUs) lo = m + 1 else hi = m }
             auditNext = lo
@@ -542,11 +548,37 @@ class StereoRenderer(private val loader: ExecutorService?,
             auditNext++
         }
         for (k in 0 until 128) if (pose.flash[k]) auditDrawn++
+        auditDampers()
         if (!auditLogged && auditNext >= p.onUs.size && vis.tUs > p.onUs[p.onUs.size - 1] + 300_000L) logAudit("end")
+    }
+
+    // Dampers stop strings: a damper that lands (lift > 0.05 → 0) on a ringing string (amp > 0.2) with the
+    // sustain pedal up must bring the drawn amplitude under 0.1 within DAMPER_STOP_MS.
+    private val damperLandUs = LongArray(128) { -1L }
+    private val prevDamper = FloatArray(128)
+    private var damperLands = 0; private var damperStopped = 0; private var damperLate = 0; private var damperMaxMs = 0f
+
+    private fun auditDampers() {
+        val t = vis.tUs
+        for (k in 0 until 128) {
+            val dmp = pose.damper[k]; val amp = pose.stringAmp[k]
+            if (pose.flash[k]) damperLandUs[k] = -1L
+            if (prevDamper[k] > 0.05f && dmp <= 0.001f && pose.sustain < 0.1f && amp > 0.2f) { damperLandUs[k] = t; damperLands++ }
+            prevDamper[k] = dmp
+            val l = damperLandUs[k]
+            if (l >= 0L) {
+                val ms = (t - l) / 1000f
+                if (dmp > 0.05f) damperLandUs[k] = -1L                                   // lifted again before it settled
+                else if (amp < 0.1f) { damperStopped++; if (ms > damperMaxMs) damperMaxMs = ms; damperLandUs[k] = -1L }
+                else if (ms > DAMPER_STOP_MS) { damperLate++; damperLandUs[k] = -1L }
+            }
+        }
     }
 
     private fun logAudit(why: String) {
         auditLogged = true
+        Log.i(HK.TAG_RENDER, "damper audit " + why + " id=" + boundPerf?.id + " landed=" + damperLands + " stopped=" + damperStopped +
+            " late=" + damperLate + " maxStopMs=" + "%.0f".format(damperMaxMs) + " limitMs=" + DAMPER_STOP_MS.toInt())
         Log.i(HK.TAG_RENDER, "strike audit " + why + " id=" + boundPerf?.id + " gen=" + auditGen + " notes=" + (boundPerf?.noteCount ?: 0) +
             " expected=" + auditExpected + " drawn=" + auditDrawn + " sameKeySameFrame=" + auditSameKey + " fps=" + "%.1f".format(fps))
     }

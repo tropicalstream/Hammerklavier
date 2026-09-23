@@ -23,12 +23,14 @@ shot m4_title
 g tap; sleep 3
 ctl --ei quality 0
 ctl --es play asset:midi/krueger/bach/bach_846.mid; sleep 10; shot m4_player
-g fwd; sleep 3; shot m4_action_cutaway                        # Player -> Action (cutaway)
+g fwd; sleep 1; shot m4_action_cutaway                        # Player -> Action (cutaway), inside the 1.5 s view toast
+sleep 2; shot m4_action_cutaway_later
 ctl --es play synth:repeat15; sleep 2
 for i in 1 2 3 4 5 6; do shot m4_repeat15_$i; done
 waitfor 'strike audit end id=synth:repeat15' 60 || true
-g down; sleep 3                                               # Action overhead
-ctl --es play asset:midi/krueger/bach/bach_846.mid; sleep 8; shot m4_action_overhead
+ctl --es play asset:midi/krueger/bach/bach_846.mid; sleep 6
+g down; sleep 1; shot m4_action_overhead                      # Action overhead, inside the view toast
+sleep 3; shot m4_action_overhead_later
 g up; sleep 2
 ctl --ei quality 2; sleep 2
 ctl --es play synth:repeat15; sleep 2
@@ -36,14 +38,19 @@ n0=$(grep -c 'strike audit end id=synth:repeat15' "$L")
 for i in $(seq 1 60); do [ "$(grep -c 'strike audit end id=synth:repeat15' "$L")" -gt "$n0" ] && break; sleep 1; done
 ctl --ei quality -1
 ctl --es play asset:midi/krueger/bach/bach_846.mid; sleep 4
-g fwd; sleep 8; shot m4_hall                                  # Action -> Hall
+g fwd; sleep 1; shot m4_hall; sleep 3; shot m4_hall_later     # Action -> Hall
 g fwd; sleep 4                                                # Hall -> Player (ring)
 g back; sleep 4                                               # Player -> Hall
 g back; sleep 4                                               # Hall -> Action
 g back; sleep 4; shot m4_player_back                          # Action -> Player
+# two swipes through the real pad path (TrackpadGestureEngine on injected touch events): fromPad timing
+$A shell input touchscreen swipe 300 240 900 240 120; sleep 3  # Player -> Action
+$A shell input touchscreen swipe 900 240 300 240 120; sleep 3  # Action -> Player
 ctl --ez pause true; sleep 2
 kill $LP
-expect "real UI title card"  'HKInput|gesture=TAP'
+expect "real UI title card"  'overlay context=TITLE titleCard=true'
+expect "title card left on tap" 'gesture=TAP'
+expect "pad swipe recognised" 'src=touch fingerMs='
 expect "action view"         'view=ACTION/0'
 expect "action overhead"     'view=ACTION/1'
 expect "hall view"           'view=HALL/'
@@ -52,7 +59,13 @@ a=$(grep 'strike audit end id=synth:repeat15' "$L" | grep -o 'fps=[0-9.]*' | tr 
 bad=$(grep 'strike audit end' "$L" | awk '{for(i=1;i<=NF;i++){split($i,a,"=");v[a[1]]=a[2]}; if (v["expected"]!=v["drawn"] || v["sameKeySameFrame"]!=0) print}' | wc -l | tr -d ' ')
 c=$(grep -c 'strike audit end id=synth:repeat15' "$L")
 [ "$c" -ge 2 ] && [ "$bad" = 0 ] && echo "[smoke] PASS strikes drawn exactly once ($c runs, $a)" || { echo "[smoke] FAIL strike audit runs=$c bad=$bad"; fail=1; }
+grep 'damper audit' "$L" | sed 's/^/[smoke]   /'
+dl=$(grep 'damper audit ' "$L" | awk '{for(i=1;i<=NF;i++){split($i,a,"=");v[a[1]]=a[2]}; s+=v["landed"]; st+=v["stopped"]; l+=v["late"]} END{print s+0, st+0, l+0}')
+set -- $dl
+[ "$1" -gt 0 ] && [ "$3" = 0 ] && echo "[smoke] PASS dampers stop strings (landed=$1 stopped=$2 late=$3)" || { echo "[smoke] FAIL damper audit landed=$1 stopped=$2 late=$3"; fail=1; }
 grep 'swipe to first fade' "$L" | sed 's/^/[smoke]   /'
+pm=$(grep -o 'fromPad ms=[0-9.]*' "$L" | cut -d= -f2 | sort -n | tail -1)
+[ -n "$pm" ] && awk "BEGIN{exit !($pm < 100)}" && echo "[smoke] PASS pad event to first fade max=${pm} ms" || { echo "[smoke] FAIL pad to fade (${pm:-none})"; fail=1; }
 mx=$(grep -o 'first fade ms=[0-9.]*' "$L" | cut -d= -f2 | sort -n | tail -1)
 nf=$(grep -c 'first fade ms=' "$L")
 [ "$nf" -ge 6 ] && awk "BEGIN{exit !($mx < 100)}" && echo "[smoke] PASS swipe to first fade max=${mx} ms over $nf swipes" || { echo "[smoke] FAIL swipe to fade n=$nf max=$mx"; fail=1; }

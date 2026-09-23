@@ -100,14 +100,21 @@ object GrandCase {
         c.box(kw, 0.62f, zRimFront, -g.X0, 0.78f, g.FRONT_Z)                     // treble cheek
         c.box(-kw, 0.62f, zRimFront, kw, 0.66f, g.FRONT_Z)                       // key bed
         c.box(-kw, 0.66f, zRimFront, kw, 0.695f, -0.17f)                         // key frame under the fallboard
-        c.box(-kw, g.KEY_TOP, -0.19f, kw, 0.80f, -0.15f)                         // fallboard
-        c.box(-kw, 0.80f, -0.21f, kw, g.RIM_TOP, -0.19f)                         // key-well back (behind the fallboard)
         for (leg in LEGS) {
             c.lathe(floatArrayOf(0.030f, 0.06f, 0.036f, 0.30f, 0.045f, 0.52f, 0.062f, 0.60f, 0.062f, g.RIM_BOTTOM), 14, leg[0], leg[1])
         }
         c.box(-0.09f, 0.12f, -0.42f, -0.07f, 0.62f, -0.39f); c.box(0.07f, 0.12f, -0.42f, 0.09f, 0.62f, -0.39f)   // lyre posts
         c.box(-0.16f, 0.05f, -0.44f, 0.16f, 0.12f, -0.36f)                                                       // pedal box
         out += c.build("grand.case", MaterialId.LACQUER, SkinKind.STATIC, VM.LEVELS_ALL, VM.ALL, true, ProgramId.LACQUER, 7)
+
+        // Fallboard, key-well back and music desk: off in the Action framings, where they stand between
+        // the camera and the action (the cutaway removes them as a drawing would; Overhead has the lid off).
+        val fb = MeshBuilder(VertexLayout.STATIC, 64)
+        fb.color(lac)
+        fb.box(-kw, g.KEY_TOP, -0.19f, kw, 0.80f, -0.15f)                        // fallboard
+        fb.box(-kw, 0.80f, -0.21f, kw, g.RIM_TOP, -0.19f)                        // key-well back (behind the fallboard)
+        fb.box(-0.40f, g.RIM_TOP, -0.30f, 0.40f, 1.26f, -0.27f)                  // music desk
+        out += fb.build("grand.fallboard", MaterialId.LACQUER, SkinKind.STATIC, VM.LEVELS_ALL, VM.PLAYER_HALL, true, ProgramId.LACQUER, 7)
 
         val casters = MeshBuilder(VertexLayout.STATIC, 512)
         casters.color(Pal.BRASS_MID)
@@ -117,7 +124,7 @@ object GrandCase {
         val decal = MeshBuilder(VertexLayout.STATIC, 8)
         decal.color(intArrayOf(255, 255, 255))
         Geo.quadZ(decal, -0.13f, 0.745f, 0.13f, 0.775f, -0.1495f)
-        out += decal.build("grand.fallboard.lettering", MaterialId.GILT_EMISSIVE, SkinKind.STATIC, VM.LEVELS_ALL, VM.ALL, true,
+        out += decal.build("grand.fallboard.lettering", MaterialId.GILT_EMISSIVE, SkinKind.STATIC, VM.LEVELS_ALL, VM.PLAYER_HALL, true,
             ProgramId.DECAL, 7, texture = InstrumentTextures.FALLBOARD)
 
         // ── Lid (slot 8, own transform, not in Overhead) and its stick ──
@@ -128,7 +135,6 @@ object GrandCase {
         val stick = MeshBuilder(VertexLayout.STATIC, 32)
         stick.color(lac)
         stick.box(0.27f, g.RIM_TOP, -1.015f, 0.295f, 1.78f, -0.99f)
-        stick.box(-0.40f, g.RIM_TOP, -0.30f, 0.40f, 1.26f, -0.27f)                 // music desk (off in Overhead with the lid)
         out += stick.build("grand.lidstick", MaterialId.LACQUER, SkinKind.STATIC, VM.LEVELS_ALL, VM.NO_OVER, true, ProgramId.LACQUER, 8)
 
         // ── Plate, pins (slot 9) ──

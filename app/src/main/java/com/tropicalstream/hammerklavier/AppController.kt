@@ -93,8 +93,10 @@ class AppController(private val ctx: Context, private val w: Wiring) {
     private var shownPlaying = false
     private val playWatch = object : Runnable { override fun run() {
         if (overlay == null) return
-        if (isPlaying() != shownPlaying) refreshOverlay()
+        // also once a second: the time line and bar advance, and view toasts expire (§1.8)
+        if (isPlaying() != shownPlaying || ++watchTicks % 4 == 0) refreshOverlay()
         w.main.postDelayed(this, 250) } }
+    private var watchTicks = 0
 
     fun startEngine() {
         if (engineRunning) return
@@ -187,8 +189,13 @@ class AppController(private val ctx: Context, private val w: Wiring) {
         if (finishing) stopEngine()
     }
 
-    fun onGesture(g: Gesture, source: String = "pad") {
-        Log.i(HK.TAG_INPUT, "${g.name.lowercase()} gesture=${g.name} src=$source")
+    fun onGesture(g: Gesture, source: String = "pad", downUptimeMs: Long = 0L, eventUptimeMs: Long = 0L) {
+        if (eventUptimeMs != 0L) {
+            val now = SystemClock.uptimeMillis()
+            Log.i(HK.TAG_INPUT, "${g.name.lowercase()} gesture=${g.name} src=$source fingerMs=${eventUptimeMs - downUptimeMs} recogMs=${now - eventUptimeMs}")
+            // uptimeMillis and System.nanoTime are both CLOCK_MONOTONIC on Android
+            (gl as? com.tropicalstream.hammerklavier.render.HkGlView)?.pendingInputNanos = eventUptimeMs * 1_000_000L
+        } else Log.i(HK.TAG_INPUT, "${g.name.lowercase()} gesture=${g.name} src=$source")
         applyAll(w.ui.onGesture(g, facts(), SystemClock.uptimeMillis()))
     }
 
@@ -323,15 +330,22 @@ class AppController(private val ctx: Context, private val w: Wiring) {
     private fun refreshOverlay() {
         val o = overlay ?: return
         val f = facts(); shownPlaying = f.playing
-        o.show(w.ui.render(f, SystemClock.uptimeMillis()))
+        val st = w.ui.render(f, SystemClock.uptimeMillis())
+        (st as? com.tropicalstream.hammerklavier.ui.model.UiOverlayState)?.let { u ->
+            val sig = "${u.context}/${u.title != null}"
+            if (sig != lastOverlaySig) { lastOverlaySig = sig; Log.i(HK.TAG_UI, "overlay context=${u.context} titleCard=${u.title != null}") }
+        }
+        o.show(st)
     }
+    private var lastOverlaySig = ""
 
     /** Minimal facts for the stub UI; WP12's FactsAssembler replaces this. */
     private fun facts(): UiFacts {
         w.audio.clock.sample(System.nanoTime(), clockSample)
         w.audio.stats(audioStats)
-        return UiFacts(playing = clockSample.playing, positionUs = clockSample.songUs, durationUs = 0L, movementId = null, bar = 1,
-            instrument = InstrumentId.GRAND, view = view, framing = framing, kitStates = mapOf(InstrumentId.GRAND to w.kits.state(InstrumentId.GRAND)), library = null,
+        return UiFacts(playing = clockSample.playing, positionUs = clockSample.songUs, durationUs = lastPerf?.durationUs ?: 0L, movementId = null,
+            bar = lastPerf?.barAt(clockSample.songUs) ?: 1,
+            instrument = lastPerf?.instrument ?: InstrumentId.GRAND, view = view, framing = framing, kitStates = mapOf(InstrumentId.GRAND to w.kits.state(InstrumentId.GRAND)), library = null,
             settings = DEFAULT_SETTINGS, nextTitle = null, quality = quality.level, companionUrl = null, companionToken = "",
             route = w.audio.route, status = emptyList(), perfInfo = null, firstRun = false, sessions = 0, resumeTitle = null,
             recent = emptyList(), shelfId = null, version = "${BuildConfig.VERSION_NAME} ${BuildConfig.GIT_COMMIT}",

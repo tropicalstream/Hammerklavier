@@ -55,14 +55,16 @@ attribute vec2 aUv;
 attribute vec4 aCol;
 uniform mat4 uVP;
 uniform mat4 uModel;
+uniform float uShiftX;                 // SECTION_CAP only: caps are built in x = 0 and drawn at the cut plane
 varying vec3 vW;
 varying vec3 vN;
 varying vec4 vCol;
 varying vec2 vUv;
 varying float vMX;
 void main() {
-    vec4 w = uModel * vec4(aPos, 1.0);
-    vMX = aPos.x;
+    vec3 pp = aPos + vec3(uShiftX, 0.0, 0.0);
+    vec4 w = uModel * vec4(pp, 1.0);
+    vMX = pp.x;
     vW = w.xyz;
     vN = (uModel * vec4(aNrm, 0.0)).xyz;
     vCol = aCol;

@@ -58,7 +58,10 @@ class MainActivity : Activity() {
         root.addView(sbs, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         setContentView(root)
         applyMono(intent)
-        gestures.onGesture = { g, src -> controller.onGesture(g, src) }
+        gestures.onGesture = { g, src ->
+            if (src == "touch" && gestures.lastSwipeEventMs != 0L) controller.onGesture(g, src, gestures.lastSwipeDownMs, gestures.lastSwipeEventMs)
+            else controller.onGesture(g, src)
+        }
         root.addOnLayoutChangeListener { _, l, t, r, b, _, _, _, _ -> gestures.setScreenSize(r - l, b - t) }
         controller.onLeave = { finish() }
         controller.onBrightness = { b -> window.attributes = window.attributes.apply { screenBrightness = b } }

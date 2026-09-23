@@ -171,6 +171,7 @@ class ItemDrawer(private val programs: Programs, private val packer: UniformPack
                 GLES20.glUniform1f(p.uWidthPx, f.stringWidthPx)
                 GLES20.glUniform1f(p.uSwellPx, 2.5f)
             }
+            ProgramId.SECTION_CAP -> GLES20.glUniform1f(p.uShiftX, if (f.clipX.isNaN()) 0f else f.clipX - CAP_EPS_M)
             else -> {}
         }
         blendFor(progId)
@@ -246,6 +247,8 @@ class ItemDrawer(private val programs: Programs, private val packer: UniformPack
     }
 
     companion object {
+        /** Section caps sit this far on the kept side of the cut plane so the clip never discards them. */
+        const val CAP_EPS_M = 0.0005f
         private const val PIVOT_BIT = 1 shl 31
 
         /**
