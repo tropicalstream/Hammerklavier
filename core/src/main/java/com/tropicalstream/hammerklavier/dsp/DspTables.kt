@@ -26,11 +26,11 @@ object DspTables {
     /**
      * Comb input normalisation (calibration, T3.1 targets 1–3): the §3.11 sends were estimated
      * for an input on a comb peak; the loop's peak gain 1/(1 − g) is ≈ +45…+60 dB, so the plan's
-     * dB values alone would put a pedal-down C5 comb ≈ 20 dB above the −28 dB target. The trim
+     * dB values alone would put a pedal-down C5 comb ≈ 13 dB above the −28 dB target (SineBank-recipe voices). The trim
      * scales every send by the same amount, keeping the plan's relative dB values (Natural vs
      * Rich, instrument vs instrument). Una corda has its own trim (calibrated alone).
      */
-    const val COMB_INPUT_TRIM_DB = -24f
+    const val COMB_INPUT_TRIM_DB = -37f
     const val UNA_CORDA_TRIM_DB = -12f
 
     /** SEND in dB for (instrument, mode), before the input trim; OFF = no send. */
