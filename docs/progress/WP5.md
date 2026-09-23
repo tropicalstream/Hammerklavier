@@ -48,8 +48,8 @@ T5.9 on this Mac: 0.03–0.05 ms per frame (88 keys, CHORD_STORM_64), zero alloc
 - Harpsichord 4′ dip vs on − staggerMs·r: ACCEPTED DEVIATION (not fixed). On an isolated stroke the drawn 4′ jack
   passes 0.433 at about on − stagger; on a compressed lead or a re-strike from d0 > 0 it passes it earlier or later
   by up to a few ms. The audio pluck and the 4′-only flash both use on − staggerMs·r (the timing that is heard and
-  flashed is exact); only the jack position in that one frame differs, below one frame at 30 fps in every case we
-  measured. A piecewise press through the point would add a kink the eye sees more than the offset.
+  flashed is exact); only the drawn jack position differs, bounded by the lead compression (not measured separately;
+  no test). A piecewise press through the point would add a kink the eye sees more than the offset.
 - d0 chain hand-off: fixed. The chain now starts at an anchor, the latest of the previous CHAIN = 8 notes whose key
   reaches the bed before release (dHeld = 1 whatever its d0), or the first note on the key; consecutive notes share
   it, so dHeld_j and d0_{j+1} agree. Test `staccatoRunIsContinuous` (12 notes of 15 ms, 70 ms apart). Only a run of
