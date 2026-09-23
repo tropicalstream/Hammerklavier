@@ -87,7 +87,7 @@ object GrandCase {
         val rim = g.rimOutline()
         val front = g.frontEdge(rim)
         val kw = kb.widthM / 2f
-        val lac = Pal.EBONY_FLOOR
+        val lac = Pal.EBONY_KEY
         val zRimFront = g.FRONT_Z - g.RIM_FRONT_V * g.LENGTH
 
         // ── Case (slot 7): rim, bottom, cheeks, key bed, fallboard, music desk, legs, lyre ──

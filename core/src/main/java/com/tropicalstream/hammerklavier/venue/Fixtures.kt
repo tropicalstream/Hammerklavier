@@ -15,7 +15,7 @@ import com.tropicalstream.hammerklavier.mesh.MeshBuilder
  * itself is never drawn (black is transparent); only the flames it reflects (FlameFieldImpl).
  */
 object Fixtures {
-    val CHAIR_FRAME_RGB = intArrayOf(170, 124, 58)
+    val CHAIR_FRAME_RGB = intArrayOf(139, 109, 84)
     val DAMASK_RGB = intArrayOf(80, 30, 26)
     val CANDLE_RGB = intArrayOf(150, 142, 128)          // M5: was (214,204,184), brighter than the flames it carries
 

@@ -61,7 +61,7 @@ object HarpsichordModel {
     fun keyboardSpec(): KeyboardSpec = KeyboardSpec(
         lowKey = 29, highKey = 89, headM = 0.0227f, topY = KEY_TOP,
         whiteMaterial = MaterialId.BONE, whiteRgb = Pal.BONE, whiteSideRgb = Geo.mul(Pal.BONE, 0.75f), frontRgb = Geo.mul(Pal.BONE, 0.6f),
-        blackRgb = Pal.EBONY_FLOOR, blackSideRgb = Geo.mul(Pal.EBONY_RIM, 0.4f),
+        blackRgb = Pal.EBONY_KEY, blackSideRgb = Geo.mul(Pal.EBONY_RIM, 0.4f),
         pivotY = KEY_TOP - 0.01f, pivotZ = BALANCE_Z, maxRad = KEY_MAX_RAD)
 
     fun create(look: InstrumentLook): InstrumentSceneImpl {

@@ -515,10 +515,11 @@ class AudioOutput internal constructor(
         // Overload shows as underruns or render time near the block period even while the DAC-side
         // measure stays high (the server fills with silence and the timestamp stalls; M1 storm64):
         // either counts as no headroom for the guard.
-        val stressed = underruns > urAtSample || loadEma > OVERLOAD_LOAD
+        val underran = underruns > urAtSample
+        val stressed = underran || loadEma > OVERLOAD_LOAD
         urAtSample = underruns
         val q = if (stressed) 0 else queued
-        when (if (gotTs) headroom.sample(framesAccepted, q, baseCap) else 0) {       // warm-up: from the first timestamp
+        when (if (gotTs) headroom.sample(framesAccepted, q, baseCap, underran && gotTs) else 0) {       // warm-up: from the first timestamp
             1 -> { val cap = headroom.cap(baseCap); core.on(Cmd.VOICE_CAP, cap.toLong(), headroom.combSteps.toFloat(), null); overloadPayload = cap; post(overloadRunnable) }
             -1 -> core.on(Cmd.VOICE_CAP, headroom.cap(baseCap).toLong(), headroom.combSteps.toFloat(), null)
         }

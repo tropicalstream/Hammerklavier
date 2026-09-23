@@ -49,14 +49,16 @@ ctl --ez gcstats true
 ctl --ez selftest true --ei selftestsecs "$SECS"
 sleep $((SECS + 8))
 kill $LC 2>/dev/null; wait $LC 2>/dev/null
-expect "stand-in bank to audio"        'HKKit.*bank gen=[0-9]+ stub=true .*-> audio'
+# M8: the stand-in bank line is gone since M2 (the real kits ship); CONTROL play goes through SessionController
+# since M6 (no HKLoader "play … gen=" / HKAudio "ended" / HKClock "play" lines): the checks follow that wiring.
+expect "real kit in the audio (bankGen, stub=false)" 'HKAudio.*stats .*stub=false'
 expect "decode bench"                  'HKKit.*decode bench: .*real time, setup'
 expect "EngineBench result"            'HKPerf.*bench cpuMhz=.*q0Cap=[0-9]+'
-expect "synth:scale compiled"          'HKLoader.*play synth:scale gen='
-expect "synth:pedalhalf compiled"      'HKLoader.*play synth:pedalhalf gen='
-expect "synth:storm64 compiled"        'HKLoader.*play synth:storm64 gen='
-expect "scale ended"                   'HKAudio.*ended gen=.*synth:scale'
-expect "clock: fromTimestamp on play"  'HKClock.*play fromTimestamp=true'
+expect "synth:scale requested" 'HKUi.*CONTROL play=synth:scale'
+expect "synth:pedalhalf requested" 'HKUi.*CONTROL play=synth:pedalhalf'
+expect "synth:storm64 requested" 'HKUi.*CONTROL play=synth:storm64'
+[ "$(grep -c 'event MOVEMENT_STARTED' "$L")" -ge 4 ] && echo "[smoke] PASS movements started (scale ×2, pedalhalf, storm64)" || { echo "[smoke] FAIL movements started"; fail=1; }
+expect "scale ends (pauses at its end)" 'HKUi.*event PAUSED'
 expect "parked after the idle timer"    'CONTROL echo=parked' 
 if awk '/CONTROL echo=parked/{exit} /HKAudio.*stats /{l=$0} END{exit !(l ~ /parked=true/)}' "$L"; then echo "[smoke] PASS parked=true before resume"; else echo "[smoke] FAIL not parked before resume"; fail=1; fi
 expect "clock: fromTimestamp on resume" 'HKClock.*resume fromTimestamp=true .*playing=true'

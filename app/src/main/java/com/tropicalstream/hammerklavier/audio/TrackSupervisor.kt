@@ -140,20 +140,31 @@ class HeadroomGuard(private val sampleRate: Int = HK.SR) {
     private var winStart = -1L
     private var winMin = Int.MAX_VALUE
     private var goodSince = -1L
+    private var lastUrgent = Long.MIN_VALUE / 2
     /** Steps of −8 currently applied. */
     var steps = 0; private set
     /** The minimum of the last complete window (stats). */
     var lastWindowMin = 0; private set
 
-    fun reset() { winStart = -1L; winMin = Int.MAX_VALUE; goodSince = -1L }
+    fun reset() { lastUrgent = Long.MIN_VALUE / 2; winStart = -1L; winMin = Int.MAX_VALUE; goodSince = -1L }
 
     /**
      * One wake: [queued] frames at output frame [frame]. Returns +1 when a step down was taken,
      * −1 for a step back up, 0 otherwise.
      */
-    fun sample(frame: Long, queued: Int, baseCap: Int): Int {
+    fun sample(frame: Long, queued: Int, baseCap: Int, underrun: Boolean = false): Int {
         if (winStart < 0) { winStart = frame; winMin = queued; goodSince = frame; return 0 }
         if (queued < winMin) winMin = queued
+        // M8: a real underrun steps down at once (at most one step per second) instead of waiting for the
+        // 10 s window: storm64 on the grand at cap 96 underran for ~80 s (8,397 underruns) before four
+        // window steps reached cap 40.
+        if (underrun && frame - lastUrgent >= sampleRate) {
+            lastUrgent = frame; goodSince = frame; winStart = frame; winMin = Int.MAX_VALUE; lastWindowMin = 0
+            // Both comb steps at once plus one cap step: shedding combs alone did not stop storm64's underruns.
+            if (cap(baseCap) > MIN_CAP) { steps = maxOf(steps, COMB_STEPS) + 1; return 1 }
+            if (steps < COMB_STEPS) { steps = COMB_STEPS; return 1 }
+            return 0
+        }
         if (frame - winStart < window) return 0
         lastWindowMin = winMin
         val min = winMin

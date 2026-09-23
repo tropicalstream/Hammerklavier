@@ -495,3 +495,46 @@ floor candelabrum's post standing in front of the case (camera/placement, WP8/WP
 - Harpsichord cutaway legibility (WP7/WP6 lighting), upright Hall/1 candelabrum occlusion.
 - USER FEEDBACK above (browns wash out orange, black keys brown): palette pass scheduled for M8, not done here.
 - WP8 contact-pool request (the upright has no pool) still open.
+
+## M8 Release candidate (2026-09-23, integrator) — PARTIAL: device checks pass plugged in; the unplugged / asleep / Bluetooth / listening items need the user
+Merged: nothing new (every WP already on main). M8 is fixes, docs and measurement. Release md5 014dc0e71789e0ad55623ec659ba047a, `tools/ci.sh` PASS.
+
+Done
+- **Palette pass (user feedback):** every brown desaturated ~40 % and moved to hue 18–22°; black keys and ebony lacquer
+  neutral charcoal (EBONY_KEY 34,34,38) with a cool rim (112,118,132); presence floor neutral; ivory/bone less yellow
+  (contracts-changelog M8). Before/after: `docs/shots/m8_before_*` / `m8_after_*` (3 instruments × Player/Action/Hall).
+  Honest look: the grand's case, legs and sharps now read charcoal/grey, not brown; the harpsichord case and hall
+  chairs are a muted grey-brown, not orange; gilding is still the only saturated warm accent. The upright walnut is
+  dark and muted (may now be *too* dull on the waveguide — needs the user's eyes).
+- **README.md** (build, install, import by Wi-Fi and push_scores.sh, asset rebuild, credits). Credits (9 pages) and
+  About (3 pages) panels were already wired at M6 (`m6_t5_10_credits.png`, `m6_t5_11_about.png`).
+- **WP10 request 1** (`SetSight.autoEdgeOverlay`, Auto row works); requests 5/6 answered (5 blocked on T-SYNC-BT, 6 already true).
+- **HeadroomGuard:** storm64 on the real grand overloaded HKAudio (cap 96 → cpu 95–119 %, **8,397 underruns** over ~80 s in
+  the soak while the 10 s window stepped down). A real underrun now steps at once (≤ 1/s), both comb steps plus −8:
+  storm64 onset 8,397 → 785 → 47 → **2** underruns (PoliciesTest `headroomUnderrunStepsDownOncePerSecond`).
+- SoakRecorder `sleep20` played nothing (a work id): now `bach.wtc1.sankey.1`.
+- Smokes: `smoke.sh all` (M0 M1 M3–M8) and `smoke.sh M8` (T-START, T-MEM, self-test) added; stale checks updated —
+  M0 presses BACK until the app leaves (BACK closes a menu since M6), M1 follows the M6 play wiring, M3 pins the grand,
+  M7 `after … | grep -q` under pipefail gave false FAILs (SIGPIPE) → `>/dev/null`.
+
+Gate (plugged in; `stay_on_while_plugged_in=7` on this device, so the display never sleeps while the cable is in)
+| Check | Result |
+|---|---|
+| T-THERM, **plugged in**, 45 min therm45 from a cleared cache | 46.3 min, no reboot (uptime continuous), never left Q0, thermal status 0, battery 25.0 → **26.0 °C peak** → 25.5 °C; fps 29.9–30.3; majflt 0; HKAudio 60.5 %, GLThread 13.8 %, main 4.2 %, prefetch 1.0 % of a core (music). **Not the plan's unplugged test** (battery barely heats while USB powered). |
+| T-UND display on | op. 106 i–iv + Moonlight 40 min: **0 underruns**, headroom min 5,0xx frames; the last 5 min (storm64) 8,397 before the guard fix |
+| T-UND "asleep" | 30 min WTC I 1–8 with KEYCODE_SLEEP: **0 underruns**, but `mWakefulness=Awake` — the display did not sleep (stay-on while plugged). Real asleep run needs the cable out. |
+| T-START | process start → first note **1.24–1.65 s** (≤ 4) |
+| T-MEM (5 min op. 106) | Java heap 11.7–16.5 MiB (≤ 48), PSS − mapped 29–32 MiB (≤ 200), RSS 259–302 MiB (≤ 450) |
+| smoke.sh all | M0 M3 M4 M5 M6 M7 M8 **PASS**; M1 FAIL: storm64 on the real grand, 2 underruns at onset (was 47/785 before the guard changes) |
+| Self-test | no FAIL; 1–2 underruns *during* the self-test (paused, grand voicing in the background) |
+
+### Open issues (M8)
+- **Needs the user:** 45-min **unplugged** T-THERM and the max-brightness run; T-UND asleep (cable out); T-UND-BT and
+  T-SYNC-BT (no Bluetooth headset here); listening L-1…L-8 incl. L-4; judgement of the new palette on the waveguide.
+- storm64 overload: the Q0 cap (64–96) exceeds what the real kit sustains in a chord storm (cap 40 = 79 % HKAudio);
+  the bench's ns/voice underestimates the real kit. Normal repertoire is clean (70 min, 0 underruns). Options: a real-kit
+  factor on q0Cap, or accept the 2-underrun onset.
+- MechanicsEvaluatorTest `evaluateAllocatesNothing` failed once in a full CI (904 bytes, harpsichord); passes alone 3/3 and in 4 CI runs.
+- Carried: T-DEC upright no margin; grand T-DEC with two lanes not re-measured; upright contact pool (WP8, declined for rc1);
+  upright Hall/1 candelabrum occlusion; harpsichord cutaway legibility; baseline profile not added; WP3 plan-owner questions.
+- Tags: **milestone-M8 and v1.0-rc1 not set** — the M8 gate (unplugged soak, asleep/BT, listening sign-off) is not passed.

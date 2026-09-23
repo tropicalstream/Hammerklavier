@@ -197,8 +197,8 @@ object RoomShell {
             clipped = false, program = ProgramId.LIT, drawSlot = 1)
     }
 
-    val WINDOW_FRAME_RGB = intArrayOf(120, 96, 64)
-    val WINDOW_BAR_RGB = intArrayOf(70, 56, 38)
+    val WINDOW_FRAME_RGB = intArrayOf(108, 91, 78)
+    val WINDOW_BAR_RGB = intArrayOf(63, 53, 46)
 
     /** Window frames and bars (3 × 6 panes) plus the wall glow discs: one LIT merge key. */
     fun framesAndGlow(palette: Palette): List<BakedMesh> {

@@ -30,7 +30,9 @@ sealed interface UiAction {
     data class SetMix(val reverb: ReverbMode? = null, val resonance: ResonanceMode? = null, val speakerBass: SpeakerBass? = null) : UiAction
     data class SetSight(val room: RoomLevel? = null, val autoRoom: Boolean = false, val palette: Palette? = null,
         val finish: UprightFinish? = null, val stereoDepth: Float? = null, val lookAround: Boolean? = null,
-        val edgeOverlay: Boolean? = null, val reverseSwipe: Boolean? = null, val msaa: Boolean? = null) : UiAction
+        val edgeOverlay: Boolean? = null, val reverseSwipe: Boolean? = null, val msaa: Boolean? = null,
+        /** M8 (WP10 request 1): true sets the edge overlay back to Auto (null); wins over [edgeOverlay]. */
+        val autoEdgeOverlay: Boolean = false) : UiAction
     data class SetPresenceFloor(val level: Int) : UiAction
     /** Stored for the current route key. */
     data class SetAvLead(val ms: Int) : UiAction

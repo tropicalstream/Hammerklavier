@@ -80,15 +80,15 @@ ctl --es view ACTION --ei framing 0; sleep 3; shot m7_harpsichord_reg8_cutaway
 mark reg84; ctl --ei registration 3; sleep 4; shot m7_harpsichord_reg84_cutaway
 ctl --es view PLAYER --ei framing 0
 mark equal; ctl --es temperament EQUAL; sleep 2
-after equal | grep -q 'remap harpsichord 415.0Hz EQUAL key=69' && ok "Equal temperament rebuilds the key map" || bad "Equal remap"
+after equal | grep 'remap harpsichord 415.0Hz EQUAL key=69' >/dev/null && ok "Equal temperament rebuilds the key map" || bad "Equal remap"
 mark wm3; ctl --es temperament WERCKMEISTER_III; sleep 2
-after wm3 | grep -q 'remap harpsichord 415.0Hz WERCKMEISTER_III key=69' && ok "back to Werckmeister III" || bad "Werckmeister III remap"
+after wm3 | grep 'remap harpsichord 415.0Hz WERCKMEISTER_III key=69' >/dev/null && ok "back to Werckmeister III" || bad "Werckmeister III remap"
 ctl --ez menu true; sleep 1.2; shot m7_menu_transport; ctl --es gesture double; sleep 0.8
 # ── K. 545 on the upright ──
 mark up; ctl --es play mozart.k545.1; sleep 1.5; ctl --es instrument upright; sleep 5
 ctl --ez dump true; sleep 1
 after up | grep 'dump view=' | tail -1 | grep -q 'movement=mozart.k545.1 instrument=UPRIGHT' && ok "K. 545 on the upright" || bad "K. 545 on the upright ($(after up | grep 'dump view=' | tail -1))"
-after up | grep -q 'remap upright 440.0Hz EQUAL key=69' && ok "upright A440 Equal key map" || bad "upright remap"
+after up | grep 'remap upright 440.0Hz EQUAL key=69' >/dev/null && ok "upright A440 Equal key map" || bad "upright remap"
 views m7_upright
 # ── grand for the comparison set ──
 ctl --es play bach.bwv846.krueger.1; sleep 1.5; ctl --es instrument grand; sleep 5; views m7_grand
@@ -111,12 +111,12 @@ PY
 shot m7_after_switches
 # ── T-Q3SWITCH ──
 mark q3; ctl --ei quality 3; sleep 3; ctl --es instrument harpsichord; sleep 4
-after q3 | grep -q 'display rest: GL paused' && ok "Q3 display rest" || bad "Q3 rest"
+after q3 | grep 'display rest: GL paused' >/dev/null && ok "Q3 display rest" || bad "Q3 rest"
 q=$(after q3 | grep -o 'switch to=harpsichord perf ms=[0-9]* playing=[a-z]*' | head -1)
 echo "$q" | grep -Eq 'perf ms=(1?[0-9]{1,3}) playing=true' && ok "T-Q3SWITCH sound continues within 2 s ($q)" || bad "T-Q3SWITCH audio ($q)"
 mark q3end; ctl --ei quality -1; sleep 3; shot m7_q3switch_after_rest
 f=$(after q3end | grep -E 'HKRender.*(scene |view=)' | head -1)
-echo "$f" | grep -q 'scene harpsichord\|tris=10616\|tris=21038\|tris=22294' && ok "T-Q3SWITCH first frame after the rest draws the harpsichord ($f)" || { after q3end | grep -q 'display rest over' && ok "T-Q3SWITCH rest over (scene applied during the rest; screencap m7_q3switch_after_rest)" || bad "T-Q3SWITCH frame ($f)"; }
+echo "$f" | grep -q 'scene harpsichord\|tris=10616\|tris=21038\|tris=22294' && ok "T-Q3SWITCH first frame after the rest draws the harpsichord ($f)" || { after q3end | grep 'display rest over' >/dev/null && ok "T-Q3SWITCH rest over (scene applied during the rest; screencap m7_q3switch_after_rest)" || bad "T-Q3SWITCH frame ($f)"; }
 # ── self-test (its 10 kHz torn-read reader loads the GL thread: hitches are counted before it) ──
 [ "${HK_M7_TDEC:-0}" = 1 ] && grep -q 'FRAME HITCH' "$L" && ! awk -v t="$T_MAIN" '$1+0 >= t+0' "$L" | grep -q 'FRAME HITCH' && echo "[smoke]   note: FRAME HITCH during the T-DEC first-run phase: $(grep -c 'FRAME HITCH' "$L")"
 awk -v t="$T_MAIN" '$1+0 >= t+0' "$L" | awk '/CONTROL echo=selftest/{exit} 1' | grep -q 'FRAME HITCH' && bad "FRAME HITCH before the self-test" || ok "no FRAME HITCH (cached launch → self-test)"

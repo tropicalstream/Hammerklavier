@@ -135,9 +135,7 @@ object MenuTree {
             option("${Math.round(d * 100)} %", Math.abs(d - f.settings.stereoDepth) < 0.01f, UiAction.SetSight(stereoDepth = d))
         }
         MenuId.EDGE -> listOf<Boolean?>(null, true, false).map { e ->
-            // Auto cannot be expressed by SetSight yet (null = unchanged): docs/requests/WP10.md item 1.
-            if (e == null) MenuRow(UiText.autoOnOff(null) + if (f.settings.edgeOverlay == null) TICK else "",
-                Choice.Do(emptyList(), After.BACK), f.settings.edgeOverlay == null)
+            if (e == null) option(UiText.autoOnOff(null), f.settings.edgeOverlay == null, UiAction.SetSight(autoEdgeOverlay = true))
             else option(UiText.autoOnOff(e), f.settings.edgeOverlay == e, UiAction.SetSight(edgeOverlay = e))
         }
         MenuId.CALIBRATE -> listOf(

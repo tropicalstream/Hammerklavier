@@ -51,7 +51,7 @@ class MeshBuilderTest {
             val o = i * 12
             val dx = m.vertices[o] - 0f; val dy = m.vertices[o + 1] - 0.1f; val dz = m.vertices[o + 2] + 0.5f
             assertTrue(dx * m.vertices[o + 3] + dy * m.vertices[o + 4] + dz * m.vertices[o + 5] > 0f)
-            assertEquals(232 / 255f, m.vertices[o + 8], 1e-6f)
+            assertEquals(Pal.IVORY[0] / 255f, m.vertices[o + 8], 1e-6f)
             // UVs in metres, within the face size.
             assertTrue(m.vertices[o + 6] in -1e-6f..1.0001f && m.vertices[o + 7] in -1e-6f..1.0001f)
         }

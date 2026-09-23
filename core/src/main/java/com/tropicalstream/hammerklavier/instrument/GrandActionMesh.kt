@@ -125,7 +125,7 @@ object GrandModel {
     fun keyboardSpec(): KeyboardSpec = KeyboardSpec(
         lowKey = 21, highKey = 108, headM = 0.0235f, topY = GrandDims.KEY_TOP,
         whiteMaterial = MaterialId.IVORY, whiteRgb = Pal.IVORY, whiteSideRgb = Pal.IVORY_SIDE, frontRgb = Pal.IVORY_SIDE,
-        blackRgb = Pal.EBONY_FLOOR, blackSideRgb = Geo.mul(Pal.EBONY_RIM, 0.4f),
+        blackRgb = Pal.EBONY_KEY, blackSideRgb = Geo.mul(Pal.EBONY_RIM, 0.4f),
         pivotY = 0.705f, pivotZ = GrandDims.BALANCE_Z, maxRad = GrandDims.KEY_MAX_RAD)
 
     fun create(look: InstrumentLook, lastDamper: Int): InstrumentSceneImpl {

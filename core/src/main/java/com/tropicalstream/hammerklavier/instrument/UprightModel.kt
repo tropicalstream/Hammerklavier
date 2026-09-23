@@ -47,7 +47,7 @@ object UprightModel {
     fun keyboardSpec(): KeyboardSpec = KeyboardSpec(
         lowKey = 21, highKey = 108, headM = 0.0235f, topY = KEY_TOP,
         whiteMaterial = MaterialId.IVORY, whiteRgb = Pal.IVORY, whiteSideRgb = Pal.IVORY_SIDE, frontRgb = Pal.IVORY_SIDE,
-        blackRgb = Pal.EBONY_FLOOR, blackSideRgb = Geo.mul(Pal.EBONY_RIM, 0.4f),
+        blackRgb = Pal.EBONY_KEY, blackSideRgb = Geo.mul(Pal.EBONY_RIM, 0.4f),
         pivotY = KEY_TOP - 0.01f, pivotZ = BALANCE_Z, maxRad = KEY_MAX_RAD)
 
     fun create(look: InstrumentLook, lastDamper: Int): InstrumentSceneImpl {
@@ -71,7 +71,7 @@ object UprightModel {
     fun finish(f: UprightFinish): Pair<MaterialId, IntArray> = when (f) {
         UprightFinish.WALNUT -> MaterialId.WOOD_CASE to Pal.WALNUT
         UprightFinish.MAHOGANY -> MaterialId.WOOD_CASE to Pal.MAHOGANY
-        UprightFinish.EBONY -> MaterialId.LACQUER to Pal.EBONY_FLOOR
+        UprightFinish.EBONY -> MaterialId.LACQUER to Pal.EBONY_KEY
     }
 
     fun spans(kb: Keyboard, profile: InstrumentProfile): List<StringSpan> {

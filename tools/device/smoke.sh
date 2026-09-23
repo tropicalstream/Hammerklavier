@@ -8,7 +8,8 @@ M=${1:-M0}
 S=${HK_SERIAL:-A06B4A96A733283}; PKG=com.tropicalstream.hammerklavier
 OUT="$ROOT/build/smoke/$M"; mkdir -p "$OUT"
 SELFTEST_SECS=${HK_SELFTEST_SECS:-60}
-case "$M" in M0) ;; M1) exec "$ROOT/tools/device/smoke_m1.sh" "$OUT" "$S" "$PKG" "$SELFTEST_SECS";; M3) ROOT="$ROOT" exec "$ROOT/tools/device/smoke_m3.sh" "$OUT" "$S" "$PKG";; M4) ROOT="$ROOT" exec "$ROOT/tools/device/smoke_m4.sh" "$OUT" "$S" "$PKG";; M5) ROOT="$ROOT" exec "$ROOT/tools/device/smoke_m5.sh" "$OUT" "$S" "$PKG";; M6) ROOT="$ROOT" exec "$ROOT/tools/device/smoke_m6.sh" "$OUT" "$S" "$PKG";; M7) ROOT="$ROOT" exec "$ROOT/tools/device/smoke_m7.sh" "$OUT" "$S" "$PKG";; *) echo "[smoke] $M not defined yet" >&2; exit 2;; esac
+case "$M" in M0) ;; M1) exec "$ROOT/tools/device/smoke_m1.sh" "$OUT" "$S" "$PKG" "$SELFTEST_SECS";; M3) ROOT="$ROOT" exec "$ROOT/tools/device/smoke_m3.sh" "$OUT" "$S" "$PKG";; M4) ROOT="$ROOT" exec "$ROOT/tools/device/smoke_m4.sh" "$OUT" "$S" "$PKG";; M5) ROOT="$ROOT" exec "$ROOT/tools/device/smoke_m5.sh" "$OUT" "$S" "$PKG";; M6) ROOT="$ROOT" exec "$ROOT/tools/device/smoke_m6.sh" "$OUT" "$S" "$PKG";; M7) ROOT="$ROOT" exec "$ROOT/tools/device/smoke_m7.sh" "$OUT" "$S" "$PKG";; M8) ROOT="$ROOT" exec "$ROOT/tools/device/smoke_m8.sh" "$OUT" "$S" "$PKG";;
+  all) r=0; for m in M0 M1 M3 M4 M5 M6 M7 M8; do echo "[smoke] === $m"; if "$0" $m; then echo "[smoke] === $m PASS"; else echo "[smoke] === $m FAIL"; r=1; fi; done; exit $r;; *) echo "[smoke] $M not defined yet" >&2; exit 2;; esac
 
 # The step script goes to a file (adb shell would swallow a script fed on stdin).
 cat > "$OUT/steps.sh" <<'SH'
@@ -43,7 +44,10 @@ $A shell input keyevent KEYCODE_SLEEP; sleep 3
 ctl --ei faketemp 425; sleep 2
 ctl --ei faketemp -1; sleep 1
 $A shell input keyevent KEYCODE_WAKEUP; $A shell wm dismiss-keyguard; sleep 2
-$A shell input keyevent KEYCODE_BACK; sleep 2
+# M8: since M6 BACK in a menu/panel acts as back (the double above left the Transport menu open): press BACK
+# until the app leaves (at most 3), as §1.3 specifies.
+for i in 1 2 3; do $A shell input keyevent KEYCODE_BACK; sleep 2
+  $A shell dumpsys activity activities | grep -E 'topResumedActivity|mResumedActivity' | head -1 | grep -q hammerklavier || break; done
 sleep 1; kill $LC 2>/dev/null; wait $LC 2>/dev/null
 expect "tap from input tap"            'HKInput.*tap gesture=TAP src=touch'
 expect "tap from DPAD_CENTER"          'HKInput.*tap gesture=TAP src=key'

@@ -3,6 +3,7 @@ package com.tropicalstream.hammerklavier.render
 import android.opengl.GLES20
 import com.tropicalstream.hammerklavier.contract.LightRig
 import com.tropicalstream.hammerklavier.contract.MaterialTable
+import com.tropicalstream.hammerklavier.contract.Pal
 import com.tropicalstream.hammerklavier.contract.ProgramId
 import com.tropicalstream.hammerklavier.contract.SkinKind
 import com.tropicalstream.hammerklavier.contract.SkinParams
@@ -262,7 +263,7 @@ class ItemDrawer(private val programs: Programs, private val packer: UniformPack
             else -> 0f
         }
 
-        /** Fresnel rim colour EBONY_RIM (120,78,40), linear 0..1 (§5.9). */
-        private val RIM = floatArrayOf(120f / 255f, 78f / 255f, 40f / 255f)
+        /** Fresnel rim colour Pal.EBONY_RIM (M8: cool), 0..1 (§5.9). */
+        private val RIM = floatArrayOf(Pal.EBONY_RIM[0] / 255f, Pal.EBONY_RIM[1] / 255f, Pal.EBONY_RIM[2] / 255f)
     }
 }

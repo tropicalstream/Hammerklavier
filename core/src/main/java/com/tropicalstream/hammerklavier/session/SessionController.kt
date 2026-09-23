@@ -577,9 +577,10 @@ class SessionController(
         a.lookAround?.let { prefs.lookAround = it }
         a.reverseSwipe?.let { prefs.reverseSwipe = it }
         a.msaa?.let { prefs.msaa = it }
-        val lookChanged = (a.finish != null && a.finish != prefs.finish) || (a.edgeOverlay != null && a.edgeOverlay != prefs.edgeOverlay)
+        val lookChanged = (a.finish != null && a.finish != prefs.finish) || (a.edgeOverlay != null && a.edgeOverlay != prefs.edgeOverlay) ||
+            (a.autoEdgeOverlay && prefs.edgeOverlay != null)
         a.finish?.let { prefs.finish = it }
-        a.edgeOverlay?.let { prefs.edgeOverlay = it }
+        if (a.autoEdgeOverlay) prefs.edgeOverlay = null else a.edgeOverlay?.let { prefs.edgeOverlay = it }
         pushRenderSettings()
         if (lookChanged) render.setInstrument(instrument, look(), lastDamper(instrument))
     }

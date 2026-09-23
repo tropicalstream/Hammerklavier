@@ -55,3 +55,6 @@ The drawn cove ceiling (flat field + cove runs + mitred corners) totals 106.6 m�
 has 108.6 m². The drawn geometry follows §3.12's own cove dimensions, so the 2 m² gap is in the
 table row (it appears to count the cove at its outer rather than mid-surface width). Please set
 the ceiling row to 106.6 m² (and rescale its absorption share) so T8.1 can tighten to 0.5 m².
+
+## Integrator answer (M8, 2026-09-23)
+- Instrument-aware contact pool: not done for v1.0-rc1 (the upright keeps no pool under it); carried as an open issue.

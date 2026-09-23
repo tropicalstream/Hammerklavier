@@ -62,6 +62,16 @@ class PoliciesTest {
         assertEquals(32, h.cap(96)); assertEquals(2, h.combSteps); assertEquals(HeadroomGuard.COMB_STEPS + 8, h.steps); assertTrue(w > 0)
     }
 
+    @Test fun headroomUnderrunStepsDownOncePerSecond() {
+        val h = HeadroomGuard()
+        var f = 0L; var downs = 0
+        h.sample(f, 5000, 96)
+        repeat(5 * 50) { f += HK.SR / 50; if (h.sample(f, 0, 96, underrun = true) == 1) downs++ }
+        assertTrue("one step per second: $downs", downs in 5..6)   // each: both comb steps + one cap step
+        assertEquals(2, h.combSteps)
+        assertEquals(96 - 8 * downs, h.cap(96))
+    }
+
     @Test fun latencyTunerGrowsOneBlockPerNewUnderrun() {
         val t = LatencyTuner()
         assertEquals(-1, t.onUnderruns(0, 512))

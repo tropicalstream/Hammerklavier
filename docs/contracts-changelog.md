@@ -308,3 +308,14 @@ Recorded by the integrator while merging WP1, WP2, WP3, WP4 and WP11 for M1 (doc
   (RenderOverrides; −1 clears), `aplcap false` (debug), `decodesleep` <factor> and `voicerprio` <nice> (T-DEC experiments,
   defaults 2 and background). Log lines: `HKKit remap <kit> <aHz> <temperament> key=69 layer=… root native std temp
   shape target shift out err f0`; `HKUi switch to=<id> perf ms=<n> playing=<b>` (600 ms after the new Performance).
+
+## M8 (2026-09-23, integrator)
+- **UiAction.SetSight** gains `autoEdgeOverlay: Boolean = false` (appended, defaulted; WP10 request 1): true sets the
+  edge overlay back to Auto (`edgeOverlay = null`) and wins over `edgeOverlay`. More › Sight › Edge overlay › Auto emits it.
+- **Pal (§5.9) waveguide re-grade** (user feedback from wearing the build: browns washed out to orange, black keys read
+  brown): every brown token desaturated ~40 % and moved to hue 18–22° (e.g. WALNUT 150,98,56 → 123,91,77; PARQUET_POOL
+  150,100,55 → 123,91,76; FLEMISH_CASE 156,86,52 → 128,93,77; also BOISERIE_NEAR, SOUNDBOARD, HARPSI_SOUNDBOARD,
+  FLEMISH_PAPER, LEATHER, DAMPER_TOP, KEYLEVER, ACTION_WOOD, SECTION_CAP, OAK, MAHOGANY, RoomShell window frame/bar,
+  Fixtures chair frame); new **EBONY_KEY 34,34,38** (sharps, grand/upright-ebony lacquer); EBONY_FLOOR (presence floor)
+  22,18,15 → 22,22,25; EBONY_RIM 120,78,40 → 112,118,132 (the lacquer Fresnel rim now reads Pal, no copy);
+  EBONY_SPEC → 228,234,246; IVORY/IVORY_SIDE/BONE slightly less yellow. Gilt, brass, flames unchanged (the only saturated warm).

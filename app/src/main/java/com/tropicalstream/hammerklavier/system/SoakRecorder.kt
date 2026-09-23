@@ -127,7 +127,7 @@ class SoakRecorder(private val ctx: Context, private val main: Handler, private 
                 Step(14) { it.play("beethoven.op106.3") }, Step(29) { it.play("beethoven.op106.4") }) + rotate.take(6)).sortedBy { it.atMin }
             "bright" -> (listOf(Step(0) { it.setBrightness(1f) }) + therm + rotate).sortedBy { it.atMin }
             "rest10" -> listOf(Step(0) { it.forceQuality(3); it.play("beethoven.op106.1") }, Step(10) { it.forceQuality(-1) })
-            "sleep20" -> listOf(Step(0) { it.play("bach.wtc1.sankey") })
+            "sleep20" -> listOf(Step(0) { it.play("bach.wtc1.sankey.1") })   // M8: a movement id (the work id played nothing)
             else -> emptyList()
         }
     }

@@ -17,6 +17,7 @@ expect() { if grep -Eq "$2" "$L"; then echo "[smoke] PASS $1"; else echo "[smoke
 $A logcat -c
 $A logcat -v time -s HKRender HKUi HKLoader AndroidRuntime > "$L" & LP=$!
 $A shell am start -S -n $PKG/.MainActivity >/dev/null; sleep 8
+ctl --es instrument grand; sleep 3   # M8: the instrument persists across launches (M3 checks the grand's scene)
 ctl --es play asset:midi/krueger/bach/bach_846.mid; sleep 16; shot player_overview
 ctl --ei framing 1; sleep 12; shot player_follow
 ctl --ei framing 0; ctl --ei quality 2; sleep 12
