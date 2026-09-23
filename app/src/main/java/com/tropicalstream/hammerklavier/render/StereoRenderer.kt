@@ -175,6 +175,7 @@ class StereoRenderer(private val loader: ExecutorService?,
     @Volatile var glAllocs = -1; private set
     @Volatile var glInfo = ""; private set
     @Volatile var maxDrawsPerEye = 0; private set
+    @Volatile var syncFrames = 0; private set
     /** glUniform4fv calls in the last frame (§5.8: ≤ 20). */
     @Volatile var uniform4fvPerFrame = 0; private set
     private val cpuUs = IntArray(128)
@@ -351,7 +352,9 @@ class StereoRenderer(private val loader: ExecutorService?,
                 n += drawLabels(d, scn, eye.view, eye.proj)
                 if (viewCode == INSET_VIEW) { n += inset.draw(scn.assembled, frame, gen, ex, 0, ew); GLES20.glViewport(ex, 0, ew, height) }
             }
-            n += sync.draw(programs.fade, pose, ex, 0, ew, height)
+            val sd = sync.draw(programs.fade, pose, ex, 0, ew, height)
+            if (sd > 0 && e == 0) { syncFrames++; if (syncFrames % 8 == 1) Log.i(HK.TAG_RENDER, "sync flash frame n=" + syncFrames) }
+            n += sd
             n += fader.draw(programs.fade, director.fade)
             if (e == 0) draws = n
         }

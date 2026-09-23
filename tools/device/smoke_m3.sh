@@ -22,6 +22,8 @@ ctl --ei framing 1; sleep 12; shot player_follow
 ctl --ei framing 0; ctl --ei quality 2; sleep 12
 ctl --ei quality -1; sleep 2; ctl --ez glreset true; sleep 8
 ctl --ez sync true; sleep 3; shot sync
+# The disc lasts one exposure window: take a burst so at least one frame catches it.
+for i in 01 02 03 04 05 06 07 08 09 10 11 12; do shot sync_$i; done
 ctl --ez pause true; sleep 12
 kill $LP
 expect "scene grand built"   'scene grand items='
@@ -30,6 +32,7 @@ expect "fps 20 at Q2"        'fps=(19\.|20\.).*q=2 idle=false'
 expect "fps 10 idle"         'fps=(9\.|10\.).*idle=true'
 expect "follow framing"      'view=PLAYER/1'
 expect "glreset generation"  'glGeneration=1'
+expect "sync flash drawn"    'sync flash frame n='
 n=$(grep -c 'scene grand items=' "$L"); [ "$n" = 1 ] && echo "[smoke] PASS no rebuild on glreset" || { echo "[smoke] FAIL scene built $n times"; fail=1; }
 m=$(grep -o 'maxDraws=[0-9]*' "$L" | cut -d= -f2 | sort -n | tail -1)
 [ "${m:-99}" -le 28 ] && echo "[smoke] PASS draws per eye max=$m <= 28" || { echo "[smoke] FAIL draws max=$m"; fail=1; }

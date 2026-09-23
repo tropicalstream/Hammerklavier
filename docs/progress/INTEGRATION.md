@@ -227,3 +227,10 @@ not caught by screencap but is detected at every click in the scrcpy recordings 
   tools/ci.sh re-run at 39f10b4: PASS. M3 still not tagged: remaining gate items need a 240 fps phone, a BT headset and the user.
 - WP7 request (harpsichord action-set layout) still to be decided by the plan owner before M7.
 - Pass the bank's `lastDamper` to `setInstrument` when WP12 lands (profile default 88 is correct for Salamander).
+
+### M3 verifier fixes (2026-09-23)
+- Status line said "paused" while playing: play/pause lands on the audio thread after the action, the overlay rendered first. AppController now watches the clock every 250 ms and re-renders on change. Verified: smoke player_overview.png reads "player · playing".
+- Sync flash: the disc is lit only during an A4 contact's exposure window (one frame), so a single screencap misses it. The renderer now logs `sync flash frame n=` (smoke expects it: PASS), smoke_m3 takes a 12-shot burst, and a 60-shot burst caught 3 lit frames (centre pixel fff2d3 vs a57646): docs/shots/m3_sync_flash.png.
+- Pedal inset camera moved closer (pos 0.03,0.24,0.02 -> target 0,0.07,-0.29, fov 34): the three pedals now fill the inset width (docs/shots/m3_player_follow.png).
+- Re-run: ci PASS, run.sh md5 22e8f64e75bec5c0a528a562eff3834d, smoke M3 11/11 PASS, draws max 15/eye.
+- Still open (not measurable here): T-SYNC absolute (240 fps camera + avsync.py), T-SYNC/T-UND on Bluetooth (no headset paired), L-1 and on-head stereo review (user). milestone-M3 not tagged.

@@ -21,10 +21,10 @@ class PedalInset(private val drawer: ItemDrawer) {
     /** Off the hot path: [hasPedals] false (harpsichord) disables the inset. */
     fun install(scene: AssembledScene, placement: Placement, hasPedals: Boolean) {
         // M3: closer than WP6's (0.30, 0.40, 0.55): at 0.8 m the pedals were ~10 px wide in the 200 px box.
-        pos[0] = 0.14f; pos[1] = 0.30f; pos[2] = 0.12f
-        target[0] = 0f; target[1] = 0.08f; target[2] = -0.28f
+        pos[0] = 0.03f; pos[1] = 0.24f; pos[2] = 0.02f
+        target[0] = 0f; target[1] = 0.07f; target[2] = -0.29f
         placement.toRoom(pos, pos); placement.toRoom(target, target)
-        rig.update(pos, target, 30f, 0f, 1f, 0f, W.toFloat() / H, 0f, 0f, false)
+        rig.update(pos, target, 34f, 0f, 1f, 0f, W.toFloat() / H, 0f, 0f, false)
         val l = ArrayList<Int>()
         for (i in scene.items.indices) {
             val k = scene.items[i].key

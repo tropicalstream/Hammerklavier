@@ -89,6 +89,12 @@ class AppController(private val ctx: Context, private val w: Wiring) {
         w.main.postDelayed(this, 500)
     } }
     private val debugTick = object : Runnable { override fun run() { if (!debug) return; refreshOverlay(); w.main.postDelayed(this, 500) } }
+    /** The play/pause state lands on the audio thread after the action; re-render the overlay when it changes. */
+    private var shownPlaying = false
+    private val playWatch = object : Runnable { override fun run() {
+        if (overlay == null) return
+        if (isPlaying() != shownPlaying) refreshOverlay()
+        w.main.postDelayed(this, 250) } }
 
     fun startEngine() {
         if (engineRunning) return
@@ -121,6 +127,7 @@ class AppController(private val ctx: Context, private val w: Wiring) {
         gl.setIdle(!isPlaying())
         lastPerf?.let { gl.setPerformance(it, lastProfile) }
         refreshOverlay()
+        w.main.removeCallbacks(playWatch); w.main.post(playWatch)
     }
 
     // ── Render wiring (M3) ──
@@ -150,7 +157,7 @@ class AppController(private val ctx: Context, private val w: Wiring) {
     /** Called from the 500 ms hint poll: idle pacing follows the clock. */
     fun syncIdle() { val idle = !isPlaying(); if (idle != lastIdle) { lastIdle = idle; gl?.setIdle(idle) } }
 
-    fun detach() { gl = null; overlay = null }
+    fun detach() { gl = null; overlay = null; w.main.removeCallbacks(playWatch) }
 
     /** §1.10 onResume: restart the engine if it was stopped, pacing, the render-side quality. */
     fun onResume() {
@@ -308,7 +315,8 @@ class AppController(private val ctx: Context, private val w: Wiring) {
 
     private fun refreshOverlay() {
         val o = overlay ?: return
-        o.show(w.ui.render(facts(), SystemClock.uptimeMillis()))
+        val f = facts(); shownPlaying = f.playing
+        o.show(w.ui.render(f, SystemClock.uptimeMillis()))
     }
 
     /** Minimal facts for the stub UI; WP12's FactsAssembler replaces this. */
