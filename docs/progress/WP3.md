@@ -29,11 +29,13 @@ Private helpers `DspTestUtil`, `CombRig`.
 
 ## Test results (2026-09-22)
 
-`tools/gw :core:test`: BUILD SUCCESSFUL, all green; 1 skipped (`CombCalibrationTest.realRegions`,
-`@Ignore("needs wp11 fixture")`). Numbers printed by the tests:
-- T3.1 calibration (SineBank-recipe voices): target 1 C5 comb −28.1 dB (−28 ± 4); target 2 una
-  corda −12.2 dB (−12 ± 4); target 3 C3 comb −32.8 dB re C4 peak (≥ −40); target 4 C3 comb silent,
-  envelope monotone, pedal up and down.
+After merging main: `tools/gw :core:test`: BUILD SUCCESSFUL, 108 tests, 0 failed, 0 skipped when run with
+`HK_REAL_REGIONS` set; no `@Ignore` left. Numbers printed by the tests:
+- T3.1 calibration, real regions (`export_test_regions.py` run from the main checkout's download cache into a
+  scratch dir, passed via `HK_REAL_REGIONS`): target 1 C5 comb −25.8 (v10) / −25.6 (v13) dB (−28 ± 4); target 2
+  una corda −10.6 dB (−12 ± 4); target 3 C3 comb −37.1 / −37.0 dB re C4 peak (≥ −40); target 4 passes (4 s).
+- T3.1 calibration, SineBank voices: target 1 −35.3 dB (expected −35 ± 4, see deviation 13); target 2 −14.2 dB;
+  target 3 −32.8 dB; target 4 passes (10 s), pedal up and down.
 - T3.3: Schroeder mid 1.578 s (design 1.649, −4%), 8 kHz 0.930 s (design 0.928); energy
   normalisation −0.06 … −0.70 dB for T60 0.8–2.5 s, 8 and 4 lines; listener switch residue
   −109 dBFS (hard cut −42.6 dBFS, so the probe sees steps); flatness 7.3 dB (smoothed, see below).
@@ -76,8 +78,18 @@ Private helpers `DspTestUtil`, `CombRig`.
 12. A new `setDesign` during an ER crossfade restarts it from the set being faded in (the older
     set is dropped); listener changes are ≥ 0.5 s apart in the UI (dip transition).
 
+13. **Real-region calibration** (T3.1 second pass): real Salamander C4 has partial 2 at +8…+9 dB re the
+   fundamental (SineBank: −6 dB), so the C5 comb rang at −18.5 dB. Fix: a register tilt on the comb input,
+   0 dB up to key 60 and −0.6 dB/key above (floor −12 dB) (`DspTables.COMB_TILT`), and `UNA_CORDA_TRIM_DB`
+   −12 → −14. A global trim cannot satisfy both target 1 (needs −9 dB) and target 3 (3 dB slack); lifting the
+   lower combs broke target 4 (beating). The SineBank target 1 therefore expects −35 ± 4 (the proxy's weak
+   second partial), the real regions keep the plan's −28 ± 4.
+14. **`realRegions` test source**: `src/test/resources/wp11/real/` if WP11 commits it, else `$HK_REAL_REGIONS`;
+   without either it is an assumption skip (not `@Ignore`). Target 4 on real regions runs over the 4 s the
+   export holds (a truncated recording's comb tail beats after the cut), not 10 s.
+
 ## Remaining
 
-- `CombCalibrationTest.realRegions`: waits for WP11's `core/src/test/resources/wp11/real/`
-  (C3/C4/C5 v10/v13, una corda C4); then re-run targets 1–4 on them and retune the trims if needed.
+- None in WP3's JVM scope. WP11 should commit the `export_test_regions.py` output to `wp11/real/` so the
+  real-region pass runs in every clone (requested).
 - Device checks at M1/M2/M5 (T-CPU via EngineBench, L-2, L-7) belong to the integrator.

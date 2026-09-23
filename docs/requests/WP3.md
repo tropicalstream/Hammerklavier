@@ -14,3 +14,7 @@
    pair (single-strung keys) or accept one shelf class. WP3 currently applies the ≥ 2-string shelf.
 6. **WP11:** `core/src/test/resources/wp11/real/` regions for T3.1 (§6.5 step 13): WP3 expects
    16-bit mono, 48 kHz; please document the file names and format there.
+
+7. **WP11 (update 2026-09-22):** please commit `export_test_regions.py`'s output to `core/src/test/resources/wp11/real/`
+   (7 WAV + `regions.json`, ≈ 2.7 MB). T3.1 `realRegions` reads it, or `$HK_REAL_REGIONS`, and passes on today's
+   export (targets 1–4, v10 and v13).

@@ -283,7 +283,7 @@ class ResonanceBank(sampleRate: Int = HK.SR) : ResonanceProcessor {
             if (dIdx < 0) dIdx = 0 else if (dIdx > 32) dIdx = 32
             gTarget[c] = gt[c * D_STEPS + dIdx]
             val gk = gate[key]
-            val a = send * (if (gk > 0f) gk else 0f)
+            val a = send * DspTables.COMB_TILT[c] * (if (gk > 0f) gk else 0f)
             cMix[c] = a
             cSelf[c] = if (selfRows[c]) -a + (if (softFeed[key] && t.multiString[c]) ucs else 0f) else 0f
             if (!isActive[c]) { isActive[c] = true; cg[c] = gTarget[c] }

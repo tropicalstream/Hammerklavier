@@ -31,7 +31,24 @@ object DspTables {
      * Rich, instrument vs instrument). Una corda has its own trim (calibrated alone).
      */
     const val COMB_INPUT_TRIM_DB = -37f
-    const val UNA_CORDA_TRIM_DB = -12f
+    const val UNA_CORDA_TRIM_DB = -14f
+
+    /**
+     * Register tilt of the comb input (T3.1 on the real `wp11/real` regions): a real piano C4 has its
+     * second partial 8–9 dB above the fundamental (the SineBank recipe: 6 dB below), so an upper comb
+     * fed through that partial rings ≈ 10 dB louder than the harmonic proxy predicts, while a lower
+     * comb fed through the struck key's fundamental does not (and lifting the lower combs makes a
+     * held C3 beat against them, target 4). The trim of the comb of key k is 0 dB up to key 60 and
+     * `COMB_TILT_DB_PER_KEY·(k − 60)` above, floored at −[COMB_TILT_MAX_DB].
+     */
+    const val COMB_TILT_DB_PER_KEY = -0.6f
+    const val COMB_TILT_MAX_DB = 12f
+
+    /** Linear register tilt for comb index c (key 21 + c). */
+    val COMB_TILT: FloatArray = FloatArray(88) { c ->
+        val db = (COMB_TILT_DB_PER_KEY * maxOf(0, 21 + c - 60)).coerceAtLeast(-COMB_TILT_MAX_DB)
+        10.0.pow(db / 20.0).toFloat()
+    }
 
     /** SEND in dB for (instrument, mode), before the input trim; OFF = no send. */
     fun sendDb(instrument: InstrumentId, mode: ResonanceMode): Float = when (mode) {
