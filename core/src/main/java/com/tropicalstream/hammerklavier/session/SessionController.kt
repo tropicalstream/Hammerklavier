@@ -127,6 +127,9 @@ class SessionController(
     private var lastResumeSaveMs = Long.MIN_VALUE
     private var syncReturn: ResumePoint? = null
     private var syncOn = false
+    /** What the user asked for (send autoPlay, toggle, end); the clock lags SET_PERF by a block. */
+    private var intendedPlaying = false
+    private var roomAfterSend = false
     private var q0Cap = HK_DEFAULT_CAP
     @Volatile private var loaderBytes: Pair<String, ByteArray>? = null   // HKLoader only: bytes of the last movement read
 
@@ -184,14 +187,14 @@ class SessionController(
         audio.setQuality(quality)
         render.setQuality(quality)
         onBrightnessCap?.invoke(quality.brightnessCap)
-        kits.setPlaybackHint(isPlaying(), instrument, quality, batteryTenths)
+        kits.setPlaybackHint(intendedPlaying, instrument, quality, batteryTenths)
     }
 
     /** Every 1 s (§2.6 step 8): stats (which also report the end of a movement), now-playing, resume every 5 s. */
     fun tick() {
         audio.stats(stats)
         val now = nowMs()
-        if (isPlaying() && (lastResumeSaveMs == Long.MIN_VALUE || now - lastResumeSaveMs >= RESUME_EVERY_MS)) saveResume()
+        if (intendedPlaying && (lastResumeSaveMs == Long.MIN_VALUE || now - lastResumeSaveMs >= RESUME_EVERY_MS)) saveResume()
         refreshNowPlaying()
     }
 
@@ -256,12 +259,17 @@ class SessionController(
 
     override fun toggle() {
         if (current == null) { enter(); return }
-        if (isPlaying()) {
+        if (intendedPlaying) {
+            intendedPlaying = false
             audio.pause()
             saveResume()
             kits.setPlaybackHint(false, instrument, quality, batteryTenths)
             onUiEvent?.invoke(UiEvent.PAUSED)
         } else {
+            val p = current!!
+            audio.clock.sample(nanoTime(), sample)
+            if (sample.generation == p.generation && sample.songUs >= p.durationUs) audio.seek(0L)   // ended: start over
+            intendedPlaying = true
             audio.play()
             kits.setPlaybackHint(true, instrument, quality, batteryTenths)
             onUiEvent?.invoke(UiEvent.RESUMED)
@@ -289,7 +297,10 @@ class SessionController(
     override fun onEnded(generation: Int) {
         val p = current ?: return
         if (generation != p.generation || syncOn) return
-        if (playlist.peekNext() != null) next() else { saveResume(); onUiEvent?.invoke(UiEvent.PAUSED) }
+        if (playlist.peekNext() != null) { next(); return }
+        intendedPlaying = false
+        saveResume(songUs = 0L)                          // the next Enter starts the finished movement over
+        onUiEvent?.invoke(UiEvent.PAUSED)
     }
 
     override fun onOverload(newCap: Int) {}
@@ -364,6 +375,7 @@ class SessionController(
             is CompileResult.Ok -> deliver(r, result.perf)
             is CompileResult.Failed -> {
                 wanted = null
+                if (roomAfterSend) { roomAfterSend = false; updateRoom() }
                 postStatus(StatusCode.IMPORT_FAILED, listOf(FactsAssembler.titleOf(model, r.movementId), result.reason.name, result.detail))
             }
         }
@@ -380,6 +392,8 @@ class SessionController(
         render.setPerformance(p, profileOf(r.instrument))
         current = p
         sentGeneration = p.generation
+        intendedPlaying = r.autoPlay
+        if (roomAfterSend) { roomAfterSend = false; updateRoom() }
         if (r.kind == Kind.SYNC) { render.setTitle(null); refreshNowPlaying(); return }
         movementId = r.movementId
         render.setTitle(FactsAssembler.titleOf(model, r.movementId))
@@ -434,23 +448,33 @@ class SessionController(
 
     private fun switchInstrument(id: InstrumentId) {
         if (id == instrument) return
-        val wasPlaying = isPlaying()
+        val wasPlaying = intendedPlaying
         val mid = movementId
+        if (syncOn) {                                    // the sync test keeps running with the new profile
+            changeInstrument(id, pauseFirst = true)
+            requestSync(wasPlaying || wanted?.kind == Kind.SYNC)
+            return
+        }
         mid?.let { prefs.setWorkInstrument(movementOf(it).workId, id) }
-        changeInstrument(id, pauseFirst = true)
+        val w0 = wanted
+        changeInstrument(id, pauseFirst = true, perfFollows = (w0 != null && w0.kind != Kind.SYNC) || (mid != null && current != null))
         val w = wanted
         if (w != null && w.kind != Kind.SYNC) request(w.movementId, id, w.startUs, w.autoPlay, w.kind)
         else if (mid != null && current != null && !syncOn) request(mid, id, -1L, wasPlaying, Kind.SWITCH)
     }
 
     /** pause(30) → renderer → kit (its bank comes back through [kitCallback]). */
-    private fun changeInstrument(id: InstrumentId, pauseFirst: Boolean) {
+    private fun changeInstrument(id: InstrumentId, pauseFirst: Boolean, perfFollows: Boolean = true) {
+        roomAfterSend = perfFollows
         if (pauseFirst) audio.pause(SWITCH_FADE_MS)
         instrument = id
         settings.putString(SessionKeys.INSTRUMENT, id.key)
         precompiled = null
         render.setInstrument(id, look(), lastDamper(id))
         openKit(id)
+        // A cached kit may come back through onComplete alone (§2.6 step 5: "instant"); do not wait for it.
+        val cached = banks[id]
+        if (cached != null && bankInstrument != id && instrument == id) bankReady(id, cached)
     }
 
     private fun openKit(id: InstrumentId) = kits.open(id, KitCb(id))
@@ -462,12 +486,13 @@ class SessionController(
             banks[id] = bank
             if (bankInstrument == id) rebuildKeyMap(id, bank)
         }
-        override fun onComplete(bank: LoadedBank) {
-            if (banks[id] == null) bankReady(id, bank)
+        override fun onComplete(bank: LoadedBank) = readyIfWaiting(bank)
+        private fun readyIfWaiting(bank: LoadedBank) {
+            if (banks[id] == null || (id == instrument && bankInstrument != id)) bankReady(id, bank) else banks[id] = bank
         }
         override fun onFallback(bank: LoadedBank, reason: FallbackReason) {
             postStatus(StatusCode.FALLBACK, listOf(reason.name))
-            if (banks[id] == null) bankReady(id, bank)
+            readyIfWaiting(bank)
         }
     }
 
@@ -479,11 +504,17 @@ class SessionController(
             val km = kits.keyMap(bank, tuning)
             post(Runnable {
                 if (id != instrument) return@Runnable
+                if (bankInstrument == id) {                  // already sent by an earlier callback: idempotent
+                    pendingSend?.let { (r, p) -> if (r.instrument == id && wanted === r) send(r, p) }
+                    return@Runnable
+                }
                 audio.setBank(bank, km, profileOf(id).withLastDamper(bank.info.lastDamper))
                 bankInstrument = id
                 if (!kitPlayableSent) { kitPlayableSent = true; onUiEvent?.invoke(UiEvent.KIT_PLAYABLE) }
-                updateRoom()
-                pendingSend?.let { (r, p) -> if (r.instrument == id && wanted === r) send(r, p) }
+                // §2.6 step 5: the room design follows setPerformance; a compile still in flight sends it from send().
+                val ps = pendingSend
+                if (ps != null && ps.first.instrument == id && wanted === ps.first) { send(ps.first, ps.second); updateRoom() }
+                else if (!roomAfterSend) updateRoom()
             })
         }
     }
@@ -568,13 +599,7 @@ class SessionController(
             syncOn = true
             audio.pause()
             render.setSyncFlash(true)
-            val r = Request(++generation, SYNC_ID, instrument, 0L, true, Kind.SYNC)
-            wanted = r; pendingSend = null
-            val profile = profileOf(instrument)
-            loader.execute {
-                val p = compiler.synthetic(SyntheticScore.SYNC_CLICK, profile, r.gen)
-                post(Runnable { if (wanted === r) deliver(r, p) })
-            }
+            requestSync(true)
         } else {
             syncOn = false
             render.setSyncFlash(false)
@@ -582,7 +607,17 @@ class SessionController(
             val back = syncReturn
             syncReturn = null
             if (back != null) request(back.movementId, instrument, back.songUs, false, Kind.RESTORE)
-            else { wanted = null; audio.setPerformance(null, 0L, false); current = null }
+            else { wanted = null; intendedPlaying = false; audio.setPerformance(null, 0L, false); current = null }
+        }
+    }
+
+    private fun requestSync(autoPlay: Boolean) {
+        val r = Request(++generation, SYNC_ID, instrument, if (current?.id == SYNC_ID) -1L else 0L, autoPlay, Kind.SYNC)
+        wanted = r; pendingSend = null
+        val profile = profileOf(instrument)
+        loader.execute {
+            val p = compiler.synthetic(SyntheticScore.SYNC_CLICK, profile, r.gen)
+            post(Runnable { if (wanted === r) deliver(r, p) })
         }
     }
 

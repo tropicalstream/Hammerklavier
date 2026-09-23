@@ -13,6 +13,8 @@ import com.tropicalstream.hammerklavier.contract.InstrumentId
 import com.tropicalstream.hammerklavier.contract.InstrumentLook
 import com.tropicalstream.hammerklavier.contract.InstrumentProfile
 import com.tropicalstream.hammerklavier.contract.KeyMap
+import com.tropicalstream.hammerklavier.contract.KitCallback
+import com.tropicalstream.hammerklavier.contract.KitService
 import com.tropicalstream.hammerklavier.contract.LibraryModel
 import com.tropicalstream.hammerklavier.contract.LibraryService
 import com.tropicalstream.hammerklavier.contract.ListenerPose
@@ -174,19 +176,21 @@ object TestLibrary {
 }
 
 /** A SessionController on the stubs with a manual clock (ms and ns) and direct or queued loader. */
-class SessionRig(val settings: MemSettings = MemSettings(), val queued: Boolean = false) {
+class SessionRig(val settings: MemSettings = MemSettings(), val queued: Boolean = false,
+                 kitsOverride: ((StubKits) -> KitService)? = null) {
     var tNanos = 1_000_000_000L
     val log = CallLog()
     val fake = FakeClock { tNanos }
     val audio = RecordingAudio(log, fake)
     val render = RecordingRender(log)
     val kits = StubKits()
+    val kitService: KitService = kitsOverride?.invoke(kits) ?: kits
     val designer = RecordingDesigner(log)
     val compiler = RecordingCompiler(log)
     val library = FakeLibrary(TestLibrary.model())
     val loaderQ = QueueExecutor()
     val events = ArrayList<UiEvent>()
-    val c = SessionController(audio, render, kits, library, compiler, designer, StubScenes(), settings,
+    val c = SessionController(audio, render, kitService, library, compiler, designer, StubScenes(), settings,
         if (queued) loaderQ else Executor { it.run() }, { it.run() }, { tNanos / 1_000_000L }).also {
         it.nanoTime = { tNanos }
         it.onUiEvent = { e -> events.add(e) }
@@ -195,4 +199,12 @@ class SessionRig(val settings: MemSettings = MemSettings(), val queued: Boolean 
     fun advanceMs(ms: Long) { tNanos += ms * 1_000_000L }
     fun start(): SessionRig { c.start(); loaderQ.runAll(); return this }
     fun drain() = loaderQ.runAll()
+}
+
+/** A KitService that reports every second and later open() of a kit with onComplete alone (a cached kit, §2.6 step 5). */
+class CachedCompleteOnlyKits(private val inner: StubKits) : KitService by inner {
+    private val opened = HashSet<InstrumentId>()
+    override fun open(id: InstrumentId, cb: KitCallback) {
+        if (opened.add(id)) inner.open(id, cb) else cb.onComplete(inner.bank(id))
+    }
 }

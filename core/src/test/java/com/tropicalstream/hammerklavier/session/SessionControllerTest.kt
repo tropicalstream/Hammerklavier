@@ -100,7 +100,8 @@ class SessionControllerTest {
         assertTrue(r.log.calls.toString(), bank < perf)
         assertTrue(r.log.calls[perf], r.log.calls[perf].contains("start=-1 auto=true"))
         assertTrue(r.log.indexOf("render.setInstrument UPRIGHT") >= 0)
-        assertTrue(r.log.indexOf("audio.setRoom", bank) > bank)
+        assertTrue(r.log.calls.toString(), r.log.indexOf("audio.setRoom", perf) > perf)
+        assertEquals(-1, r.log.indexOf("audio.setRoom", bank).let { if (it in bank until perf) it else -1 })
         assertEquals(InstrumentId.UPRIGHT, r.c.instrument)
         assertEquals(InstrumentId.UPRIGHT, r.c.current!!.instrument)
     }
@@ -118,6 +119,46 @@ class SessionControllerTest {
         val perf = r.log.indexOf("audio.setPerformance")
         assertTrue(r.log.calls.toString(), bank in 0 until perf)
         assertTrue(r.log.calls[perf].contains("start=-1 auto=false"))
+    }
+
+    @Test fun t12_2_switchBackToACachedKitReportedOnlyByOnCompleteDoesNotHang() {
+        val r = SessionRig(kitsOverride = { CachedCompleteOnlyKits(it) }).start()
+        r.c.onAction(UiAction.Play("w1.a", "bach"))
+        r.c.onAction(UiAction.SetInstrument(InstrumentId.HARPSICHORD))
+        r.log.clear()
+        r.c.onAction(UiAction.SetInstrument(InstrumentId.GRAND))
+        val bank = r.log.indexOf("audio.setBank GRAND")
+        val perf = r.log.indexOf("audio.setPerformance")
+        assertTrue(r.log.calls.toString(), bank in 0 until perf)
+        assertTrue(r.log.calls[perf].contains("start=-1 auto=true"))
+        assertEquals(InstrumentId.GRAND, r.c.current!!.instrument)
+    }
+
+    @Test fun t12_2_switchRightAfterPlayKeepsPlayingBeforeTheClockCatchesUp() {
+        val r = SessionRig(queued = true).start()
+        r.c.onAction(UiAction.Play("w1.a", "bach")); r.drain()
+        r.audio.inner.pause(0)                               // the clock still shows "not playing"
+        r.c.onAction(UiAction.SetInstrument(InstrumentId.UPRIGHT)); r.drain()
+        assertTrue(r.audio.perfs.last().third)
+    }
+
+    @Test fun endOfLastItemResumesFromTheStartAndPlayRestarts() {
+        val r = SessionRig().start()
+        r.c.onAction(UiAction.Play("w3.b", "bach"))
+        r.advanceMs(3_000)
+        r.c.onEnded(r.c.current!!.generation)
+        assertEquals(0L, r.c.resume!!.songUs)
+    }
+
+    @Test fun switchDuringSyncTestResendsTheSyncClick() {
+        val r = SessionRig().start()
+        r.c.onAction(UiAction.Play("w1.a", "bach"))
+        r.c.onAction(UiAction.SyncTest(true))
+        r.log.clear()
+        r.c.onAction(UiAction.SetInstrument(InstrumentId.HARPSICHORD))
+        assertEquals("synth:sync", r.c.current!!.id)
+        assertEquals(InstrumentId.HARPSICHORD, r.c.current!!.instrument)
+        assertTrue(r.audio.perfs.last().third)
     }
 
     @Test fun instrumentChoiceIsRememberedPerWork() {

@@ -47,8 +47,15 @@ class LevelCalibrationTest {
                 id = "calibration:triad", title = "calibration")
         }
 
+        /**
+         * [preLimiterPeak] reads the linear peak before the limiter since the last call (WP3's MasterProcessor tap,
+         * docs/requests/WP12.md item 5). Without it the probe measures the post-limiter output, which T12.8 must
+         * never use: that needs [allowPostLimiter] = true and is only for exercising the harness.
+         */
         fun peakDbfs(core: EngineCoreApi, bank: LoadedBank, keyMap: KeyMap, profile: InstrumentProfile, room: RoomDesign,
-                     masterDb: Float, seconds: Float = 4f): Float {
+                     masterDb: Float, seconds: Float = 4f, preLimiterPeak: ((EngineCoreApi) -> Float)? = null,
+                     allowPostLimiter: Boolean = false): Float {
+            require(preLimiterPeak != null || allowPostLimiter) { "T12.8 needs the pre-limiter tap; the core has none" }
             val prepared = core.prepareBank(bank, keyMap, profile)
             core.on(Cmd.SET_BANK, 0L, 0f, prepared)
             core.on(Cmd.SET_KEYMAP, 0L, 0f, core.prepareKeyMap(keyMap, bank.info, profile))
@@ -60,7 +67,8 @@ class LevelCalibrationTest {
             val blocks = (seconds * HK.SR / HK.BLOCK).toInt()
             for (b in 0 until blocks) {
                 core.render(out, b.toLong() * HK.BLOCK)
-                for (x in out) { val a = abs(x); if (a > peak) peak = a }
+                if (preLimiterPeak != null) { val a = preLimiterPeak(core); if (a > peak) peak = a }
+                else for (x in out) { val a = abs(x); if (a > peak) peak = a }
             }
             return if (peak <= 0f) -200f else (20.0 * log10(peak.toDouble())).toFloat()
         }
@@ -72,8 +80,15 @@ class LevelCalibrationTest {
         assertEquals(HK.PRE_ROLL_US, p.onUs[0])
         val bank = SineBank(layers = 2)
         val km = KeyMapFixtures.forSineBank(layers = 2, mode = KeyMapFixtures.Mode.HARD, stops = 1, readyMask = bank.readyMask)
-        val db = LevelProbe.peakDbfs(SineCore(), bank, km, InstrumentProfile.GRAND, FixedRoom.PLAYER, 0f)
+        val db = LevelProbe.peakDbfs(SineCore(), bank, km, InstrumentProfile.GRAND, FixedRoom.PLAYER, 0f, allowPostLimiter = true)
         assertTrue("SineCore produced sound: $db dBFS", db > -60f && db < 12f)
+    }
+
+    @Test fun probeRefusesToMeasureWithoutAPreLimiterTap() {
+        val bank = SineBank(layers = 2)
+        val km = KeyMapFixtures.forSineBank(layers = 2, mode = KeyMapFixtures.Mode.HARD, stops = 1, readyMask = bank.readyMask)
+        val e = runCatching { LevelProbe.peakDbfs(SineCore(), bank, km, InstrumentProfile.GRAND, FixedRoom.PLAYER, 0f) }.exceptionOrNull()
+        assertTrue(e is IllegalArgumentException)
     }
 
     @Ignore("needs WP2 EngineCore + WP3 DspFactory/RoomAcoustics + wp11 exported test regions (M5)")
