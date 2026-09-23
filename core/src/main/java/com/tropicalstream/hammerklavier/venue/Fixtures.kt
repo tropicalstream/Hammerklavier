@@ -87,7 +87,7 @@ object Fixtures {
             }
         }
         val m = b.build("venue.fittings.gilt", MaterialId.GILT, SkinKind.STATIC, Masks.SALON or Masks.STAGE, Masks.ALL_VIEWS,
-            clipped = false, program = ProgramId.RIBBON, drawSlot = 5,
+            clipped = false, program = ProgramId.RIBBON, drawSlot = 2,   // M5: merges with venue.gilt (same RIBBON GILT key); Hall Salon was 29 draws
             fadeNearM = Konzertzimmer.STAGE_FADE_NEAR, fadeFarM = Konzertzimmer.STAGE_FADE_FAR)
         for (x in m) LightBake.bake(x, useNormal = false, gain = 1.2f, floor = 0.35f)
         return m

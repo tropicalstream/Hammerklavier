@@ -104,6 +104,7 @@ class AppController(private val ctx: Context, private val w: Wiring) {
         w.audio.start()
         playback.start()
         governor.start(); control.start(); perf.start()
+        updateRoom()
         w.main.removeCallbacks(hintTick); w.main.post(hintTick)
         if (media == null) media = runCatching { MediaButtons(ctx) { a -> applyAll(listOf(a)) } }.getOrNull()
         Log.i(HK.TAG_UI, "engine started")
@@ -211,13 +212,35 @@ class AppController(private val ctx: Context, private val w: Wiring) {
                 if (clockSample.playing) w.audio.pause() else { w.audio.play(); w.main.postDelayed({ playback.logClock("resume") }, 1000) }
                 media?.setPlaying(!clockSample.playing, positionMs())
             }
-            is UiAction.SetView -> { view = a.view; framing = a.framing; gl?.setView(view, framing) }
+            is UiAction.SetView -> { view = a.view; framing = a.framing; gl?.setView(view, framing); updateRoom() }
             is UiAction.Seek -> w.audio.seek(a.us)
             UiAction.Recenter -> gl?.recenter()
             UiAction.Enter -> Log.i(HK.TAG_UI, "entered the stage (Start here is WP12's; M4 plays what CONTROL sends)")
             UiAction.Leave -> { w.audio.pause(300); onLeave?.invoke() }
             else -> Log.i(HK.TAG_UI, "action $a deferred (SessionController, WP12)")
         }
+    }
+
+    // ── Room (M5): sound follows the view (§2.6 step 4, §5.6); WP12's SessionController takes this over at M6 ──
+    private var anchors: com.tropicalstream.hammerklavier.contract.InstrumentAnchors? = null
+    private var roomSig = ""
+    private fun updateRoom(force: Boolean = false) {
+        val id = InstrumentId.GRAND
+        val sig = "$id/$view/$framing"
+        if (sig == roomSig && !force) return
+        roomSig = sig
+        val t0 = System.nanoTime()
+        val g = runCatching { w.scenes.venue().geometry }.getOrDefault(com.tropicalstream.hammerklavier.contract.KonzertzimmerAcoustics.GEOMETRY)
+        val placement = g.placements[id] ?: com.tropicalstream.hammerklavier.contract.KonzertzimmerAcoustics.PLACEMENTS.getValue(id)
+        val a = anchors ?: runCatching { w.scenes.instrument(id, InstrumentLook(UprightFinish.WALNUT, edgeOverlay = false), InstrumentProfile.GRAND.lastDamper).anchors }.getOrNull()?.also { anchors = it }
+        val r = com.tropicalstream.hammerklavier.session.ListenerRooms.resolve(id, a, placement, view, framing)
+        val source = a?.soundSource ?: com.tropicalstream.hammerklavier.session.ListenerRooms.SOURCE.getValue(id)
+        val embedded = runCatching { w.kits.info(id)?.embeddedRoomDb }.getOrNull() ?: 0f
+        val d = w.designer.design(g, placement, source, r.pose, ReverbMode.ROOM, com.tropicalstream.hammerklavier.session.ListenerRooms.benchDistance(id, a), embedded)
+        w.audio.setRoom(d, 500)
+        val e = r.pose.earRoom
+        Log.i(HK.TAG_UI, "setRoom view=$view/$framing ear=${"%.2f,%.2f,%.2f".format(e[0], e[1], e[2])} worldLocked=${r.pose.worldLocked} " +
+            "width=${r.pose.directWidth} direct=${"%.3f".format(d.directGain)} erGain=${"%.3f".format(d.erGain)} reverbGain=${"%.3f".format(d.reverbGain)} preDelay=${d.preDelayFrames} t60Mid=${"%.2f".format(d.t60Mid)} az=${"%.2f".format(d.sourceAzimuthRad)} ms=${"%.2f".format((System.nanoTime() - t0) / 1e6)}")
     }
 
     // ── Quality (§5.11) ──
@@ -321,7 +344,16 @@ class AppController(private val ctx: Context, private val w: Wiring) {
         override fun brightness() = if (brightnessOverride > -2f) brightnessOverride else quality.brightnessCap
         override fun movement() = "none"
         override fun positionMs() = this@AppController.positionMs()
-        override fun play(id: String) { Log.i(HK.TAG_SOAK, "play $id deferred (SessionController, WP12)") }
+        override fun play(id: String) {
+            // M5: catalogue ids of the soak plans mapped onto the bundled files until WP12/WP9 play by id (M6)
+            val m = Regex("beethoven\\.op106\\.([1-4])").matchEntire(id)
+            val name = when {
+                m != null -> "asset:midi/krueger/beethoven/beethoven_hammerklavier_${m.groupValues[1]}.mid"
+                id == "beethoven.op27-2.1" -> "asset:midi/krueger/beethoven/mond_1.mid"
+                else -> id
+            }
+            Log.i(HK.TAG_SOAK, "play $id -> $name"); playback.play(name); enterStage()
+        }
         override fun setView(v: ViewId, framing: Int) = applyAll(listOf(UiAction.SetView(v, framing)))
         override fun forceQuality(q: Int) = governor.forcedLevel(q)
         override fun setBrightness(b: Float) { brightnessOverride = b; if (resumed) applyBrightness() }

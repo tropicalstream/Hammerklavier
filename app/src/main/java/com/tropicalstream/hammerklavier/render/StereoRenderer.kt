@@ -491,6 +491,7 @@ class StereoRenderer(private val loader: ExecutorService?,
         val probeBytes = ByteArray(TextureUploader.PROBE_W * TextureUploader.PROBE_H * 4)
         val centre = FloatArray(3); placement.toRoom(floatArrayOf(0f, 0.8f, -0.8f), centre)
         venue.bakeProbe(centre, probeBytes)
+        (venue.flames() as? com.tropicalstream.hammerklavier.venue.FlameFieldImpl)?.setInstrumentOrigin(placement.originRoom[0], placement.originRoom[2])   // WP8 light 3
         val assembled = SceneAssembler.assemble(inst.meshes(), venue.meshes(palette))
         BuiltScene(request, id, InstrumentProfile.of(id).withLastDamper(lastDamper), inst, venue.flames(), placement, assembled, tex,
             ResidentTexture(TextureUploader.PROBE, TextureUploader.PROBE_W, TextureUploader.PROBE_H, probeBytes), palette)

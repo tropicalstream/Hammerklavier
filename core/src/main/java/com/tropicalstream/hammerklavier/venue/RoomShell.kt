@@ -158,7 +158,33 @@ object RoomShell {
             clipped = false, program = ProgramId.LIT, drawSlot = 1, texture = Atlas.PARQUET,
             fadeNearM = Konzertzimmer.STAGE_FADE_NEAR, fadeFarM = Konzertzimmer.STAGE_FADE_FAR)
         for (x in m) LightBake.bake(x, useNormal = true, gain = 0.83f, cut = 0.75f)   // pools: full near the candelabra and under the chandelier, black by E ≈ 0.9
+        for (x in m) poolFalloff(x)
         return m
+    }
+
+    /** §5.5 floor row (M5 integration): (150,100,55) only at a pool centre, falling to 0 by r = 2.6 m, instead of a
+     *  saturated plateau (T-APL: the flat plateau alone put the Player view at 30%). Pools: the two candelabra, the
+     *  chandelier (room centre) and the stage centre. */
+    private val POOLS = floatArrayOf(Konzertzimmer.CANDELABRA_XZ[0], Konzertzimmer.CANDELABRA_XZ[1],
+        Konzertzimmer.CANDELABRA_XZ[2], Konzertzimmer.CANDELABRA_XZ[3], 0f, 0f, Konzertzimmer.STAGE_CENTRE[0], Konzertzimmer.STAGE_CENTRE[2])
+    const val POOL_R = 2.6f
+    private fun poolFalloff(m: BakedMesh) {
+        val f = m.layout.floats; val v = m.vertices
+        var o = 0
+        while (o < v.size) {
+            var k = 0f
+            var i = 0
+            while (i < POOLS.size) {
+                val dx = v[o] - POOLS[i]; val dz = v[o + 2] - POOLS[i + 1]
+                val t = (kotlin.math.sqrt(dx * dx + dz * dz) / POOL_R).coerceIn(0f, 1f)
+                val q = 1f - t * t * (3f - 2f * t)
+                if (q > k) k = q
+                i += 2
+            }
+            k *= k
+            v[o + 8] *= k; v[o + 9] *= k; v[o + 10] *= k
+            o += f
+        }
     }
 
     /** The Instrument level's contact pool under the stage centre (r 1.4 m). */

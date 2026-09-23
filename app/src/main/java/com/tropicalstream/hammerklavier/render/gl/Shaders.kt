@@ -363,8 +363,9 @@ varying vec2 vCorner;
 varying vec4 vCol;
 void main() {
     vCorner = aCorner;
-    vCol = aCol;
     gl_Position = uVP * vec4(aPos, 1.0);
+    // M5: a flame (or its halo) within arm's length of the eye would fill the view; fade it out by depth (w = eye depth)
+    vCol = vec4(aCol.rgb, aCol.a * smoothstep(0.5, 1.2, gl_Position.w));
 }
 """
 

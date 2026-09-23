@@ -30,7 +30,6 @@ import com.tropicalstream.hammerklavier.contract.InstrumentId
 import com.tropicalstream.hammerklavier.contract.InstrumentLook
 import com.tropicalstream.hammerklavier.contract.InstrumentScene
 import com.tropicalstream.hammerklavier.contract.VenueScene
-import com.tropicalstream.hammerklavier.contract.stub.StubVenue
 import com.tropicalstream.hammerklavier.render.HkGlView
 import java.io.File
 import java.util.concurrent.ExecutorService
@@ -42,7 +41,7 @@ import java.util.concurrent.ExecutorService
  * the overlay and the GL-thread mechanics are made per activity.
  *
  * Current state (M3): WP1, WP2, WP3, WP4 (real grand), WP5 mechanics, WP6 GL host, WP7 instruments, WP9 library are real;
- * WP10 UI/overlay real (M4); venue still a contract stub.
+ * WP10 UI/overlay real (M4); WP8 venue real (M5); WP12 ListenerRooms drives setRoom (M5).
  */
 class Wiring(val app: Application, val loader: ExecutorService, val voicer: ExecutorService, val main: Handler) {
     val post: (Runnable) -> Unit = { r -> main.post(r) }
@@ -60,10 +59,11 @@ class Wiring(val app: Application, val loader: ExecutorService, val voicer: Exec
     val audio: AudioControl = AudioOutput(app, engine, cursors, head, settings)   // WP4
     val library: LibraryService = LibraryServiceImpl(app, compiler)      // WP9 (bundled-only at M2)
     val designer: RoomDesigner = RoomAcoustics                            // WP3
-    val scenes: SceneFactory = object : SceneFactory {                  // WP7 instruments; WP8 venue still stub
+    val scenes: SceneFactory = object : SceneFactory {                  // WP7 instruments, WP8 venue
         override fun instrument(id: InstrumentId, look: InstrumentLook, lastDamper: Int): InstrumentScene =
             com.tropicalstream.hammerklavier.instrument.Instruments.create(id, look, lastDamper)
-        override fun venue(): VenueScene = StubVenue()                  // WP8: venue.VenueSceneImpl()
+        private val venue by lazy { com.tropicalstream.hammerklavier.venue.VenueSceneImpl() }
+        override fun venue(): VenueScene = venue                        // WP8 (M5)
     }
     val ui: UiStateMachine = com.tropicalstream.hammerklavier.ui.model.UiStateMachineImpl()   // WP10
 

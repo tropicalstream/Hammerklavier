@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # PLAN §8.5 (integrator only): tools/device/soak.sh start <plan> | pull
-#   start: checks the battery is < 33 °C, starts the in-app recorder and plan (therm45|bright|rest10|sleep20);
+#   start: checks the battery is < 33 °C, starts the in-app recorder and plan (therm45|therm30|bright|rest10|sleep20);
 #          then unplug the cable. pull: after reconnecting, fetches soak.csv and the uptime into build/.
 set -euo pipefail
 ROOT=$(git rev-parse --show-toplevel); . "$ROOT/tools/env.sh"
@@ -15,5 +15,5 @@ case "$cmd" in
   pull) mkdir -p "$ROOT/build"; out="$ROOT/build/soak-$(date +%Y%m%d-%H%M).csv"
     exec "$ROOT/tools/device/lock.sh" -- bash -c "
     adb -s $S pull /sdcard/Android/data/$PKG/files/soak.csv '$out' && adb -s $S shell cat /proc/uptime && echo '[soak] $out'";;
-  *) echo "usage: tools/device/soak.sh start <therm45|bright|rest10|sleep20> | pull" >&2; exit 2;;
+  *) echo "usage: tools/device/soak.sh start <therm45|therm30|bright|rest10|sleep20> | pull" >&2; exit 2;;
 esac
