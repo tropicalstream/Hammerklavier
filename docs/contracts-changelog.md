@@ -272,3 +272,17 @@ Recorded by the integrator while merging WP1, WP2, WP3, WP4 and WP11 for M1 (doc
 - PLAN §5.6 Hall wide (grand, harpsichord) target (0, 1.95, −1.9) → (0, 1.65, −1.9); chandelier stays overhead.
 - `RoomShell` wall glow: per-wall max-blended grid replaces overlapping discs (z-fighting); same colours and radius.
 - `SpriteBatch.build(n, right, up, eye?)`: minimum angular sprite size 0.010 rad; `Fixtures.CANDLE_RGB` darkened.
+
+## M6 (2026-09-23, integrator)
+- Shelf id: `LibraryIndex.SHELF_START` "start" → "start-here" (= `MenuTree.SHELF_START`, `SessionController.SHELF_START_HERE`).
+- Non-signature additions: `SessionController.onUploadResults(results, facts)` (a status per uploaded file);
+  `CompanionServer.onResults` hook; SessionController rescan IMPORTED args follow UiText (name, notes, seconds).
+- `ImportRules.titleOf` ignores sequencer boilerplate track names ("control track", "Piano 1", "Track 3", …) and falls back
+  to the file name (T-IMPORT showed "control track" for every Mutopia file).
+- App: `AppController` drives WP12's SessionController (RenderControl forwarder, 1 Hz tick, facts from `session.facts()`);
+  `Playback` keeps only tools (bench/align/wavdump/stats). New CONTROL keys: `instrument` (String), `enter`, `rescan`,
+  `menu`, `library`, `card floor|sync`, `companion` (logs url + token); `view` accepts an Int or a name.
+- Leaving with the display on pauses at `onPause` (onStop arrives 1.0–1.7 s after HOME / another app; T-LEAVE ≤ 0.5 s).
+- APL cap gains −5 % (Player 0.35, cutaway 0.28, overhead 0.245, Hall 0.70): the live HUD (credit, pills) adds luma.
+- HUD: title/movement ellipsize at 400 px (ran under the tuning line); pills one row above the credit; menu rows ellipsize.
+- `tools/device/push_scores.sh`: `HK_LOCK_HELD=1` skips lock.sh; chmods the pushed entries, not the app-owned Scores dir.

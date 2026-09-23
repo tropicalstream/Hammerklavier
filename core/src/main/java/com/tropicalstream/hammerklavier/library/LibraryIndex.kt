@@ -39,7 +39,7 @@ object LibraryIndex {
     const val SCHEMA = 2
     const val SOURCE_UPLOAD = "upload"
     const val USER_SOURCE_ID = "user"
-    const val SHELF_START = "start"
+    const val SHELF_START = "start-here"   // M6: one id with WP10 MenuTree and WP12 SessionController
     const val SHELF_IMPORTED = "imported"
 
     val USER_SOURCE = Source(id = USER_SOURCE_ID, credit = "", licence = "", licenceUrl = "", sourceUrl = "",

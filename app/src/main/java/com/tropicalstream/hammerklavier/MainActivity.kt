@@ -97,7 +97,8 @@ class MainActivity : Activity() {
     }
 
     override fun onPause() {
-        controller.onPause()
+        // T-LEAVE: HOME / another app reach onStop only ~1-1.7 s later; pause at onPause when the display is on
+        controller.onPause(displayInteractive = (getSystemService(POWER_SERVICE) as PowerManager).isInteractive)
         super.onPause()
     }
 

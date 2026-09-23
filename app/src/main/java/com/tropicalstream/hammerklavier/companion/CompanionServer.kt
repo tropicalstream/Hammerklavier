@@ -45,6 +45,9 @@ class CompanionServer(
     private val nowMs: () -> Long = System::currentTimeMillis,
 ) : NanoHTTPD(port) {
 
+    /** M6: every upload's results, posted to main (the glasses show a status per file). */
+    @Volatile var onResults: ((List<ImportResult>) -> Unit)? = null
+
     private val uploads = AtomicInteger()
     private val failures = HashMap<String, ArrayDeque<Long>>()
     private val blockedUntil = HashMap<String, Long>()
@@ -187,6 +190,7 @@ class CompanionServer(
                     .put("detail", r.detail ?: ""))
             }
             if (saves.isNotEmpty()) post(Runnable { commands.importsChanged() })
+            onResults?.let { cb -> post(Runnable { cb(results) }) }
             return json(Response.Status.OK, JSONObject().put("saved", saved).put("rejected", rejected).toString())
         } finally {
             tmp.delete()

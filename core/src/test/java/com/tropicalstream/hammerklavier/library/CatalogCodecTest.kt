@@ -45,7 +45,7 @@ class CatalogCodecTest {
 
     @Test fun shelvesAndStartHere() {
         val m = CatalogCodec.parse(json)
-        assertEquals(listOf("start", "bach-wtc", "handel", "beethoven"), m.shelves.map { it.id })
+        assertEquals(listOf("start-here", "bach-wtc", "handel", "beethoven"), m.shelves.map { it.id })
         assertEquals("Start here", m.shelves[0].title)
         assertEquals(listOf("bach.bwv846.krueger", "handel.hwv430", "beethoven.woo59", "beethoven.op106"), m.shelves[0].workIds)
         assertEquals(listOf("beethoven.woo59", "beethoven.op106"), m.shelves[3].workIds)      // unknown work dropped

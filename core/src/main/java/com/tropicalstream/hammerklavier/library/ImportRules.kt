@@ -82,9 +82,13 @@ object ImportRules {
 
     /** Title (§1.7): the MIDI track name (ScoreFacts.title), else the file name without its extension. */
     fun titleOf(factsTitle: String?, relativeName: String): String {
-        val t = factsTitle?.trim()?.takeIf { it.isNotEmpty() && it.any { c -> c.isLetterOrDigit() } }
+        val t = factsTitle?.trim()?.takeIf { it.isNotEmpty() && it.any { c -> c.isLetterOrDigit() } && !isGenericTrackName(it) }
         return if (t != null) t.take(MAX_DISPLAY_CHARS) else stripExtension(fileNameOf(relativeName)).ifEmpty { "untitled" }
     }
+
+    /** Sequencer boilerplate track names ("control track", "Track 1", "Piano", …) are not titles (M6 device check). */
+    private val GENERIC = Regex("^(control|tempo|conductor|meta|untitled|unnamed|sequence|track|piano|grand piano|acoustic grand|acoustic grand piano|klavier|pianoforte|harpsichord|staff|part|midi|channel)( ?(track|part|staff))?( ?[-#]?\\d+)?$")
+    fun isGenericTrackName(t: String): Boolean = GENERIC.matches(t.trim().lowercase())
 
     /** Composer (§1.7): a folder component that names a composer, else "Imported". */
     fun composerOf(folder: String?): String {

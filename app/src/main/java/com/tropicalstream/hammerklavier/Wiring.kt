@@ -40,7 +40,8 @@ import java.util.concurrent.ExecutorService
  * app names a concrete component. Built once by HammerklavierApp (process singletons); the GL view,
  * the overlay and the GL-thread mechanics are made per activity.
  *
- * Current state (M3): WP1, WP2, WP3, WP4 (real grand), WP5 mechanics, WP6 GL host, WP7 instruments, WP9 library are real;
+ * Current state (M6): every WP is real; WP12 SessionController and WP9 CompanionServer are owned by AppController;
+ * WP1, WP2, WP3, WP4 (real grand), WP5 mechanics, WP6 GL host, WP7 instruments, WP9 library are real;
  * WP10 UI/overlay real (M4); WP8 venue real (M5); WP12 ListenerRooms drives setRoom (M5).
  */
 class Wiring(val app: Application, val loader: ExecutorService, val voicer: ExecutorService, val main: Handler) {

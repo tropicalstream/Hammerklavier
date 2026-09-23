@@ -1,5 +1,7 @@
 package com.tropicalstream.hammerklavier.session
 
+import com.tropicalstream.hammerklavier.contract.ImportResult
+
 import com.tropicalstream.hammerklavier.contract.AudioControl
 import com.tropicalstream.hammerklavier.contract.AudioListener
 import com.tropicalstream.hammerklavier.contract.AudioStats
@@ -628,7 +630,11 @@ class SessionController(
             post(Runnable {
                 if (m != null) model = m
                 if (scan != null) {
-                    if (scan.added > 0) { postStatus(StatusCode.IMPORTED, listOf(scan.added.toString())); onUiEvent?.invoke(UiEvent.IMPORTED) }
+                    if (scan.added > 0) {
+                        // UiText IMPORTED args: name, notes, seconds (M6: was the bare count, which read as a file name)
+                        postStatus(StatusCode.IMPORTED, listOf(if (scan.added == 1) "1 file" else "${scan.added} files"))
+                        onUiEvent?.invoke(UiEvent.IMPORTED)
+                    }
                     for (rj in scan.rejected) {
                         val code = if (rj.reason == RejectReason.PERMISSION_DENIED)
                             StatusCode.IMPORT_PERMISSION else StatusCode.IMPORT_FAILED
@@ -638,6 +644,21 @@ class SessionController(
                 }
             })
         }
+    }
+
+    /** Companion upload results (M6): one status per file, like a rescan. */
+    fun onUploadResults(results: List<ImportResult>, facts: (String) -> Pair<Int, Float>?) {
+        for (r in results) {
+            val mid = r.movementId
+            if (r.ok && mid != null) {
+                val f = facts(mid)
+                postStatus(StatusCode.IMPORTED, listOfNotNull(r.name, f?.first?.toString(), f?.second?.toLong()?.toString()))
+            } else if (r.reason != RejectReason.DUPLICATE) {
+                val code = if (r.reason == RejectReason.PERMISSION_DENIED) StatusCode.IMPORT_PERMISSION else StatusCode.IMPORT_FAILED
+                postStatus(code, listOf(r.name, r.reason?.name ?: "", r.detail ?: ""))
+            }
+        }
+        onUiEvent?.invoke(UiEvent.IMPORTED)
     }
 
     private fun reloadLibrary() {

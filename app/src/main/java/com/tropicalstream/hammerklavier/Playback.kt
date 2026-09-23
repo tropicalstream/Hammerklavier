@@ -70,9 +70,7 @@ class Playback(private val w: Wiring) {
 
     fun start() {
         if (running) return
-        running = true
-        w.audio.setListener(listener)
-        w.kits.open(instrument, kitCb)
+        running = true                  // M6: SessionController owns the listener and the kits
         w.main.postDelayed(tick, 10_000)
     }
 

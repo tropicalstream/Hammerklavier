@@ -23,7 +23,7 @@ class LibraryIndexTest {
         val json = javaClass.classLoader.getResource("wp9/catalog_wp9.json")!!.readText()
         val bundled = CatalogCodec.parse(json)
         val m = LibraryIndex.merge(bundled, ImportIndex(listOf(item), emptyList(), emptyList()), File("/x"))
-        assertEquals(listOf("start", "imported", "bach-wtc", "handel", "beethoven"), m.shelves.map { it.id })
+        assertEquals(listOf("start-here", "imported", "bach-wtc", "handel", "beethoven"), m.shelves.map { it.id })
         val w = m.works.getValue("user.handel")
         assertEquals(InstrumentId.UPRIGHT, w.defaultInstrument)       // the last chosen instrument wins
         assertEquals("/x/${item.file}", m.movements.getValue(item.movementId).file)

@@ -396,3 +396,44 @@ flat beige slabs across the bottom and are the main APL overshoot; the grand is 
   `soak.sh pull`; battery < Q3); APL cap remains a stopgap for WP6/7/8 materials; T12.8; T-CPU with combs, comb
   calibration; L-2/L-7 listening; real-head look-around; setRoom in AppController until WP12 SessionController (M6);
   soak CSV movement column.
+
+## M6 Library, menus, import (2026-09-23, integrator) — PASS (device gate); L-5 / L-6 need the user
+Merged: WP9, WP10, WP11 (full corpus, catalog.json, credits) and WP12 were already on main (0 commits ahead); M6 is wiring.
+
+Wired
+- `AppController` now drives WP12's `SessionController` exactly as docs/wiring/WP12.md: RenderControl forwarder (replayed
+  on attach), listener owned by `session.start()` (re-set after stopEngine/startEngine), every UiAction → `session.onAction`,
+  facts from `session.facts()`, 1 Hz `session.tick()`, `onThermalLevel`, media buttons, CONTROL play/seek/instrument/view/rescan.
+  The M1 `Playback` driver keeps only bench/align/wavdump/stats. Soak plans now play catalogue ids; the CSV movement column is real.
+- `CompanionServer` (WP9) started with the engine (token in `companion.token`, rotated by the Import panel), `NetInfo.watchWifi`
+  refreshes the url; upload results post a status per file on the glasses.
+- WP10: `creditsText` from assets/credits.txt, `stageHidden` → `setStageHidden`, CONTROL `menu`/`library`/`card`.
+- Fixes found on the glasses: two "Start here" rows (shelf id mismatch "start" vs "start-here"); imported titles all
+  "control track"; IMPORTED status args; HUD title running under the tuning line; the "N channels merged" pill over the
+  credit; clipped menu rows; HOME/another app paused only after 1.0–1.7 s (moved to onPause); push_scores.sh aborted on
+  `chmod` of the app-owned Scores dir (it never requested the rescan).
+
+Gate (release md5 a14459381ba9b2e24efbe6174ae4beb6, `tools/ci.sh` PASS; `tools/device/smoke.sh M6` PASS twice in a row,
+plus once with `HK_M6_PRELAUNCH=1` for the pre-launch push)
+| Check | Result |
+|---|---|
+| Title card → Start here | title in both eyes with `Phone: http://192.168.1.205:19112 · token …`; after `pm clear` tap plays `bach.bwv846.krueger.1`; with a resume point the card reads `Tap to continue: «…»` and tap resumes it |
+| Corpus | 67 bundled works / 197 movements, 11 catalogue shelves + Start here (12) (+ Imported, Recently played) |
+| T-5MIN | every screen reached by `--es gesture`: title, Player, Action, Hall, Transport, Library (Rescan on open), Start here shelf, More, Import, Credits (1/9), About (1/3), Calibrate, Display floor card; 0 AndroidRuntime |
+| T-IMPORT curl | `H%C3%A4ndel.mid` saved as «Händel» (5,335 notes, 7:17); a zip of 2 → 2 saved (one work «suite»); text file named .mid → `NOT_MIDI` «Not a MIDI file» in the reply and `Couldn't read "bad.mid": not a MIDI file` on the glasses; re-upload → DUPLICATE, not recorded; wrong token 403; `/api/state` 49–108 ms (Wi-Fi ping itself 21–107 ms, avg 67) |
+| T-IMPORT adb | `push_scores.sh "Op 109"` → one work «Op 109» with 2 movements; a bare `adb push` of a 0600 file → `Permission denied: run push_scores.sh`; push before the first launch: the script launched the app, then pushed and rescanned (PASS) |
+| Imported within 10 s | the upload reply and `/api/library` reflect it at once (model = null); the smoke's 12 s counts the three uploads, the push and a 4 s wait |
+| T-LEAVE display on | fade + pause after HOME 0.051–0.095 s, BACK at the root 0.035–0.059 s, another app (Settings) 0.071–0.076 s; resume point saved each time (`bach.bwv846.krueger.1@~4.15 s`) |
+| T-LEAVE asleep | KEYCODE_SLEEP while playing → still playing 8 s later |
+| M5 regression | `smoke.sh M5` PASS after the HUD fixes: APL Player 7.87 %, cutaway 7.76 %, overhead 8.87 % (≤ 9), Hall 11.93 % (≤ 12); 6 setRoom lines with the §5.6 listener; no hitch |
+
+Screencaps: `docs/shots/m6_t5_*.png` (walkthrough), `m6_ti_*.png` (import). Honest look: the menus read cleanly in both
+eyes, gilt highlight and footer hints legible; the Library first page is Start here, Imported, Recently played, then the
+catalogue; the Start here rows with long titles are ellipsized; the Display floor card hides the stage as specified. The
+Import panel's `Last import:` stays "none" until a status arrives in this session (it reads the status stream).
+
+### Open issues (M6)
+- L-5 (first-use test) and L-6 (tier-C listening) need the user; the companion upload from a phone (only curl from the Mac was run).
+- One FRAME HITCH seen once at Enter (idle 10 fps → play) in an M5 run; not reproduced in 4 later runs.
+- WP10 requests 1, 5, 6 open (SetSight Auto edge, BT A/V default in facts, sessions semantics).
+- Carried from M5: unplugged T-THERM, T12.8, T-CPU with combs, L-2/L-7, look-around.

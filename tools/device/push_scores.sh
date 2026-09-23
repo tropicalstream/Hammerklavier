@@ -5,7 +5,8 @@ ROOT=$(git rev-parse --show-toplevel); . "$ROOT/tools/env.sh"
 [ $# -gt 0 ] || { echo "usage: tools/device/push_scores.sh <files or folders>…" >&2; exit 2; }
 S=${HK_SERIAL:-A06B4A96A733283}; PKG=com.tropicalstream.hammerklavier
 D=/sdcard/Android/data/$PKG/files
-exec "$ROOT/tools/device/lock.sh" -- bash -c '
+LOCK="$ROOT/tools/device/lock.sh --"; [ "${HK_LOCK_HELD:-0}" = 1 ] && LOCK=   # smoke_m6 already holds it
+exec $LOCK bash -c '
   set -euo pipefail; S=$1; PKG=$2; D=$3; shift 3
   A="adb -s $S"
   owner=$($A shell "stat -c %U $D 2>/dev/null" | tr -d "\r" || true)
@@ -17,6 +18,7 @@ exec "$ROOT/tools/device/lock.sh" -- bash -c '
   fi
   $A shell mkdir -p $D/Scores
   $A push "$@" $D/Scores/
-  $A shell chmod -R a+rwX $D/Scores
+  # the Scores dir itself is app-owned (chmod on it is refused); the pushed entries are shell-owned
+  $A shell "cd $D/Scores && for f in *; do chmod -R a+rwX \"\$f\" 2>/dev/null; done; true"
   $A shell am broadcast -a $PKG.CONTROL --ez rescan true >/dev/null
   echo "[push] done; rescan requested"' _ "$S" "$PKG" "$D" "$@"

@@ -13,8 +13,9 @@ import com.tropicalstream.hammerklavier.ui.model.UiOverlayState
  * above the progress rule, the first-session hint centre-bottom and the debug line at the top.
  */
 class HudView(ctx: Context) : FrameLayout(ctx) {
-    private val work = Styles.text(ctx, Styles.BODY_PX)
-    private val movement = Styles.text(ctx, Styles.SMALL_PX)
+    // M6: long raw MIDI titles ran under the tuning line; the left block stops 170 px short of it and ellipsizes
+    private val work = Styles.text(ctx, Styles.BODY_PX).apply { maxWidth = 400; ellipsize = android.text.TextUtils.TruncateAt.END }
+    private val movement = Styles.text(ctx, Styles.SMALL_PX).apply { maxWidth = 400; ellipsize = android.text.TextUtils.TruncateAt.END }
     private val tuning = Styles.text(ctx, Styles.SMALL_PX, gravity = Gravity.END)
     private val time = Styles.text(ctx, Styles.SMALL_PX)
     private val rule = RuleView(ctx)
@@ -37,7 +38,7 @@ class HudView(ctx: Context) : FrameLayout(ctx) {
         timeBlock.addView(time)
         timeBlock.addView(rule, LinearLayout.LayoutParams(200, 1).apply { topMargin = 4 })
         addView(timeBlock, lp(Gravity.BOTTOM or Gravity.START, sx, sy))
-        addView(pills, lp(Gravity.BOTTOM or Gravity.END, sx, sy))
+        addView(pills, lp(Gravity.BOTTOM or Gravity.END, sx, sy + 22))   // M6: one row above the centred credit (they overlapped)
         addView(credit, lp(Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL, 0, sy))
         addView(status, lp(Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL, 0, sy + 44))
         addView(hint, lp(Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL, 0, sy + 22))
@@ -59,7 +60,7 @@ class HudView(ctx: Context) : FrameLayout(ctx) {
             if (h.pillsTopRight != pillsTop) {
                 pillsTop = h.pillsTopRight
                 val g = if (pillsTop) Gravity.TOP or Gravity.END else Gravity.BOTTOM or Gravity.END
-                pills.layoutParams = lp(g, Styles.SAFE_X, if (pillsTop) Styles.SAFE_Y + 22 else Styles.SAFE_Y)
+                pills.layoutParams = lp(g, Styles.SAFE_X, if (pillsTop) Styles.SAFE_Y + 22 else Styles.SAFE_Y + 22)
             }
             if (h.pills != pillTexts) {
                 pillTexts = h.pills

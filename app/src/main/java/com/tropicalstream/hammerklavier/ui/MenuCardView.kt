@@ -15,7 +15,7 @@ import com.tropicalstream.hammerklavier.ui.model.MenuTree
 class MenuCardView(ctx: Context) : LinearLayout(ctx) {
     private val title = Styles.text(ctx, Styles.TITLE_PX, Styles.TEXT, Gravity.CENTER)
     private val rule = RuleView(ctx)
-    private val rows = Array(MenuTree.PAGE) { Styles.text(ctx, Styles.BODY_PX) }
+    private val rows = Array(MenuTree.PAGE) { Styles.text(ctx, Styles.BODY_PX).apply { ellipsize = android.text.TextUtils.TruncateAt.END } }   // M6: no clipped glyphs
     private val value = Styles.text(ctx, Styles.TITLE_PX, Styles.ACCENT, Gravity.CENTER)
     private val page = Styles.text(ctx, Styles.SMALL_PX, Styles.TEXT, Gravity.END)
     private val footer = Styles.text(ctx, Styles.SMALL_PX, Styles.TEXT, Gravity.CENTER)

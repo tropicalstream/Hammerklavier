@@ -8,7 +8,7 @@ M=${1:-M0}
 S=${HK_SERIAL:-A06B4A96A733283}; PKG=com.tropicalstream.hammerklavier
 OUT="$ROOT/build/smoke/$M"; mkdir -p "$OUT"
 SELFTEST_SECS=${HK_SELFTEST_SECS:-60}
-case "$M" in M0) ;; M1) exec "$ROOT/tools/device/smoke_m1.sh" "$OUT" "$S" "$PKG" "$SELFTEST_SECS";; M3) ROOT="$ROOT" exec "$ROOT/tools/device/smoke_m3.sh" "$OUT" "$S" "$PKG";; M4) ROOT="$ROOT" exec "$ROOT/tools/device/smoke_m4.sh" "$OUT" "$S" "$PKG";; M5) ROOT="$ROOT" exec "$ROOT/tools/device/smoke_m5.sh" "$OUT" "$S" "$PKG";; *) echo "[smoke] $M not defined yet" >&2; exit 2;; esac
+case "$M" in M0) ;; M1) exec "$ROOT/tools/device/smoke_m1.sh" "$OUT" "$S" "$PKG" "$SELFTEST_SECS";; M3) ROOT="$ROOT" exec "$ROOT/tools/device/smoke_m3.sh" "$OUT" "$S" "$PKG";; M4) ROOT="$ROOT" exec "$ROOT/tools/device/smoke_m4.sh" "$OUT" "$S" "$PKG";; M5) ROOT="$ROOT" exec "$ROOT/tools/device/smoke_m5.sh" "$OUT" "$S" "$PKG";; M6) ROOT="$ROOT" exec "$ROOT/tools/device/smoke_m6.sh" "$OUT" "$S" "$PKG";; *) echo "[smoke] $M not defined yet" >&2; exit 2;; esac
 
 # The step script goes to a file (adb shell would swallow a script fed on stdin).
 cat > "$OUT/steps.sh" <<'SH'

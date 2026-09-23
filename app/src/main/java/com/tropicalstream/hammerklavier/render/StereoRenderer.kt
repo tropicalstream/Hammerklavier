@@ -635,8 +635,8 @@ class StereoRenderer(private val loader: ExecutorService?,
     }
 
     companion object {
-        const val APL_GAIN_PLAYER = 0.37f; const val APL_GAIN_CUTAWAY = 0.30f
-        const val APL_GAIN_OVERHEAD = 0.26f; const val APL_GAIN_HALL = 0.74f
+        const val APL_GAIN_PLAYER = 0.35f; const val APL_GAIN_CUTAWAY = 0.28f   // M6: -5% for the HUD (credit, pills) now live
+        const val APL_GAIN_OVERHEAD = 0.245f; const val APL_GAIN_HALL = 0.70f
         private val NOTE = arrayOf("C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B")
         /** §5.9: the thermal cap overrides Auto; an explicit user choice overrides both. */
         internal fun levelFor(userOverride: RoomLevel?, view: ViewId, cap: RoomLevel): Int {

@@ -23,6 +23,23 @@ import com.tropicalstream.hammerklavier.contract.ViewId
 import com.tropicalstream.hammerklavier.contract.QualityLadder
 import com.tropicalstream.hammerklavier.contract.QualityProfile
 import com.tropicalstream.hammerklavier.contract.RenderStats
+import com.tropicalstream.hammerklavier.contract.RenderControl
+import com.tropicalstream.hammerklavier.contract.SongClock
+import com.tropicalstream.hammerklavier.contract.EnergyRing
+import com.tropicalstream.hammerklavier.contract.MechanicsEvaluator
+import com.tropicalstream.hammerklavier.contract.SceneFactory
+import com.tropicalstream.hammerklavier.contract.Performance
+import com.tropicalstream.hammerklavier.contract.RenderSettings
+import com.tropicalstream.hammerklavier.contract.RenderOverrides
+import com.tropicalstream.hammerklavier.contract.UiContext
+import com.tropicalstream.hammerklavier.contract.UiEvent
+import com.tropicalstream.hammerklavier.companion.CompanionServer
+import com.tropicalstream.hammerklavier.companion.NetInfo
+import com.tropicalstream.hammerklavier.session.SessionController
+import com.tropicalstream.hammerklavier.ui.model.CardKind
+import com.tropicalstream.hammerklavier.ui.model.UiOverlayState
+import com.tropicalstream.hammerklavier.ui.model.UiStateMachineImpl
+import com.tropicalstream.hammerklavier.ui.model.UiText
 import com.tropicalstream.hammerklavier.system.DebugControl
 import com.tropicalstream.hammerklavier.system.MediaButtons
 import com.tropicalstream.hammerklavier.system.PerfProbe
@@ -34,24 +51,22 @@ import com.tropicalstream.hammerklavier.contract.android.OverlayHost
 
 /**
  * The thin Android adapter (PLAN §2.2, §2.6): lifecycle, gestures, the CONTROL receiver, media
- * buttons, the thermal governor, the soak recorder, the perf probe and the self-test, all
- * forwarded to WP12's SessionController once it merges. Until then it drives the stubs directly:
- * gestures go through the UiStateMachine and its PlayPause / SetView / Leave actions are applied
- * here; commands that need a SessionController are logged as deferred.
+ * buttons, the thermal governor, the soak recorder, the perf probe, the self-test and the
+ * companion server, all forwarded to WP12's [SessionController] (M6). UiActions go to the
+ * session except Recenter and Leave's fade; the overlay facts come from `session.facts()`.
+ * [Playback] keeps only the bench / align / wavdump / stats tools (no kit, no listener).
  *
- * The engine services (governor, CONTROL receiver, media buttons, perf probe) live as long as the
- * engine, not the activity (§1.10, §5.11): [startEngine] runs at process start and on every
- * resume (idempotent); [stopEngine] only on `onDestroy` with `isFinishing`. Main thread only.
+ * The engine services live as long as the engine, not the activity (§1.10, §5.11): [startEngine]
+ * runs at process start and on every resume (idempotent); [stopEngine] only on `onDestroy` with
+ * `isFinishing`. Main thread only.
  */
 class AppController(private val ctx: Context, private val w: Wiring) {
     private var gl: GlHost? = null
     private var overlay: OverlayHost? = null
-    private var view = ViewId.PLAYER
-    private var framing = 0
     private var resumed = false
     private var engineRunning = false
+    private var sessionStarted = false
     private var debug = false
-    private var q0Cap = HK.VOICE_CAP_MAX                          // until EngineBench sets C (§3.14)
     private val clockSample = ClockSample()
     private val audioStats = AudioStats()
     private val renderStats = RenderStats()
@@ -63,8 +78,110 @@ class AppController(private val ctx: Context, private val w: Wiring) {
     /** Set by MainActivity: gesture-engine raw trace on/off (`--ez debug true`). */
     var onDebug: ((Boolean) -> Unit)? = null
 
-    var quality: QualityProfile = QualityLadder.of(0, q0Cap); private set
+    val quality: QualityProfile get() = session.quality
     private var brightnessOverride = -2f                                // −2 = none; else `--ef brightness`
+    private var sessionCap = -1f
+
+    // ── RenderControl forwarder: the GlHost attaches after construction and can detach (WP12 wiring 1) ──
+    private var rInstrument: Triple<InstrumentId, InstrumentLook, Int>? = null
+    private var rView: Pair<ViewId, Int>? = null
+    private var rSettings: RenderSettings? = null
+    private var rPerf: Pair<Performance?, InstrumentProfile>? = null
+    private var rStageHidden = false
+    private var rOverrides: RenderOverrides? = null
+    private val renderFwd = object : RenderControl {
+        override fun bind(clock: SongClock, energy: EnergyRing, mech: MechanicsEvaluator, scenes: SceneFactory) { gl?.bind(clock, energy, mech, scenes) }
+        override fun setPerformance(p: Performance?, profile: InstrumentProfile) { rPerf = p to profile; gl?.setPerformance(p, profile) }
+        override fun setInstrument(id: InstrumentId, look: InstrumentLook, lastDamper: Int) { rInstrument = Triple(id, look, lastDamper); gl?.setInstrument(id, look, lastDamper) }
+        override fun setView(v: ViewId, framing: Int) {
+            rView = v to framing; gl?.setView(v, framing)
+            describePose(v, framing)
+        }
+        override fun setQuality(q: QualityProfile) { if (resumed) gl?.setQuality(q) }
+        override fun setSettings(s: RenderSettings) { rSettings = s; gl?.setSettings(s) }
+        override fun setStereo(on: Boolean) { gl?.setStereo(on) }
+        override fun setIdle(idle: Boolean) { gl?.setIdle(idle) }
+        override fun setSyncFlash(on: Boolean) { gl?.setSyncFlash(on) }
+        override fun setTitle(text: String?) { gl?.setTitle(text) }
+        override fun setStageHidden(hidden: Boolean) { rStageHidden = hidden; gl?.setStageHidden(hidden) }
+        override fun setOverrides(o: RenderOverrides) { rOverrides = o; gl?.setOverrides(o) }
+        override fun recenter() { gl?.recenter() }
+        override fun onResume() { gl?.onResume() }
+        override fun onPause() { gl?.onPause() }
+        override fun stats(out: RenderStats) { gl?.stats(out) }
+    }
+
+    /** Logs each setRoom with the §5.6 listener of the current view (smoke M5: one line per view change). */
+    private var roomPose = ""
+    private val audioLog = object : com.tropicalstream.hammerklavier.contract.AudioControl by w.audio {
+        override fun setRoom(d: com.tropicalstream.hammerklavier.contract.RoomDesign, glideMs: Int) {
+            val t0 = System.nanoTime()
+            w.audio.setRoom(d, glideMs)
+            Log.i(HK.TAG_UI, "setRoom $roomPose direct=${"%.3f".format(d.directGain)} erGain=${"%.3f".format(d.erGain)} reverbGain=${"%.3f".format(d.reverbGain)} " +
+                "preDelay=${d.preDelayFrames} t60Mid=${"%.2f".format(d.t60Mid)} az=${"%.2f".format(d.sourceAzimuthRad)} ms=${"%.2f".format((System.nanoTime() - t0) / 1e6)}")
+        }
+    }
+    private fun describePose(v: ViewId, framing: Int) {
+        roomPose = runCatching {
+            val id = session.instrument
+            val g = w.scenes.venue().geometry
+            val placement = g.placements[id] ?: com.tropicalstream.hammerklavier.contract.KonzertzimmerAcoustics.PLACEMENTS.getValue(id)
+            val a = poseAnchors.getOrPut(id) { w.scenes.instrument(id, InstrumentLook(UprightFinish.WALNUT, edgeOverlay = false), InstrumentProfile.of(id).lastDamper).anchors }
+            val r = com.tropicalstream.hammerklavier.session.ListenerRooms.resolve(id, a, placement, v, framing)
+            val e = r.pose.earRoom
+            "view=$v/$framing ear=${"%.2f,%.2f,%.2f".format(e[0], e[1], e[2])} worldLocked=${r.pose.worldLocked} width=${r.pose.directWidth}"
+        }.getOrDefault("view=$v/$framing")
+    }
+    private val poseAnchors = HashMap<InstrumentId, com.tropicalstream.hammerklavier.contract.InstrumentAnchors>()
+
+    val session: SessionController = SessionController(audioLog, renderFwd, w.kits, w.library, w.compiler, w.designer,
+        w.scenes, w.settings, w.loader, w.post, nowMs = { SystemClock.elapsedRealtime() }).also { s ->
+        s.onUiEvent = { e -> uiEvent(e) }
+        s.onBrightnessCap = { c -> sessionCap = c; if (resumed) applyBrightness() }
+        s.onLeave = { onLeave?.invoke() }
+        s.onRotateToken = { rotateToken() }
+        s.statusPriority = UiText::priority
+        s.version = "${BuildConfig.VERSION_NAME} ${BuildConfig.GIT_COMMIT}"
+    }
+
+    private val uiImpl: UiStateMachineImpl? get() = w.ui as? UiStateMachineImpl
+
+    // ── Companion (WP9) ──
+    private val companion = CompanionServer(port = CompanionServer.PORT, token = { token() }, library = w.library,
+        model = { null }, commands = session, post = w.post,
+        page = { ctx.assets.open("companion.html").use { String(it.readBytes(), Charsets.UTF_8) } })
+    init {
+        companion.onResults = { rs ->
+            val f = w.library as? com.tropicalstream.hammerklavier.library.ImportedFacts
+            session.onUploadResults(rs) { id -> f?.let { (it.importedNotes(id) ?: 0) to (it.importedDurationSec(id) ?: 0f) } }
+            refreshOverlay()
+        }
+    }
+    private var companionRunning = false
+    private var unwatchWifi: (() -> Unit)? = null
+    private fun token(): String {
+        val t = w.settings.getString(KEY_TOKEN, "")
+        if (CompanionServer.isToken(t)) return t
+        return CompanionServer.newToken().also { w.settings.putString(KEY_TOKEN, it) }
+    }
+    private fun rotateToken() { w.settings.putString(KEY_TOKEN, CompanionServer.newToken()); updateCompanionFacts(); Log.i(HK.TAG_UI, "companion token rotated") }
+    private fun updateCompanionFacts() {
+        session.companionUrl = if (companionRunning) companion.url() else null
+        session.companionToken = token()
+        Log.i(HK.TAG_UI, "companion url=${session.companionUrl} running=$companionRunning")
+        refreshOverlay()
+    }
+    private fun startCompanion() {
+        if (companionRunning) return
+        companionRunning = runCatching { companion.start(5000, true); true }.getOrElse { Log.w(HK.TAG_UI, "companion start failed: $it"); false }
+        if (unwatchWifi == null) unwatchWifi = NetInfo.watchWifi(ctx) { w.main.post { updateCompanionFacts() } }
+        updateCompanionFacts()
+    }
+    private fun stopCompanion() {
+        unwatchWifi?.invoke(); unwatchWifi = null
+        if (companionRunning) runCatching { companion.stop() }
+        companionRunning = false
+    }
 
     val governor = ThermalGovernor(ctx, w.main) { level -> applyQuality(level) }
     private val control = DebugControl(ctx, w.main) { b -> onControl(b) }
@@ -72,29 +189,24 @@ class AppController(private val ctx: Context, private val w: Wiring) {
     private val selfTest = SelfTest(ctx, w, w.main)
     private var media: MediaButtons? = null
     val soak = SoakRecorder(ctx, w.main, SoakSource())
-    /** M1 interim playback driver (kits → audio, `play`, `bench`, stats lines); WP12 replaces it. */
+    /** Tools only (bench, align, wavdump, the 10 s stats line); the session owns kits, listener and plays. */
     val playback = Playback(w).also { pb ->
-        pb.onVoiceCap = { cap -> q0Cap = cap; applyQuality(quality.level) }
-        pb.onPerformance = { p, prof -> lastPerf = p; lastProfile = prof; gl?.setPerformance(p, prof) }
-        pb.onPlaying = { runCatching { w.kits.setPlaybackHint(true, InstrumentId.GRAND, quality, governor.effectiveTenths) } }
+        pb.onVoiceCap = { cap -> session.setQ0Cap(cap) }
     }
-    /** Re-sends the playback hint on every play/pause edge (pause and end paths do not call back). */
-    private var hintPlaying = false
-    private val hintTick = object : Runnable { override fun run() {
+    /** 1 Hz: session tick (resume point, now-playing), idle pacing, render log every 5 s. */
+    private val tick = object : Runnable { override fun run() {
         if (!engineRunning) return
-        val p = isPlaying()
-        if (p != hintPlaying) { hintPlaying = p; runCatching { w.kits.setPlaybackHint(p, InstrumentId.GRAND, quality, governor.effectiveTenths) } }
+        session.batteryTenths = governor.effectiveTenths
+        session.debugLine = if (debug) playback.debugLine() else null
+        session.tick()
         syncIdle()
-        if (resumed && ++renderTicks % 10 == 0) logRender()
-        w.main.postDelayed(this, 500)
+        if (resumed && ++renderTicks % 5 == 0) logRender()
+        w.main.postDelayed(this, 1000)
     } }
-    private val debugTick = object : Runnable { override fun run() { if (!debug) return; refreshOverlay(); w.main.postDelayed(this, 500) } }
-    /** The play/pause state lands on the audio thread after the action; re-render the overlay when it changes. */
     private var shownPlaying = false
     private val playWatch = object : Runnable { override fun run() {
         if (overlay == null) return
-        // also once a second: the time line and bar advance, and view toasts expire (§1.8)
-        if (isPlaying() != shownPlaying || ++watchTicks % 4 == 0) refreshOverlay()
+        if (session.isPlaying() != shownPlaying || ++watchTicks % 4 == 0) refreshOverlay()
         w.main.postDelayed(this, 250) } }
     private var watchTicks = 0
 
@@ -102,19 +214,27 @@ class AppController(private val ctx: Context, private val w: Wiring) {
         if (engineRunning) return
         engineRunning = true
         w.audio.start()
+        if (!sessionStarted) { sessionStarted = true; session.start() } else w.audio.setListener(session)
         playback.start()
         governor.start(); control.start(); perf.start()
-        updateRoom()
-        w.main.removeCallbacks(hintTick); w.main.post(hintTick)
+        startCompanion()
+        w.main.removeCallbacks(tick); w.main.post(tick)
         if (media == null) media = runCatching { MediaButtons(ctx) { a -> applyAll(listOf(a)) } }.getOrNull()
+        w.loader.execute {
+            val credits = runCatching { ctx.assets.open("credits.txt").use { String(it.readBytes(), Charsets.UTF_8) } }.getOrNull()
+            w.main.post { uiImpl?.creditsText = credits }
+        }
         Log.i(HK.TAG_UI, "engine started")
     }
 
     fun stopEngine() {
         if (!engineRunning) return
         engineRunning = false
+        session.onAppLeft()
         playback.stop(); soak.stop(); perf.stop(); control.stop(); governor.stop()
+        stopCompanion()
         media?.release(); media = null
+        w.audio.setListener(null)
         w.audio.stop()
         Log.i(HK.TAG_UI, "engine stopped")
     }
@@ -122,21 +242,20 @@ class AppController(private val ctx: Context, private val w: Wiring) {
     fun attach(gl: GlHost, overlay: OverlayHost) {
         this.gl = gl; this.overlay = overlay
         gl.bind(w.audio.clock, w.audio.energy, w.mechanics(), w.scenes)
-        gl.setInstrument(InstrumentId.GRAND, InstrumentLook(UprightFinish.WALNUT, edgeOverlay = false), InstrumentProfile.GRAND.lastDamper)
-        gl.setView(view, framing)
+        val inst = rInstrument ?: Triple(session.instrument, InstrumentLook(UprightFinish.WALNUT, edgeOverlay = false), InstrumentProfile.of(session.instrument).lastDamper)
+        gl.setInstrument(inst.first, inst.second, inst.third)
+        val v = rView ?: (session.view to session.framing)
+        gl.setView(v.first, v.second)
         gl.setQuality(quality)
-        gl.setSettings(renderSettings())
-        gl.setSyncFlash(syncFlash)
-        gl.setIdle(!isPlaying())
-        lastPerf?.let { gl.setPerformance(it, lastProfile) }
+        rSettings?.let { gl.setSettings(it) }
+        rOverrides?.let { gl.setOverrides(it) }
+        gl.setStageHidden(rStageHidden)
+        gl.setIdle(!session.isPlaying())
+        rPerf?.let { gl.setPerformance(it.first, it.second) }
         refreshOverlay()
         w.main.removeCallbacks(playWatch); w.main.post(playWatch)
     }
 
-    // ── Render wiring (M3) ──
-    private var lastPerf: com.tropicalstream.hammerklavier.contract.Performance? = null
-    private var lastProfile: InstrumentProfile = InstrumentProfile.GRAND
-    private var syncFlash = false
     private var lastIdle: Boolean? = null
     private var renderTicks = 0
 
@@ -147,22 +266,14 @@ class AppController(private val ctx: Context, private val w: Wiring) {
         val d = g.diagnostics()
         Log.i(HK.TAG_RENDER, "fps=${"%.1f".format(renderStats.fps)} late=${renderStats.lateFrames} lateP99Us=${renderStats.lateP99Us} " +
             "hitches=${renderStats.hitches} divider=${renderStats.divider} draws=${renderStats.draws} maxDraws=${d["maxDrawsPerEye"]} tris=${renderStats.tris} " +
-            "cpuUsP99=${renderStats.cpuUsP99} glGen=${renderStats.glGeneration} glErrors=${d["glErrors"]} glAllocs=${d["glAllocs"]} view=$view/$framing q=${quality.level} idle=$lastIdle")
+            "cpuUsP99=${renderStats.cpuUsP99} glGen=${renderStats.glGeneration} glErrors=${d["glErrors"]} glAllocs=${d["glAllocs"]} view=${session.view}/${session.framing} q=${quality.level} idle=$lastIdle")
     }
-    private val KEY_LEAD = "render.leadMs.speaker"
 
-    /** §8.6: the speaker's displayLeadMs (default 30 ms), `--ei lead N` stores it. Route classes arrive with WP12. */
-    private fun renderSettings() = com.tropicalstream.hammerklavier.contract.RenderSettings(
-        stereoDepth = 1f, lookAround = true, roomOverride = null, palette = com.tropicalstream.hammerklavier.contract.Palette.SANSSOUCI_1747,
-        presenceFloor = 22, displayLeadMs = w.settings.getInt(KEY_LEAD, 30), lifeSizeVFov = 0f,
-        look = InstrumentLook(UprightFinish.WALNUT, edgeOverlay = false), msaa = false)
-
-    /** Called from the 500 ms hint poll: idle pacing follows the clock. */
-    fun syncIdle() { val idle = !isPlaying(); if (idle != lastIdle) { lastIdle = idle; gl?.setIdle(idle) } }
+    fun syncIdle() { val idle = !session.isPlaying(); if (idle != lastIdle) { lastIdle = idle; gl?.setIdle(idle) } }
 
     fun detach() { gl = null; overlay = null; w.main.removeCallbacks(playWatch) }
 
-    /** §1.10 onResume: restart the engine if it was stopped, pacing, the render-side quality. */
+    /** §1.10 onResume: restart the engine if it was stopped, pacing, the render-side quality, a rescan (§1.7). */
     fun onResume() {
         resumed = true
         startEngine()
@@ -171,19 +282,32 @@ class AppController(private val ctx: Context, private val w: Wiring) {
         applyBrightness()
         gl?.onResume()
         perf.setResumed(true)
+        session.onAction(UiAction.Rescan)
         refreshOverlay()
     }
 
-    /** §1.10 onPause: GL pauses, audio keeps playing; the engine services stay alive. */
-    fun onPause() {
+    fun onPause(displayInteractive: Boolean = false) {
+        if (displayInteractive) fadeAndPause("onPause")
         resumed = false
         perf.setResumed(false)
         gl?.onPause()
     }
 
-    /** §1.10: leaving with the display on fades and pauses; with the display asleep playback continues. */
+    /** §1.10: leaving with the display on fades and pauses (resume point saved); asleep playback continues. */
     fun onStop(displayInteractive: Boolean) {
-        if (displayInteractive) { w.audio.pause(300); media?.setPlaying(false, positionMs()) }
+        if (displayInteractive) fadeAndPause("onStop")
+        else { session.onAppLeft(); Log.i(HK.TAG_UI, "left asleep: playing=${session.isPlaying()} continues") }
+    }
+
+    /** §1.10 leaving with the display on: 300 ms fade, pause, resume point saved (T-LEAVE). */
+    private fun fadeAndPause(why: String) {
+        if (session.isPlaying()) {
+            session.toggle()                     // pause through the session (intended state, resume point)
+            w.audio.pause(300)                   // the 300 ms fade (§1.10)
+            media?.setPlaying(false, positionMs())
+            Log.i(HK.TAG_UI, "left with the display on: fade and pause ($why), resume point saved")
+        }
+        session.onAppLeft()
     }
 
     fun onDestroy(finishing: Boolean) {
@@ -194,88 +318,71 @@ class AppController(private val ctx: Context, private val w: Wiring) {
         if (eventUptimeMs != 0L) {
             val now = SystemClock.uptimeMillis()
             Log.i(HK.TAG_INPUT, "${g.name.lowercase()} gesture=${g.name} src=$source fingerMs=${eventUptimeMs - downUptimeMs} recogMs=${now - eventUptimeMs}")
-            // uptimeMillis and System.nanoTime are both CLOCK_MONOTONIC on Android
             (gl as? com.tropicalstream.hammerklavier.render.HkGlView)?.pendingInputNanos = eventUptimeMs * 1_000_000L
         } else Log.i(HK.TAG_INPUT, "${g.name.lowercase()} gesture=${g.name} src=$source")
         applyAll(w.ui.onGesture(g, facts(), SystemClock.uptimeMillis()))
     }
 
     private fun applyAll(actions: List<UiAction>) {
+        val t0 = System.nanoTime()
         for (a in actions) apply(a)
+        val t1 = System.nanoTime()
         refreshOverlay()
+        val t2 = System.nanoTime()
+        if (t2 - t0 > 16_000_000L) Log.w(HK.TAG_UI, "slow main: actions ${(t1 - t0) / 1_000_000} ms overlay ${(t2 - t1) / 1_000_000} ms $actions")
     }
 
     private fun apply(a: UiAction) {
+        Log.i(HK.TAG_UI, "action $a")
         when (a) {
-            UiAction.PlayPause -> {
-                w.audio.clock.sample(System.nanoTime(), clockSample)
-                if (clockSample.playing) w.audio.pause() else { w.audio.play(); w.main.postDelayed({ playback.logClock("resume") }, 1000) }
-                media?.setPlaying(!clockSample.playing, positionMs())
-            }
-            is UiAction.SetView -> { view = a.view; framing = a.framing; gl?.setView(view, framing); updateRoom() }
-            is UiAction.Seek -> w.audio.seek(a.us)
-            UiAction.Recenter -> gl?.recenter()
-            UiAction.Enter -> Log.i(HK.TAG_UI, "entered the stage (Start here is WP12's; M4 plays what CONTROL sends)")
-            UiAction.Leave -> { w.audio.pause(300); onLeave?.invoke() }
-            else -> Log.i(HK.TAG_UI, "action $a deferred (SessionController, WP12)")
+            UiAction.Leave -> { fadeAndPause("Back at the root"); onLeave?.invoke() }
+            UiAction.PlayPause -> { session.onAction(a); media?.setPlaying(session.isPlaying(), positionMs()) }
+            else -> session.onAction(a)
         }
     }
 
-    // ── Room (M5): sound follows the view (§2.6 step 4, §5.6); WP12's SessionController takes this over at M6 ──
-    private var anchors: com.tropicalstream.hammerklavier.contract.InstrumentAnchors? = null
-    private var roomSig = ""
-    private fun updateRoom(force: Boolean = false) {
-        val id = InstrumentId.GRAND
-        val sig = "$id/$view/$framing"
-        if (sig == roomSig && !force) return
-        roomSig = sig
-        val t0 = System.nanoTime()
-        val g = runCatching { w.scenes.venue().geometry }.getOrDefault(com.tropicalstream.hammerklavier.contract.KonzertzimmerAcoustics.GEOMETRY)
-        val placement = g.placements[id] ?: com.tropicalstream.hammerklavier.contract.KonzertzimmerAcoustics.PLACEMENTS.getValue(id)
-        val a = anchors ?: runCatching { w.scenes.instrument(id, InstrumentLook(UprightFinish.WALNUT, edgeOverlay = false), InstrumentProfile.GRAND.lastDamper).anchors }.getOrNull()?.also { anchors = it }
-        val r = com.tropicalstream.hammerklavier.session.ListenerRooms.resolve(id, a, placement, view, framing)
-        val source = a?.soundSource ?: com.tropicalstream.hammerklavier.session.ListenerRooms.SOURCE.getValue(id)
-        val embedded = runCatching { w.kits.info(id)?.embeddedRoomDb }.getOrNull() ?: 0f
-        val d = w.designer.design(g, placement, source, r.pose, ReverbMode.ROOM, com.tropicalstream.hammerklavier.session.ListenerRooms.benchDistance(id, a), embedded)
-        w.audio.setRoom(d, 500)
-        val e = r.pose.earRoom
-        Log.i(HK.TAG_UI, "setRoom view=$view/$framing ear=${"%.2f,%.2f,%.2f".format(e[0], e[1], e[2])} worldLocked=${r.pose.worldLocked} " +
-            "width=${r.pose.directWidth} direct=${"%.3f".format(d.directGain)} erGain=${"%.3f".format(d.erGain)} reverbGain=${"%.3f".format(d.reverbGain)} preDelay=${d.preDelayFrames} t60Mid=${"%.2f".format(d.t60Mid)} az=${"%.2f".format(d.sourceAzimuthRad)} ms=${"%.2f".format((System.nanoTime() - t0) / 1e6)}")
+    private fun uiEvent(e: UiEvent) {
+        w.ui.onEvent(e, facts(), SystemClock.uptimeMillis())
+        Log.i(HK.TAG_UI, "event $e")
+        refreshOverlay()
     }
 
-    // ── Quality (§5.11) ──
+    // ── Quality (§5.11): the session applies the ladder, the Q3 rest and the brightness cap ──
     private fun applyQuality(level: Int) {
-        quality = QualityLadder.of(level, q0Cap)
-        w.audio.setQuality(quality)
-        runCatching { w.kits.setPlaybackHint(isPlaying(), InstrumentId.GRAND, quality, governor.effectiveTenths) }
+        session.onThermalLevel(level)
         if (resumed) { gl?.setQuality(quality); applyBrightness() }
         refreshOverlay()
     }
 
     private fun applyBrightness() {
-        val b = if (brightnessOverride > -2f) brightnessOverride else quality.brightnessCap
+        val b = if (brightnessOverride > -2f) brightnessOverride else if (sessionCap != -1f) sessionCap else quality.brightnessCap
         onBrightness?.invoke(b)
     }
 
     // ── CONTROL (§8.2) ──
-    /** One CONTROL broadcast (or `am start` extras). Unknown or not-yet-wired keys are logged. */
     fun onControl(b: Bundle) {
         for (k in b.keySet().sorted()) {
             when (k) {
                 "gesture" -> gestureOf(b.getString(k))?.let { onGesture(it, "control") } ?: unknown(k, b)
-                "view" -> ViewId.entries.getOrNull(b.getInt(k, -1))?.let { applyAll(listOf(UiAction.SetView(it, framing))) } ?: unknown(k, b)
-                "framing" -> applyAll(listOf(UiAction.SetView(view, b.getInt(k, 0).coerceIn(0, 1))))
-                "pause" -> if (b.getBoolean(k)) { w.audio.pause(); media?.setPlaying(false, positionMs()) }
-                "resume" -> if (b.getBoolean(k)) { w.audio.play(); w.main.postDelayed({ playback.logClock("resume") }, 1000); media?.setPlaying(isPlaying(), positionMs()) }
-                "seek" -> w.audio.seek(b.getLong(k, 0L) * 1000 + HK.PRE_ROLL_US)
+                "view" -> viewOf(b, k)?.let { session.view(it, if (b.containsKey("framing")) b.getInt("framing", 0).coerceIn(0, 1) else session.framing); refreshOverlay() } ?: unknown(k, b)
+                "framing" -> if (!b.containsKey("view")) { session.view(session.view, b.getInt(k, 0).coerceIn(0, 1)); refreshOverlay() }
+                "instrument" -> b.getString(k)?.let { s -> (InstrumentId.of(s) ?: runCatching { InstrumentId.valueOf(s.uppercase()) }.getOrNull())?.let { session.instrument(it) } } ?: unknown(k, b)
+                "pause" -> if (b.getBoolean(k) && session.isPlaying()) session.toggle()
+                "resume" -> if (b.getBoolean(k)) { if (!session.isPlaying()) session.toggle(); w.main.postDelayed({ playback.logClock("resume") }, 1000) }
+                "seek" -> { @Suppress("DEPRECATION") val v = b.get(k); session.controlSeekDisplayMs((v as? Number)?.toLong() ?: v?.toString()?.toLongOrNull() ?: 0L); refreshOverlay() }
                 "rate" -> w.audio.setRate(b.getFloat(k, 1f))
                 "leave" -> if (b.getBoolean(k)) apply(UiAction.Leave)
                 "quality" -> governor.forcedLevel(b.getInt(k, -1))
                 "faketemp" -> governor.fakeTenths(b.getInt(k, -1))
                 "recenter" -> if (b.getBoolean(k)) gl?.recenter()
                 "brightness" -> { brightnessOverride = b.getFloat(k, -1f).let { if (it < 0f) -2f else it.coerceIn(0.05f, 1f) }; if (resumed) applyBrightness() }
-                "debug" -> { debug = b.getBoolean(k); onDebug?.invoke(debug); w.main.removeCallbacks(debugTick); if (debug) w.main.post(debugTick) else refreshOverlay() }
-                "play" -> b.getString(k)?.let { playback.play(it); enterStage() } ?: unknown(k, b)
+                "debug" -> { debug = b.getBoolean(k); onDebug?.invoke(debug); refreshOverlay() }
+                "play" -> b.getString(k)?.let { session.controlPlay(it); enterStage() } ?: unknown(k, b)
+                "enter" -> if (b.getBoolean(k)) applyAll(listOf(UiAction.Enter))
+                "rescan" -> if (b.getBoolean(k)) session.onAction(UiAction.Rescan)
+                "menu" -> if (b.getBoolean(k)) { uiImpl?.openTransport(); refreshOverlay() }
+                "library" -> if (b.getBoolean(k)) uiImpl?.let { applyAll(it.openLibrary()) }
+                "card" -> uiImpl?.let { u -> when (b.getString(k)) { "floor" -> applyAll(u.openCard(CardKind.FLOOR, facts())); "sync" -> applyAll(u.openCard(CardKind.SYNC, facts())); else -> unknown(k, b) } }
                 "bench" -> if (b.getBoolean(k)) playback.bench(b.getInt("benchsecs", 2).coerceIn(1, 30))
                 "lowlatency" -> w.settings.putBool("audio.lowLatency", b.getBoolean(k))
                 "standin" -> w.settings.putBool(Wiring.KEY_STAND_IN, b.getBoolean(k))              // applies at the next launch
@@ -283,22 +390,27 @@ class AppController(private val ctx: Context, private val w: Wiring) {
                 "align" -> if (b.getBoolean(k)) playback.align()
                 "wavdump" -> playback.captureWav(b.getInt(k, 20).coerceIn(1, 60))
                 "selftest" -> if (b.getBoolean(k)) selfTest.run(gl, b.getInt("selftestsecs", 60).coerceIn(1, 600))
-                "lead" -> { w.settings.putInt(KEY_LEAD, b.getInt(k, 30).coerceIn(-200, 400)); gl?.setSettings(renderSettings()); Log.i(HK.TAG_UI, "lead=${w.settings.getInt(KEY_LEAD, 30)} ms") }
-                "sync" -> { syncFlash = b.getBoolean(k); gl?.setSyncFlash(syncFlash); if (syncFlash) playback.play("synth:sync") }
+                "lead" -> session.onAction(UiAction.SetAvLead(b.getInt(k, 30).coerceIn(0, 400)))
+                "sync" -> session.onAction(UiAction.SyncTest(b.getBoolean(k)))
                 "glreset" -> if (b.getBoolean(k)) (gl as? com.tropicalstream.hammerklavier.render.HkGlView)?.resetContext()
-                "selftestsecs", "benchsecs", "soakplan", "mono", "echo", "n" -> {}                   // parameters of other keys; echo is for the smoke test
+                "selftestsecs", "benchsecs", "soakplan", "mono", "echo", "n" -> {}
                 "gcstats" -> if (b.getBoolean(k)) logGcStats()
                 "dump" -> if (b.getBoolean(k)) dump()
+                "companion" -> if (b.getBoolean(k)) { Log.i(HK.TAG_UI, "companion url=${session.companionUrl} token=${token()}") }
                 "soak" -> if (b.getBoolean(k)) soak.start(b.getString("soakplan")) else soak.stop()
-                else -> Log.i(HK.TAG_UI, "CONTROL $k deferred (SessionController, WP12)")
+                else -> unknown(k, b)
             }
         }
     }
 
-    /** Until WP12's SessionController: a CONTROL play leaves the title card for the stage (UiEvent.ENTERED). */
+    private fun viewOf(b: Bundle, k: String): ViewId? {
+        @Suppress("DEPRECATION") val v = b.get(k)
+        return when (v) { is Int -> ViewId.entries.getOrNull(v); is String -> runCatching { ViewId.valueOf(v.uppercase()) }.getOrNull(); else -> null }
+    }
+
+    /** A CONTROL play leaves the title card for the stage (UiEvent.ENTERED). */
     private fun enterStage() {
-        if (w.ui.context == com.tropicalstream.hammerklavier.contract.UiContext.TITLE)
-            w.ui.onEvent(com.tropicalstream.hammerklavier.contract.UiEvent.ENTERED, facts(), SystemClock.uptimeMillis())
+        if (w.ui.context == UiContext.TITLE) uiEvent(UiEvent.ENTERED)
     }
 
     private fun unknown(k: String, b: Bundle) { @Suppress("DEPRECATION") Log.w(HK.TAG_UI, "CONTROL $k=${b.get(k)} not understood") }
@@ -318,8 +430,12 @@ class AppController(private val ctx: Context, private val w: Wiring) {
 
     private fun dump() {
         w.audio.stats(audioStats); gl?.stats(renderStats)
-        Log.i(HK.TAG_UI, "dump view=$view framing=$framing resumed=$resumed engine=$engineRunning quality=$quality " +
-            "battery=${governor.effectiveTenths} playing=${isPlaying()} positionMs=${positionMs()} soak=${soak.recording}")
+        val lib = session.model
+        Log.i(HK.TAG_UI, "dump view=${session.view} framing=${session.framing} resumed=$resumed engine=$engineRunning quality=$quality " +
+            "battery=${governor.effectiveTenths} playing=${session.isPlaying()} positionMs=${positionMs()} soak=${soak.recording} " +
+            "movement=${session.movementId} instrument=${session.instrument} ui=${w.ui.context} companion=${session.companionUrl} " +
+            "works=${lib?.works?.size} movements=${lib?.movements?.size} shelves=${lib?.shelves?.size} imported=${lib?.shelves?.firstOrNull { it.id == "imported" }?.workIds?.size} " +
+            "startHere=${lib?.startHere?.size} resume=${session.resume?.movementId}@${session.resume?.songUs}")
         for ((name, m) in listOf("audio" to w.audio.diagnostics(), "gl" to (gl?.diagnostics() ?: emptyMap())))
             Log.i(HK.TAG_UI, "dump $name ${m.entries.joinToString(" ") { "${it.key}=${it.value}" }}")
     }
@@ -329,7 +445,6 @@ class AppController(private val ctx: Context, private val w: Wiring) {
         return "q=${quality.level} underruns=${audioStats.underruns} voices=${audioStats.voices}"
     }
 
-    private fun isPlaying(): Boolean { w.audio.clock.sample(System.nanoTime(), clockSample); return clockSample.playing }
     private fun positionMs(): Long { w.audio.clock.sample(System.nanoTime(), clockSample); return (clockSample.songUs - HK.PRE_ROLL_US) / 1000 }
 
     private inner class SoakSource : SoakRecorder.Source {
@@ -342,54 +457,36 @@ class AppController(private val ctx: Context, private val w: Wiring) {
         override fun headroomMin(): Int { w.audio.stats(audioStats); return audioStats.headroomMinFrames }
         override fun audioTid(): Int { w.audio.stats(audioStats); return audioStats.tid }
         override fun brightness() = if (brightnessOverride > -2f) brightnessOverride else quality.brightnessCap
-        override fun movement() = "none"
+        override fun movement() = session.movementId ?: "none"
         override fun positionMs() = this@AppController.positionMs()
-        override fun play(id: String) {
-            // M5: catalogue ids of the soak plans mapped onto the bundled files until WP12/WP9 play by id (M6)
-            val m = Regex("beethoven\\.op106\\.([1-4])").matchEntire(id)
-            val name = when {
-                m != null -> "asset:midi/krueger/beethoven/beethoven_hammerklavier_${m.groupValues[1]}.mid"
-                id == "beethoven.op27-2.1" -> "asset:midi/krueger/beethoven/mond_1.mid"
-                else -> id
-            }
-            Log.i(HK.TAG_SOAK, "play $id -> $name"); playback.play(name); enterStage()
-        }
-        override fun setView(v: ViewId, framing: Int) = applyAll(listOf(UiAction.SetView(v, framing)))
+        override fun play(id: String) { Log.i(HK.TAG_SOAK, "play $id"); session.controlPlay(id); enterStage() }
+        override fun setView(v: ViewId, framing: Int) { session.view(v, framing); refreshOverlay() }
         override fun forceQuality(q: Int) = governor.forcedLevel(q)
         override fun setBrightness(b: Float) { brightnessOverride = b; if (resumed) applyBrightness() }
     }
 
+    private var lastStageHidden: Boolean? = null
+    private var lastStatus: String? = null
     private fun refreshOverlay() {
         val o = overlay ?: return
         val f = facts(); shownPlaying = f.playing
         val st = w.ui.render(f, SystemClock.uptimeMillis())
-        (st as? com.tropicalstream.hammerklavier.ui.model.UiOverlayState)?.let { u ->
+        (st as? UiOverlayState)?.let { u ->
             val sig = "${u.context}/${u.title != null}"
             if (sig != lastOverlaySig) { lastOverlaySig = sig; Log.i(HK.TAG_UI, "overlay context=${u.context} titleCard=${u.title != null}") }
+            if (u.status != lastStatus) { lastStatus = u.status; if (u.status != null) Log.i(HK.TAG_UI, "status ${u.status}") }
+            if (u.stageHidden != lastStageHidden) { lastStageHidden = u.stageHidden; renderFwd.setStageHidden(u.stageHidden) }
         }
         o.show(st)
     }
     private var lastOverlaySig = ""
 
-    /** Minimal facts for the stub UI; WP12's FactsAssembler replaces this. */
     private fun facts(): UiFacts {
-        w.audio.clock.sample(System.nanoTime(), clockSample)
-        w.audio.stats(audioStats)
-        return UiFacts(playing = clockSample.playing, positionUs = clockSample.songUs, durationUs = lastPerf?.durationUs ?: 0L, movementId = null,
-            bar = lastPerf?.barAt(clockSample.songUs) ?: 1,
-            instrument = lastPerf?.instrument ?: InstrumentId.GRAND, view = view, framing = framing, kitStates = mapOf(InstrumentId.GRAND to w.kits.state(InstrumentId.GRAND)), library = null,
-            settings = DEFAULT_SETTINGS, nextTitle = null, quality = quality.level, companionUrl = null, companionToken = "",
-            route = w.audio.route, status = emptyList(), perfInfo = null, firstRun = false, sessions = 0, resumeTitle = null,
-            recent = emptyList(), shelfId = null, version = "${BuildConfig.VERSION_NAME} ${BuildConfig.GIT_COMMIT}",
-            debug = if (debug) playback.debugLine() else null)
+        session.debugLine = if (debug) playback.debugLine() else null
+        return session.facts()
     }
 
     companion object {
-        private val DEFAULT_SETTINGS = SettingsSnapshot(
-            tuning = InstrumentId.entries.associateWith { InstrumentProfile.of(it).defaultTuning },
-            registration = 3, reverb = ReverbMode.ROOM, resonance = ResonanceMode.NATURAL, speakerBass = SpeakerBass.AUTO,
-            roomOverride = null, palette = Palette.SANSSOUCI_1747, finish = UprightFinish.WALNUT, stereoDepth = 1f,
-            lookAround = true, edgeOverlay = null, reverseSwipe = false, presenceFloor = 22, avLeadMs = emptyMap(),
-            tempoPct = 100, msaa = true)
+        const val KEY_TOKEN = "companion.token"
     }
 }
