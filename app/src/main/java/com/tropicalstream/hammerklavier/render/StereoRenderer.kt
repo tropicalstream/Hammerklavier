@@ -75,6 +75,7 @@ class StereoRenderer(private val loader: ExecutorService?,
         @Volatile var view = ViewId.PLAYER
         @Volatile var framing = 0
         @Volatile var viewSerial = 0L
+        @Volatile var viewNanos = 0L
         @Volatile var quality: QualityProfile = QualityLadder.of(0, 96)
         @Volatile var settings: RenderSettings? = null
         @Volatile var stereo = true
@@ -288,6 +289,7 @@ class StereoRenderer(private val loader: ExecutorService?,
         visual.update(sample, t0, vis)
         bindSlot(d, vis.generation, vis.reseed, mech, sc.profile)
         if (mech != null && boundSlot >= 0) mech.evaluate(vis, if (energyOk) energyBuf else null, dt, pose) else restPose()
+        auditStrikes()
 
         // camera
         val gz = gazeSource
@@ -299,12 +301,16 @@ class StereoRenderer(private val loader: ExecutorService?,
         val dy = gaze.yaw - lastGazeYaw; lastGazeYaw = gaze.yaw
         val dp = gaze.pitch - lastGazePitch; lastGazePitch = gaze.pitch
         headStill = dy < HEAD_STILL_RAD && dy > -HEAD_STILL_RAD && dp < HEAD_STILL_RAD && dp > -HEAD_STILL_RAD
-        if (d.viewSerial != seenViewSerial) { seenViewSerial = d.viewSerial; director.request(d.view, d.framing) }
+        if (d.viewSerial != seenViewSerial) { seenViewSerial = d.viewSerial; director.request(d.view, d.framing); fadeReqNanos = d.viewNanos }
         val ov = d.overrides
         director.setOverrides(ov.ipdScale ?: Float.NaN, ov.vFovDeg ?: lifeSizeFov(settings))
         director.update(dt, pose, gaze, cam)
         if (director.cutThisFrame) onCut()
         dipping = director.dipping
+        if (fadeReqNanos != 0L && dipping) {
+            Log.i(HK.TAG_RENDER, "swipe to first fade ms=" + "%.1f".format((t0 - fadeReqNanos) / 1e6) + " view=" + d.view + "/" + d.framing)
+            fadeReqNanos = 0L
+        }
         val stereo = d.stereo
         val eyes = if (stereo) 2 else 1
         val ew = width / eyes
@@ -498,11 +504,51 @@ class StereoRenderer(private val loader: ExecutorService?,
         synchronized(d.lock) {
             for (s in 0..1) if (d.slotGen[s] == generation && d.slotPerf[s] != null) { slot = s; perf = d.slotPerf[s]; prof = d.slotProfile[s] }
         }
+        boundPerf = perf
         if (mech == null) { boundSlot = slot; return }
         if (slot != boundSlot || generation != boundGen || reseed) {
             mech.bind(perf, prof ?: fallback)
             boundSlot = slot; boundGen = generation
         }
+    }
+
+    // ── M4 strike audit: every contact in a frame's exposure window is drawn exactly once (pose.flash) ──
+    private var boundPerf: Performance? = null
+    private var fadeReqNanos = 0L
+    private var auditGen = Int.MIN_VALUE
+    private var auditNext = 0
+    private var auditExpected = 0
+    private var auditDrawn = 0
+    private var auditSameKey = 0
+    private var auditLogged = true
+    private val auditSeen = BooleanArray(128)
+
+    private fun auditStrikes() {
+        val p = boundPerf ?: return
+        if (p.generation != auditGen || vis.reseed) {
+            if (!auditLogged && auditExpected > 0) logAudit("reset")
+            auditGen = p.generation; auditExpected = 0; auditDrawn = 0; auditSameKey = 0; auditLogged = false
+            var lo = 0; var hi = p.onUs.size
+            while (lo < hi) { val m = (lo + hi) ushr 1; if (p.onUs[m] <= vis.exposeToUs) lo = m + 1 else hi = m }
+            auditNext = lo
+            return
+        }
+        java.util.Arrays.fill(auditSeen, false)
+        while (auditNext < p.onUs.size && p.onUs[auditNext] <= vis.exposeToUs) {
+            if (p.onUs[auditNext] > vis.exposeFromUs) {
+                val k = p.key[auditNext].toInt() and 127
+                if (auditSeen[k]) auditSameKey++ else { auditSeen[k] = true; auditExpected++ }
+            }
+            auditNext++
+        }
+        for (k in 0 until 128) if (pose.flash[k]) auditDrawn++
+        if (!auditLogged && auditNext >= p.onUs.size && vis.tUs > p.onUs[p.onUs.size - 1] + 300_000L) logAudit("end")
+    }
+
+    private fun logAudit(why: String) {
+        auditLogged = true
+        Log.i(HK.TAG_RENDER, "strike audit " + why + " id=" + boundPerf?.id + " gen=" + auditGen + " notes=" + (boundPerf?.noteCount ?: 0) +
+            " expected=" + auditExpected + " drawn=" + auditDrawn + " sameKeySameFrame=" + auditSameKey + " fps=" + "%.1f".format(fps))
     }
 
     private fun restPose() {

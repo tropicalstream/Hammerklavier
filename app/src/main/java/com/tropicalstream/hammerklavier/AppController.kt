@@ -207,6 +207,7 @@ class AppController(private val ctx: Context, private val w: Wiring) {
             is UiAction.SetView -> { view = a.view; framing = a.framing; gl?.setView(view, framing) }
             is UiAction.Seek -> w.audio.seek(a.us)
             UiAction.Recenter -> gl?.recenter()
+            UiAction.Enter -> Log.i(HK.TAG_UI, "entered the stage (Start here is WP12's; M4 plays what CONTROL sends)")
             UiAction.Leave -> { w.audio.pause(300); onLeave?.invoke() }
             else -> Log.i(HK.TAG_UI, "action $a deferred (SessionController, WP12)")
         }
@@ -244,7 +245,7 @@ class AppController(private val ctx: Context, private val w: Wiring) {
                 "recenter" -> if (b.getBoolean(k)) gl?.recenter()
                 "brightness" -> { brightnessOverride = b.getFloat(k, -1f).let { if (it < 0f) -2f else it.coerceIn(0.05f, 1f) }; if (resumed) applyBrightness() }
                 "debug" -> { debug = b.getBoolean(k); onDebug?.invoke(debug); w.main.removeCallbacks(debugTick); if (debug) w.main.post(debugTick) else refreshOverlay() }
-                "play" -> b.getString(k)?.let { playback.play(it) } ?: unknown(k, b)
+                "play" -> b.getString(k)?.let { playback.play(it); enterStage() } ?: unknown(k, b)
                 "bench" -> if (b.getBoolean(k)) playback.bench(b.getInt("benchsecs", 2).coerceIn(1, 30))
                 "lowlatency" -> w.settings.putBool("audio.lowLatency", b.getBoolean(k))
                 "standin" -> w.settings.putBool(Wiring.KEY_STAND_IN, b.getBoolean(k))              // applies at the next launch
@@ -262,6 +263,12 @@ class AppController(private val ctx: Context, private val w: Wiring) {
                 else -> Log.i(HK.TAG_UI, "CONTROL $k deferred (SessionController, WP12)")
             }
         }
+    }
+
+    /** Until WP12's SessionController: a CONTROL play leaves the title card for the stage (UiEvent.ENTERED). */
+    private fun enterStage() {
+        if (w.ui.context == com.tropicalstream.hammerklavier.contract.UiContext.TITLE)
+            w.ui.onEvent(com.tropicalstream.hammerklavier.contract.UiEvent.ENTERED, facts(), SystemClock.uptimeMillis())
     }
 
     private fun unknown(k: String, b: Bundle) { @Suppress("DEPRECATION") Log.w(HK.TAG_UI, "CONTROL $k=${b.get(k)} not understood") }
@@ -324,7 +331,7 @@ class AppController(private val ctx: Context, private val w: Wiring) {
         w.audio.clock.sample(System.nanoTime(), clockSample)
         w.audio.stats(audioStats)
         return UiFacts(playing = clockSample.playing, positionUs = clockSample.songUs, durationUs = 0L, movementId = null, bar = 1,
-            instrument = InstrumentId.GRAND, view = view, framing = framing, kitStates = emptyMap(), library = null,
+            instrument = InstrumentId.GRAND, view = view, framing = framing, kitStates = mapOf(InstrumentId.GRAND to w.kits.state(InstrumentId.GRAND)), library = null,
             settings = DEFAULT_SETTINGS, nextTitle = null, quality = quality.level, companionUrl = null, companionToken = "",
             route = w.audio.route, status = emptyList(), perfInfo = null, firstRun = false, sessions = 0, resumeTitle = null,
             recent = emptyList(), shelfId = null, version = "${BuildConfig.VERSION_NAME} ${BuildConfig.GIT_COMMIT}",

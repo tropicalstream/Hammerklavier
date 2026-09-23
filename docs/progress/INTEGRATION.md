@@ -234,3 +234,45 @@ not caught by screencap but is detected at every click in the scrcpy recordings 
 - Pedal inset camera moved closer (pos 0.03,0.24,0.02 -> target 0,0.07,-0.29, fov 34): the three pedals now fill the inset width (docs/shots/m3_player_follow.png).
 - Re-run: ci PASS, run.sh md5 22e8f64e75bec5c0a528a562eff3834d, smoke M3 11/11 PASS, draws max 15/eye.
 - Still open (not measurable here): T-SYNC absolute (240 fps camera + avsync.py), T-SYNC/T-UND on Bluetooth (no headset paired), L-1 and on-head stereo review (user). milestone-M3 not tagged.
+
+## M4 Hammers hit strings (2026-09-23) — not tagged (gate partial: T-SYNC absolute)
+
+### Merged
+- `wp10-ui` (c77a79d): no conflicts. WP5 ExposureSampler/strings-from-energy, WP7 action set/hammers/dampers/strings and
+  WP2 EnergyRing lanes were already on main from M3.
+
+### Wired
+- `Wiring.ui` = `ui.model.UiStateMachineImpl()`, `Wiring.overlay` = `ui.OverlayViews(ctx)` (WP10 wiring note).
+- Facts: `kitStates` now carries `kits.state(GRAND)` (the title tap was refused with an empty map). Until WP12's
+  SessionController lands, a CONTROL `play` sends `UiEvent.ENTERED` when the UI is on the title card; `UiAction.Enter` is logged.
+- Pad / `--es gesture` swipes now drive the ring (Player -> Action -> Hall) and up/down the framings through the state machine.
+- Fix (WP6 shaders): the Action cut plane was only honoured by the SKINNED and STRING programs, so the lacquered case, plate,
+  soundboard, lettering and gilt edges were drawn whole and the cutaway showed only the side of the rim
+  (first `m4_action_cutaway` shot). LIT, LACQUER, DECAL and RIBBON now pass model-space x and discard beyond `uClipX`
+  (1e9 for unclipped items). No contract change.
+- Instrumentation: `HKRender strike audit end|reset id= gen= notes= expected= drawn= sameKeySameFrame= fps=` (contacts whose
+  onUs falls in each frame's exposure window vs `pose.flash` keys drawn), and `swipe to first fade ms=` (setView to the
+  first dipping frame).
+- New `tools/device/smoke.sh M4` (-> `smoke_m4.sh`).
+
+### Gate results (glasses A06B4A96A733283, release build md5 506f6a9654974741fedef663a0c9beae)
+| Check | Measured | Result |
+|---|---|---|
+| `tools/ci.sh` | PASS (in run.sh) | pass |
+| `smoke.sh M4` | 8/8 PASS | pass |
+| every strike drawn exactly once | synth:repeat15 (90 notes) in Action: Q0 30.0 fps expected 90 drawn 90; Q2 20.0 fps expected 90 drawn 90; sameKeySameFrame 0 (also the interrupted runs: 70/70, 63/63) | pass |
+| swipe-to-first-fade < 100 ms | 8 swipes, max 64.2 ms (0.6–64 ms; measured from setView on main, pad recognition not included) | pass |
+| draws <= 28 | max 19 per eye (Action cutaway 18, overhead 13, Hall 16, Player 11); no hitch, glErrors 0 | pass |
+| T-SYNC in the Action view | not measured: needs the 240 fps phone film (scrcpy gives only the relative check, §M3) | open |
+
+Screencaps (docs/shots/): `m4_title` (WP10 title card), `m4_player`, `m4_action_cutaway` / `m4_repeat15_3` (cutaway on C4:
+keys, hammer row, the struck string lit, C4 label), `m4_action_overhead` (lid off, string bed, hammer row, struck strings
+white, the rest grey), `m4_hall` (stub venue, WP8 at M5), `m4_player_back` (ring back to Player).
+Honest look: the cutaway now reads as a section, but the section caps are flat beige slabs that look like untextured blocks
+and the camera sits low enough that the key frame fills the lower third; the neighbouring actions recede but are small. The
+overlay reads "bar 1" and "0:10 / 0:00" (duration 0): the facts are still the M1 minimal set until WP12.
+
+### Open issues (M4)
+- T-SYNC absolute (Action view, speaker and Bluetooth) needs a 240 fps camera, a headset and the user; milestone-M4 not tagged.
+- Overlay facts (duration, bar, movement) wait for WP12 FactsAssembler; `stageHidden` hook not yet wired (Display floor card, M6).
+- Section-cap look and cutaway camera height: worth a WP7/WP6 pass before the user review.

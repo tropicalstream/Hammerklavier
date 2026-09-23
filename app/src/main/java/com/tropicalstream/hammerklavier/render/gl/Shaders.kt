@@ -59,8 +59,10 @@ varying vec3 vW;
 varying vec3 vN;
 varying vec4 vCol;
 varying vec2 vUv;
+varying float vMX;
 void main() {
     vec4 w = uModel * vec4(aPos, 1.0);
+    vMX = aPos.x;
     vW = w.xyz;
     vN = (uModel * vec4(aNrm, 0.0)).xyz;
     vCol = aCol;
@@ -75,7 +77,10 @@ varying vec3 vW;
 varying vec3 vN;
 varying vec4 vCol;
 varying vec2 vUv;
+uniform float uClipX;
+varying float vMX;
 void main() {
+    if (vMX > uClipX) discard;
     vec3 N = normalize(vN);
     vec3 c = mix(shade(vCol.rgb, N, vW, 0.3), vCol.rgb, uBaked);
     c = lift(c);
@@ -94,7 +99,10 @@ varying vec3 vW;
 varying vec3 vN;
 varying vec4 vCol;
 varying vec2 vUv;
+uniform float uClipX;
+varying float vMX;
 void main() {
+    if (vMX > uClipX) discard;
     vec3 N = normalize(vN);
     vec3 V = normalize(uEye - vW);
     float nv = clamp(dot(N, V), 0.0, 1.0);
@@ -299,8 +307,10 @@ varying vec4 vCol;
 varying float vSide;
 varying float vHalf;
 varying vec3 vW;
+varying float vMX;
 void main() {
     vec4 w = uModel * vec4(aPos, 1.0);
+    vMX = aPos.x;
     vec4 c0 = uVP * w;
     vec4 c1 = uVP * (uModel * vec4(aPos + aNrm * 0.02, 1.0));
     vec2 s0 = c0.xy / c0.w * uViewport * 0.5;
@@ -330,7 +340,10 @@ varying float vSide;
 varying float vHalf;
 varying vec3 vW;
 vec3 lift(vec3 c) { return pow(max(c, vec3(0.0)), vec3(0.85)); }
+uniform float uClipX;
+varying float vMX;
 void main() {
+    if (vMX > uClipX) discard;
     float a = clamp((1.0 - abs(vSide)) * vHalf, 0.0, 1.0);
     float f = uFadeR.y > 0.0 ? 1.0 - smoothstep(uFadeR.x, uFadeR.y, distance(vW, uFadeC.xyz)) : 1.0;
     vec3 c = lift(vCol.rgb) * max(uEmissive, uLight) * a * f;
@@ -373,7 +386,10 @@ varying vec3 vW;
 varying vec3 vN;
 varying vec4 vCol;
 varying vec2 vUv;
+uniform float uClipX;
+varying float vMX;
 void main() {
+    if (vMX > uClipX) discard;
     vec4 t = uHasTex > 0.5 ? texture2D(uTex, vUv) : vec4(1.0);
     vec3 base = vCol.rgb * t.rgb;
     vec3 c = lift(base) * max(uEmissive, 0.35);

@@ -113,7 +113,7 @@ class HkGlView(ctx: Context, loader: ExecutorService?, private val msaa: Boolean
 
     override fun setView(v: ViewId, framing: Int) {
         val d = renderer.desired
-        d.view = v; d.framing = framing.coerceIn(0, 1); d.viewSerial = d.viewSerial + 1
+        d.view = v; d.framing = framing.coerceIn(0, 1); d.viewNanos = System.nanoTime(); d.viewSerial = d.viewSerial + 1
     }
 
     override fun setQuality(q: QualityProfile) {

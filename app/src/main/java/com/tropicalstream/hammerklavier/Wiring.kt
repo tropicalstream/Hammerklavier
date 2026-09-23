@@ -31,9 +31,7 @@ import com.tropicalstream.hammerklavier.contract.InstrumentLook
 import com.tropicalstream.hammerklavier.contract.InstrumentScene
 import com.tropicalstream.hammerklavier.contract.VenueScene
 import com.tropicalstream.hammerklavier.contract.stub.StubVenue
-import com.tropicalstream.hammerklavier.contract.stub.StubUi
 import com.tropicalstream.hammerklavier.render.HkGlView
-import com.tropicalstream.hammerklavier.contract.stub.android.StubOverlay
 import java.io.File
 import java.util.concurrent.ExecutorService
 
@@ -44,7 +42,7 @@ import java.util.concurrent.ExecutorService
  * the overlay and the GL-thread mechanics are made per activity.
  *
  * Current state (M3): WP1, WP2, WP3, WP4 (real grand), WP5 mechanics, WP6 GL host, WP7 instruments, WP9 library are real;
- * venue, UI and overlay are still contract stubs.
+ * WP10 UI/overlay real (M4); venue still a contract stub.
  */
 class Wiring(val app: Application, val loader: ExecutorService, val voicer: ExecutorService, val main: Handler) {
     val post: (Runnable) -> Unit = { r -> main.post(r) }
@@ -67,7 +65,7 @@ class Wiring(val app: Application, val loader: ExecutorService, val voicer: Exec
             com.tropicalstream.hammerklavier.instrument.Instruments.create(id, look, lastDamper)
         override fun venue(): VenueScene = StubVenue()                  // WP8: venue.VenueSceneImpl()
     }
-    val ui: UiStateMachine = StubUi()                                    // WP10: ui.model.UiStateMachineImpl()
+    val ui: UiStateMachine = com.tropicalstream.hammerklavier.ui.model.UiStateMachineImpl()   // WP10
 
     /** GLThread-owned; one per GL view. WP5: mech.MechanicsEvaluatorImpl(). */
     fun mechanics(): MechanicsEvaluator = MechanicsEvaluatorImpl()
@@ -76,7 +74,7 @@ class Wiring(val app: Application, val loader: ExecutorService, val voicer: Exec
     fun glHost(ctx: Context, msaa: Boolean): GlHost = HkGlView(ctx, loader = loader, msaa = msaa, head = head)
 
     /** WP10: ui.OverlayViews(ctx). */
-    fun overlay(ctx: Context): OverlayHost = StubOverlay(ctx)
+    fun overlay(ctx: Context): OverlayHost = com.tropicalstream.hammerklavier.ui.OverlayViews(ctx)
 
     companion object {
         const val KEY_STAND_IN = "kit.standIn"
