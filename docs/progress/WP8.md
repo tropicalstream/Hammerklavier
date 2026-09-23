@@ -38,6 +38,12 @@ Branch `wp8-venue` (from `contracts-v1`), worktree `/Users/me/Projects/hk-wp8`. 
   0 ignored. `tools/check_purity.sh`: OK. No test needed contracts-v1.1 or a WP11 fixture.
 - Venue triangles checked below the T8.4 limit of 18k (and above 2k) for both palettes.
 
+- Merged main (contracts-v1.1, WP11 fixtures, WP7 MeshBuilder): no conflicts, no `@Ignore` markers in WP8 tests.
+- `VenueRasterTest`: MeshRaster review of Hall, Stage, look N/S and ceiling for both palettes
+  (`core/build/venue-review/raster-*.png`); reviewed, geometry reads correctly.
+- `docs/wiring/WP8.md` written.
+- After merge: `tools/gw :core:test` BUILD SUCCESSFUL, 81 tests, 0 failures, 0 skipped.
+
 ## Decisions and deviations
 
 - **Footprints:** the contract constant has none; `Konzertzimmer.GEOMETRY` carries them (request to
@@ -47,8 +53,7 @@ Branch `wp8-venue` (from `contracts-v1`), worktree `/Users/me/Projects/hk-wp8`. 
   2.5 m² (T8.1 names only floor, walls and V). The acoustic constant is unchanged.
 - **Case outlines** for T8.9 come from the §5.4 dimensions (WP7 owns the real cases).
 - **MeshBuilder:** only the day-0 subset exists; ribbons, discs and decals are built with
-  `vertex()`/`tri()` in private helpers (`Geo` in RoomShell.kt). Rebase onto WP7's builder later is
-  optional; the encoding follows the frozen conventions.
+  `vertex()`/`tri()` in private helpers (`Geo` in RoomShell.kt). Kept after WP7's builder merged (tested, no benefit to rewriting); the encoding follows the frozen conventions.
 - **Candelabra "at 1.6 m"** read as candle height 1.6 m; placed on the audience side of the grand
   at (−1.70, −0.85) and (1.30, −0.85). Music-desk candles are placed for the grand/harpsichord desk.
 - **Contact pool** is centred on the Stage centre (the grand/harpsichord); the upright's pool would
@@ -58,6 +63,5 @@ Branch `wp8-venue` (from `contracts-v1`), worktree `/Users/me/Projects/hk-wp8`. 
 
 ## Remaining
 
-- MeshRaster PNG review of the geometry once WP7 delivers `testutil/MeshRaster.kt`.
 - Device checks (T-APL Hall ≤ 12%, Stage ≤ 9%; Hall screencap vs the build sheet; look-around):
   need WP6 and the glasses (not allowed in this stage).
