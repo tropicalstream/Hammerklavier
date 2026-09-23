@@ -2,13 +2,12 @@ package com.tropicalstream.hammerklavier.system
 
 import android.os.Handler
 import android.util.Log
-import android.view.Choreographer
 import com.tropicalstream.hammerklavier.contract.HK
 import java.io.File
 
 /**
  * Performance probe (PLAN §2.2, §8.4), main thread:
- * - a frame-hitch detector: a main-thread Choreographer gap > 120 ms while [resumed] logs
+ * - a frame-hitch detector: the main thread blocked > 120 ms (a late heartbeat) while [resumed] logs
  *   `HKPerf FRAME HITCH <ms>` (smoke fails on it);
  * - `majflt` of one task (the HKAudio tid from [audioTid]) from `/proc/self/task/<tid>/stat` field 12;
  * - `scaling_cur_freq` per CPU and `time_in_state` deltas per policy;
@@ -22,15 +21,22 @@ class PerfProbe(private val main: Handler, private val audioTid: () -> Int = { -
     private var lastMajflt = -1L
     private val lastTis = HashMap<String, LongArray>()
 
-    private val frame = object : Choreographer.FrameCallback {
-        override fun doFrame(t: Long) {
+    /**
+     * Main-thread stall detector: a [BEAT_MS] Handler heartbeat; a beat arriving more than
+     * HITCH_MS late logs `FRAME HITCH <gap>ms`. Not a Choreographer frame callback: every vsync a
+     * Choreographer delivers runs Qualcomm's BoostFramework.ScrollOptimizer.setVsyncTime, which
+     * allocates ~1.5 KB per vsync (~92 KB/s, T-GC failed at M1).
+     */
+    private val frame = object : Runnable {
+        override fun run() {
             if (!resumed) return
+            val t = System.nanoTime()
             if (lastFrameNs != 0L) {
                 val gapMs = (t - lastFrameNs) / 1_000_000
-                if (gapMs > HITCH_MS) { hitches++; Log.w(HK.TAG_PERF, "FRAME HITCH ${gapMs}ms") }
+                if (gapMs - BEAT_MS > HITCH_MS) { hitches++; Log.w(HK.TAG_PERF, "FRAME HITCH ${gapMs - BEAT_MS}ms") }
             }
             lastFrameNs = t
-            Choreographer.getInstance().postFrameCallback(this)
+            main.postDelayed(this, BEAT_MS)
         }
     }
     private val tick = object : Runnable {
@@ -44,9 +50,8 @@ class PerfProbe(private val main: Handler, private val audioTid: () -> Int = { -
     fun setResumed(r: Boolean) {
         if (r == resumed) return
         resumed = r; lastFrameNs = 0L
-        val ch = Choreographer.getInstance()
-        ch.removeFrameCallback(frame)
-        if (r) ch.postFrameCallback(frame)
+        main.removeCallbacks(frame)
+        if (r) main.post(frame)
     }
 
     /** One HKPerf line: majflt (total, delta), CPU frequencies (MHz), time_in_state deltas (top 3 per policy). */
@@ -92,5 +97,5 @@ class PerfProbe(private val main: Handler, private val audioTid: () -> Int = { -
         }
     }
 
-    private companion object { const val HITCH_MS = 120L; const val PERIOD_MS = 10_000L }
+    private companion object { const val HITCH_MS = 120L; const val BEAT_MS = 50L; const val PERIOD_MS = 10_000L }
 }

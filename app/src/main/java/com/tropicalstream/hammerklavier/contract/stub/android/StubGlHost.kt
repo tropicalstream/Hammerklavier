@@ -28,7 +28,7 @@ import javax.microedition.khronos.opengles.GL10
 /**
  * The GL host until WP6 merges (PLAN §2.2, M0): an ES 2.0 GLSurfaceView that clears to black
  * (transparent on the waveguide), logs the GL info once (`HKRender`), and draws a gilt test frame
- * in each eye's viewport with scissored clears (no shaders). Paced by Choreographer: every 6th
+ * in each eye's viewport with scissored clears (no shaders). Paced by a main Handler (M1: not Choreographer, see pace): every 6th
  * vsync (10 fps); nothing while paused or in display rest. RenderControl calls only set fields
  * (§2.1 rule 6); every GL call happens in onSurfaceCreated/onDrawFrame.
  */
@@ -37,6 +37,7 @@ class StubGlHost(ctx: Context) : GLSurfaceView(ctx), GlHost, GLSurfaceView.Rende
 
     @Volatile private var stereo = true
     @Volatile private var divider = 6
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
     @Volatile private var resting = false
     @Volatile private var glInfo = ""
     @Volatile private var frames = 0
@@ -93,20 +94,23 @@ class StubGlHost(ctx: Context) : GLSurfaceView(ctx), GlHost, GLSurfaceView.Rende
         GLES20.glScissor(x, y, w, h); GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
     }
 
-    // ── Choreographer pacing (main) ──
-    override fun doFrame(frameTimeNanos: Long) {
-        if (!paced) return
-        if (++vsyncs >= divider) { vsyncs = 0; requestRender() }
-        Choreographer.getInstance().postFrameCallback(this)
+    // ── Pacing (main) ──
+    // A main-thread Handler tick, not a Choreographer frame callback: on this device Qualcomm's
+    // BoostFramework.ScrollOptimizer.setVsyncTime builds strings on every vsync a Choreographer
+    // delivers (~1.5 KB each, ~92 KB/s at 60 Hz), which alone broke T-GC at M1. The stub needs no
+    // vsync phase; WP6's renderer is told in docs/requests/WP6.md.
+    private val pace = object : Runnable {
+        override fun run() {
+            if (!paced) return
+            requestRender()
+            handler.postDelayed(this, divider * VSYNC_MS)
+        }
     }
+    override fun doFrame(frameTimeNanos: Long) {}
 
-    private fun startPacing() {
-        Choreographer.getInstance().removeFrameCallback(this)
-        paced = true
-        Choreographer.getInstance().postFrameCallback(this)
-    }
+    private fun startPacing() { handler.removeCallbacks(pace); paced = true; handler.post(pace) }
 
-    private fun stopPacing() { paced = false; Choreographer.getInstance().removeFrameCallback(this) }
+    private fun stopPacing() { paced = false; handler.removeCallbacks(pace) }
 
     // ── RenderControl (main): fields only ──
     override fun bind(clock: SongClock, energy: EnergyRing, mech: MechanicsEvaluator, scenes: SceneFactory) {}
@@ -132,4 +136,5 @@ class StubGlHost(ctx: Context) : GLSurfaceView(ctx), GlHost, GLSurfaceView.Rende
         out.fps = 0f; out.draws = 0; out.tris = 0; out.divider = divider; out.dipping = false; out.glGeneration = glGeneration
     }
     override fun diagnostics(): Map<String, String> = mapOf("gl" to glInfo, "frames" to frames.toString(), "host" to "StubGlHost")
+    private companion object { const val VSYNC_MS = 17L }
 }
