@@ -293,7 +293,7 @@ Fixes, each re-checked on the glasses:
 - **APK md5**: the release APK embeds `BuildConfig.GIT_COMMIT`, so every commit changes the md5; the verifier's rebuild at
   3f51d5a differs from the number recorded before the final commit. run.sh verifies installed == local each time.
 
-Gate re-run (main, glasses A06B4A96A733283): ci PASS; `smoke.sh M4` 13/13 PASS.
+Gate re-run (main a5ac184, clean tree, glasses A06B4A96A733283): run.sh ci PASS, release md5 f644e6a0e775e11325ad2d844d2a4f0f installed and verified (a second ci.sh at the same commit gave the same md5); `smoke.sh M4` 13/13 PASS (second run: dampers 22 landed / 9 settled / 0 late, pad-to-fade max 31.7 ms, setView-to-fade max 28.2 ms).
 | Check | Measured | Result |
 |---|---|---|
 | strikes drawn exactly once | repeat15 Q0 30.0 fps 90/90, Q2 20.0 fps 90/90, sameKeySameFrame 0 | pass |
