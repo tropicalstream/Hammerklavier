@@ -374,3 +374,7 @@ flat beige slabs across the bottom and are the main APL overshoot; the grand is 
   still tiny, the front chairs flat slabs — the cap hides brightness, it does not fix those (WP8/WP6).
 - Still blocking the tag: the unplugged 30-min T-THERM (user must unplug), T12.8, T-CPU with combs, comb calibration,
   L-2/L-7, look-around.
+
+### M5 third pass (2026-09-23) — still PARTIAL, not tagged
+- Device re-checked: USB powered, status 5 (charging/full), level 100 — the unplugged 30-min T-THERM still cannot run
+  without the user pulling the cable. No code change in this pass; 814f292 gate numbers stand.
