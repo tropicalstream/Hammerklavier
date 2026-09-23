@@ -264,9 +264,73 @@ def measure_pitch(pcm_or_mono, root, octave_mult=1.0):
             fit = dict(fit or {"B": 0.0, "partials": [(1, f)], "resid_cents": 0.0})
             fit["B"] = min(fit["B"], TOP_OCTAVE_MAX_B)
             fit["f0"] = f                  # the loose B is not trusted to move the pitch
+            fit["f0Source"] = "peak"
+        if fit is not None:
+            # an independent estimate on the same window for the cross-check (top_octave_check)
+            fit["f0Acf"] = audio.acf_f0(mono[PRE_ROLL:], audio.key_hz(root) * octave_mult)
     if fit is None:
         return None
     return fit
+
+
+# Top-octave roots whose measured pitch is > TOP_RESID_MAX cents off the tuning shape and has been
+# confirmed by the independent autocorrelation estimate and by inspection of the spectrum, pending
+# the L-3 listening check. Any other top-octave root that far off fails the build.
+# 108 (Salamander C8): every layer's strongest partial is at 4433 Hz (+99 c, three unison strings
+# at +85..+99 c); nothing near 4186 Hz rises above -36 dB; ACF +92..+95 c. tune_ret gives -38 c here,
+# the same as A7 (measured +38 c), so the retuning table does not model it (docs/progress/WP11.md).
+TOP_OCTAVE_L3_PENDING = {108}
+TOP_RESID_MAX = 50.0
+TOP_ACF_TOL = 10.0
+
+
+# Plan deviation (PLAN §10, WP11): §3.x says a damper T60 outside 0.5-2x the formula fails the
+# build. The VCSL release takes are _Far room recordings whose early decay the room lengthens, so
+# most roots fall outside; the build keeps the formula for every key instead of failing, and emits a
+# machine-checkable DAMPER-FALLBACK flag. The fallback is allowed only for these instruments and
+# for at most this many out-of-range roots (the counts measured on the 2026-09 corpus); anything
+# more fails the build. The grand never measures (it uses the R3 formula by design).
+DAMPER_FALLBACK_MAX_REJECTED = {"upright": 17, "harpsichord": 19}
+
+
+def damper_fallback(instrument, fitted, rejected):
+    """fitted: {root: T60} in range; rejected: [root] out of range → (fitted to use, report flag).
+    Raises RuntimeError when the fallback is not allowed for `instrument` or rejects too many roots."""
+    n_roots = len(fitted) + len(rejected)
+    if n_roots and len(fitted) < n_roots / 2:
+        allowed = DAMPER_FALLBACK_MAX_REJECTED.get(instrument)
+        flag = "DAMPER-FALLBACK instrument=%s fitted=%d roots=%d rejected=%d" % (
+            instrument, len(fitted), n_roots, len(rejected))
+        if allowed is None or len(rejected) > allowed:
+            raise RuntimeError("%s: damper T60 fallback not allowed (limit %s)" % (flag, allowed))
+        return {}, flag + " (formula used for every key; plan deviation, section 10)"
+    return fitted, "DAMPER-FIT instrument=%s fitted=%d roots=%d" % (instrument, len(fitted), n_roots)
+
+
+def top_octave_check(top, resid, pending=TOP_OCTAVE_L3_PENDING):
+    """top: {root >= 96: [(pitchCents, acfCents or None)] per layer}; resid: {root: cents off the
+    shape}. → (failures, flags). Fails when a root's median measured pitch and median ACF pitch
+    disagree by > TOP_ACF_TOL, or when its residual exceeds TOP_RESID_MAX and it is not pending L-3
+    (then it is only flagged)."""
+    fails, flags = [], []
+    for root in sorted(top):
+        pcs = [p for p, _a in top[root]]
+        acs = [a for _p, a in top[root] if a is not None]
+        pm = float(np.median(pcs))
+        if not acs:
+            fails.append("root %d: no autocorrelation estimate to cross-check %.1f c" % (root, pm))
+            continue
+        am = float(np.median(acs))
+        if abs(pm - am) > TOP_ACF_TOL:
+            fails.append("root %d: measured %.1f c but autocorrelation %.1f c" % (root, pm, am))
+        r = resid.get(root, 0.0)
+        if abs(r) > TOP_RESID_MAX:
+            msg = "root %d: %.1f c off the shape (measured %.1f c, ACF %.1f c)" % (root, r, pm, am)
+            if root in pending:
+                flags.append("PITCH-L3 " + msg)
+            else:
+                fails.append(msg + ": not in TOP_OCTAVE_L3_PENDING")
+    return fails, flags
 
 
 def tuning_shape(points, piano=True):
@@ -525,6 +589,7 @@ def build_real_kit(kit, out_dir, report_path):
     loud = {}
     pitch_pts = {"raw": [], "nat": [], "ret": []}
     inh, free, damp, rel_t60 = {}, {}, {}, {}
+    top_pts = {}
     pcm_rl = {}
     knees, drrs, edts = [], [], []
     onset_jitter = []
@@ -552,6 +617,10 @@ def build_real_kit(kit, out_dir, report_path):
                 pc = audio.pitch_cents(fit["f0"], s.root)
                 r["pitchCents"] = pc
                 if s.stop == 0:
+                    if s.root >= 96 and s.octave == 1.0:
+                        acf = fit.get("f0Acf")
+                        top_pts.setdefault(s.root, []).append(
+                            (pc, audio.pitch_cents(acf, s.root) if acf else None))
                     inh.setdefault(s.root, []).append(fit["B"])
                     pitch_pts["raw"].append((s.root, pc))
                     pitch_pts["nat"].append((s.root, pc + s.tune_nat))
@@ -594,6 +663,13 @@ def build_real_kit(kit, out_dir, report_path):
     for k, v in sorted(resid.items()):
         if abs(v) > 5:
             report.append("  root %d is %.1f cents off the shape" % (k, v))
+    if piano:
+        t_fails, t_flags = top_octave_check(top_pts, resid)
+        report.extend("  " + f for f in t_flags)
+        if t_fails:
+            report.append("  TOP-OCTAVE PITCH FAILURE: " + "; ".join(t_fails))
+            common.write_text(report_path, "\n".join(report) + "\n")
+            raise RuntimeError("kit %s: top-octave pitch check failed: %s" % (kit, "; ".join(t_fails)))
     if fails and use == "raw" and piano:
         report.append("  WARNING: stretch shape fails the Railsback check: %s" % "; ".join(fails))
     inharm = per_key({k: float(np.median(v)) for k, v in inh.items()}, lambda k: 0.0)
@@ -637,13 +713,8 @@ def build_real_kit(kit, out_dir, report_path):
                                   root, t, ", ".join("%.2f" % x for x in ts), d, dict(knees).get(root)))
                 continue
             fitted[root] = t
-        n_roots = len(fitted) + len(rejected)
-        if n_roots and len(fitted) < n_roots / 2:
-            report.append("  damper T60 evidence inconclusive (%d of %d roots in range): the formula is used "
-                          "for every key" % (len(fitted), n_roots))
-            fitted = {}
-        else:
-            report.append("  damper T60 fitted on %d of %d roots" % (len(fitted), n_roots))
+        fitted, flag = damper_fallback(instrument, fitted, rejected)
+        report.append("  " + flag)
         damper = per_key(fitted, lambda k: kitmap.default_damper_t60(instrument, k))
         release_carries = True
         if instrument == "upright":

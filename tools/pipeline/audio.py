@@ -258,6 +258,36 @@ def fundamental_peak(mono, f0_nominal, sr=SR, t0=0.05, t1=0.55, span=0.07):
     return _peak_interp(mag_db, k)[0] * hz_per_bin
 
 
+def acf_f0(mono, f0_nominal, sr=SR, t0=0.05, t1=0.55, span=0.07, up=8):
+    """Autocorrelation f0 within ±`span` of the nominal f0 over [t0, t1] s: an estimate independent
+    of the spectral peak, used to cross-check the top octave (§6.5 step 4). The segment is
+    band-limited to ±1.5·span around nominal (hammer noise elsewhere biases it) and upsampled `up`× (FFT zero-pad) so that a lag of ~11 samples
+    at C8 is resolved to well under a cent by parabolic interpolation. None when there is no signal."""
+    x = np.asarray(mono, dtype=np.float64)
+    seg = x[int(t0 * sr):min(len(x), int(t1 * sr))]
+    if len(seg) < 1024 or not np.any(seg):
+        return None
+    seg = seg - seg.mean()
+    n = len(seg)
+    X = np.fft.rfft(seg * np.hanning(n))
+    f = np.fft.rfftfreq(n, 1.0 / sr)
+    X[(f < (1 - 1.5 * span) * f0_nominal) | (f > (1 + 1.5 * span) * f0_nominal)] = 0.0
+    P = np.abs(X) ** 2                        # Wiener-Khinchin: the band's (circular) ACF
+    N = 2 * n * up                            # zero-padding the spectrum interpolates the ACF
+    ac = np.fft.irfft(P, N)
+    lag_unit = float(n) / N                   # input samples per ACF index (= 1 / (2 up))
+    lo = int((sr / (f0_nominal * (1 + span))) / lag_unit)
+    hi = int(math.ceil((sr / (f0_nominal * (1 - span))) / lag_unit))
+    hi = min(hi, len(ac) - 2)
+    if hi <= lo + 1:
+        return None
+    k = lo + int(np.argmax(ac[lo:hi + 1]))
+    a, b, c = ac[k - 1], ac[k], ac[k + 1]
+    den = a - 2 * b + c
+    d = 0.5 * (a - c) / den if den != 0 else 0.0
+    return sr / ((k + d) * lag_unit)
+
+
 def _ls_fit(pts):
     n = np.array([p[0] for p in pts], dtype=np.float64)
     f = np.array([p[1] for p in pts], dtype=np.float64)

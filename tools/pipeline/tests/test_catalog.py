@@ -68,6 +68,13 @@ class CatalogTest(unittest.TestCase):
         self.assertTrue(any("licence file" in x for x in build_catalog.build(s, generated="x", check_licences=True,
                                                                                assets_dir=common.TEST_RES)[1]))
 
+    def test_duration_coverage_warning(self):
+        src = {"works": [{"movements": [{"expectDurationSec": 60.0}, {}, {}]}]}
+        self.assertEqual(build_catalog.duration_coverage(src), (1, 3))
+        self.assertIn("WARNING", build_catalog.coverage_warning(src))
+        src["works"][0]["movements"][1]["expectDurationSec"] = 30.0
+        self.assertIsNone(build_catalog.coverage_warning(src))
+
     def test_partial(self):
         cat, e, _l = build_catalog.build(src(), partial=True, generated="x", check_licences=False)
         self.assertEqual(e, [])

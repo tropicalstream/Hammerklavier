@@ -43,6 +43,46 @@ class PartialsTest(unittest.TestCase):
         self.assertAlmostEqual(audio.pitch_cents(fit["f0"], key), 97.0, delta=2.0)
         self.assertLessEqual(fit["B"], kit_build.TOP_OCTAVE_MAX_B)
 
+    def test_c8_inharmonic_with_hammer_noise(self):
+        # a C8 sounding +95 c with strong inharmonicity (B = 0.02), three unison strings spread over
+        # 10 c, and a hammer-noise burst: the peak fallback and the ACF both read the sounding pitch
+        # (the first partial, which is all that sounds at C8) within 5 c
+        import numpy as np
+        key, true_c = 108, 95.0
+        f0 = audio.key_hz(key) * 2 ** (true_c / 1200) / (1 + 0.02) ** 0.5
+        n = 48000
+        t = np.arange(n) / 48000
+        rng = np.random.default_rng(11)
+        x = np.zeros(n)
+        for det, amp in ((-4.0, 0.5), (0.0, 1.0), (4.0, 0.5)):
+            for p in (1, 2, 3):
+                fp = p * f0 * 2 ** (det / 1200) * (1 + 0.02 * p * p) ** 0.5
+                if fp < 23000:
+                    x += amp / p ** 2 * np.sin(2 * np.pi * fp * t + rng.uniform(0, 6.3)) * np.exp(-t / (0.2 / p))
+        burst = rng.standard_normal(n) * np.exp(-t / 0.008) * 0.8
+        x = x + burst + 0.002 * rng.standard_normal(n)
+        pad = np.zeros(kit_build.PRE_ROLL)
+        x = np.concatenate([pad, x])
+        fit = kit_build.measure_pitch(np.stack([x, x], 1), key)
+        self.assertIsNotNone(fit)
+        self.assertAlmostEqual(audio.pitch_cents(fit["f0"], key), true_c, delta=5.0)
+        self.assertIsNotNone(fit.get("f0Acf"))
+        self.assertAlmostEqual(audio.pitch_cents(fit["f0Acf"], key), true_c, delta=5.0)
+
+    def test_top_octave_check(self):
+        ok = {105: [(38.0, 36.0), (37.0, 35.5)], 108: [(99.4, 95.0), (99.0, 92.0)]}
+        fails, flags = kit_build.top_octave_check(ok, {105: 26.0, 108: 86.5})
+        self.assertEqual(fails, [])
+        self.assertEqual(len(flags), 1)
+        self.assertTrue(flags[0].startswith("PITCH-L3 root 108"))
+        # a far-off root not pending L-3 fails; so does a peak/ACF disagreement
+        fails, _ = kit_build.top_octave_check({102: [(80.0, 79.0)]}, {102: 60.0})
+        self.assertEqual(len(fails), 1)
+        fails, _ = kit_build.top_octave_check({99: [(30.0, 5.0)]}, {99: 4.0})
+        self.assertEqual(len(fails), 1)
+        fails, _ = kit_build.top_octave_check({99: [(30.0, None)]}, {99: 4.0})
+        self.assertEqual(len(fails), 1)
+
     def test_rumble_does_not_set_the_floor(self):
         # a treble note 30 dB under sub-50 Hz rumble is still fitted
         import numpy as np
