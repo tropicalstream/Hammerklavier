@@ -130,6 +130,21 @@ class TransportTest {
         }
     }
 
+    /** Deviation 4 (RATE also rewinds and drops not-yet-heard voices): the onset still sounds exactly once. */
+    @Test fun aRateChangeBeforeAnOnsetPlaysItExactlyOnce() {
+        for (r in floatArrayOf(1.25f, 0.8f)) for (d in offsets) {
+            val h = Harness()
+            h.play(perfWithOnsetAt(b + d))
+            h.renderTo(b)
+            h.cmd(Cmd.RATE, 0L, r)
+            h.renderBlocks(40)
+            val on = h.firstAbove(0f) - 1
+            val expect = b + d / r.toDouble()
+            assertTrue("r=$r d=$d onset $on expected ~$expect", on >= b && abs(on - expect) <= 2.0)
+            assertEquals("r=$r d=$d heard once", 1, h.voicesOf(key).size)
+        }
+    }
+
     @Test fun aBankChangeBeforeAnOnsetPlaysItOnlyFromTheNewBank() {
         for (d in offsets) {
             val h = Harness()

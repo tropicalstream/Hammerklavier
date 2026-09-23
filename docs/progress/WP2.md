@@ -43,7 +43,7 @@ Private test helpers: `EngineTestKit.kt` (`Harness`, `IdentityMaster`, `TestBank
 
 ## Test results
 
-After merging main (contracts-v1.1, WP11 fixtures, WP7 MeshBuilder): `tools/gw :core:test`: 131 tests, 0 failures, 0 skipped, no `@Ignore`. `tools/check_purity.sh`: OK.
+After merging main (contracts-v1.1, WP11 fixtures, WP7 MeshBuilder): `tools/gw :core:test`: 133 tests, 0 failures, 0 skipped, no `@Ignore`. `tools/check_purity.sh`: OK.
 JVM bench on this Mac (PassThroughDsp): Hermite ≈ 8 ns, linear ≈ 5 ns, copy ≈ 4 ns per voice-frame.
 
 ## Wiring
@@ -54,15 +54,17 @@ JVM bench on this Mac (PassThroughDsp): Hermite ≈ 8 ns, linear ≈ 5 ns, copy 
 
 - Device work (M1 with WP4): `--ez bench true` numbers, the on-device HKAudio allocation count around
   10 s of `storm64` (debug build), T-CPU, T-UND, T-GC. Not allowed in this task (no adb).
-- Re-run T2.8/T2.11 against WP3's real `ResonanceProcessor` once it merges (the tests use capture
-  stand-ins for the combs).
+- **M1 integration item (review):** re-run `CombGateTest` (T2.8) and `EnergyTest` (T2.11) against WP3's
+  real `ResonanceProcessor` once WP3 merges; the tests use capture stand-ins, so the R80 golden check
+  (lane 39 = 0.25) stays open until then.
 
 ## Decisions and deviations (with reasons)
 
 1. **Play frames.** Scheduling (voice starts, queued events, damper landings, quill passes) uses a
    play-frame counter that advances only in playing blocks, so countdowns count playing frames only
-   (§2.5) and survive a pause; the engine counts its own output frames (256 per render) and treats
-   `blockStartFrame` as informational.
+   (§2.5) and survive a pause; the engine counts its own output frames (256 per render) and resyncs
+   to `blockStartFrame` when it jumps, shifting END, steal-age and debug-onset stamps by the delta
+   (test `aSkippedBlockStartFrameResyncsTheOutputClock`).
 2. **"Not yet heard" = before the sampled onset.** PAUSE/SEEK/SET_PERF/SET_BANK/RATE send to IDLE,
    without a fade, every voice whose onset frame has not been reached (not only PENDING ones): a
    voice that started reading its pre-onset frames 1–95 frames before the command would otherwise put
@@ -75,6 +77,9 @@ JVM bench on this Mac (PassThroughDsp): Hermite ≈ 8 ns, linear ≈ 5 ns, copy 
    the missing frames × rate, so the onset still lands exactly; a pending-list entry more than 50 ms
    late is dropped and counted.
 4. **RATE also rewinds** (like PAUSE, without a fade): pending voices were scheduled at the old rate.
+   This goes beyond §2.5/R5 (which list PAUSE, SEEK, SET_PERF, bank); recorded for the plan owner in
+   `docs/requests/WP4.md` item 5 (WP2 cannot edit PLAN.md §10). Covered by
+   `aRateChangeBeforeAnOnsetPlaysItExactlyOnce` (rates 1.25 and 0.8, 1–255 frames before an onset).
 5. **Key-down is a queued state event** at the note's event frame: `KeyState.noteOn`, the re-strike
    fades (τ by the pedal at that block) and the soft-feed flag happen when the note sounds, not up to
    1,280 frames early at dispatch. Voices get no damping before their note's key-down block (they
@@ -106,4 +111,11 @@ JVM bench on this Mac (PassThroughDsp): Hermite ≈ 8 ns, linear ≈ 5 ns, copy 
     the expected −40 dB crossing (onset + (thrFrame − onsetFrame)/rate), detected = the first output
     sample above 1 % of the expected peak.
 16. **Cmd.BENCH** runs in ≈ 2 ms slices per block and restores the resonance mode afterwards; the
-    results are on `EngineCore.bench` (see `docs/requests/WP4.md`).
+    results are on `EngineCore.bench`; a contract-change request to publish them via `diagnostics()` /
+    `AudioStats` is in `docs/requests/WP4.md` item 1, and the wiring note no longer tells WP4 to hard-cast.
+
+## Review fixes (2026-09-22)
+
+All four minor findings addressed: output-frame resync + test; RATE-before-onset test + deviation
+recorded; bench wiring moved off the hard cast to a contract-change request; comb tests kept as an M1
+integration item (cannot be closed before WP3 merges). None rejected.

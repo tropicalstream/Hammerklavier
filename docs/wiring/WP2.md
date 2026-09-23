@@ -19,8 +19,10 @@ own: the engine is constructed by the app and handed to WP4's `audio.AudioOutput
 2. `AppController` / `HammerklavierApp`: no change. They talk only to `AudioControl` / `KitService`; the engine is
    reached through the command ring. Bank and key-map tokens come from `EngineCore.prepareBank` /
    `prepareKeyMap`, called by WP4's KitManager on HKVoicer (see `docs/requests/WP4.md`).
-3. `Cmd.BENCH` results are on `EngineCore.bench`; WP4 reads them (cast `engine as EngineCore`) for
-   `--ez bench true`.
+3. `Cmd.BENCH` results are not yet on the frozen `EngineCoreApi`. A contract-change request (bench
+   results on `diagnostics()` / `AudioStats`) is recorded in `docs/requests/WP4.md`; until WP0 accepts it,
+   WP4 must not hard-cast `engine as EngineCore`. The `--ez bench true` path is optional and may use only a
+   safe `(engine as? EngineCore)?.bench`, reporting "bench unavailable" when a SineCore or wrapper sits in the slot.
 
 ## Smoke steps
 

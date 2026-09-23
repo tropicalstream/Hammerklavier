@@ -132,4 +132,19 @@ class EngineTimingTest {
         assertTrue("scheduled ${o[0]} detected ${o[1]}", abs(o[0] - o[1]) <= 2)
         assertTrue(abs(o[0] - 48_000) < 48)
     }
+
+    /** A skipped block in WP4's clock (blockStartFrame jumps): the engine resyncs, debugOnset follows WP4's frames. */
+    @Test fun aSkippedBlockStartFrameResyncsTheOutputClock() {
+        val h = Harness()
+        val o = LongArray(2)
+        val blk = FloatArray(2 * HK.BLOCK)
+        h.play(perfSong(listOf(N(1000.0, 1050.0, 69, 118))))
+        var f = 0L
+        while (f < 20_480) { h.core.render(blk, f); f += HK.BLOCK }
+        f += 10 * HK.BLOCK                                   // WP4 skipped ten blocks
+        while (f < 70_000) { h.core.render(blk, f); f += HK.BLOCK }
+        assertTrue(h.core.debugOnset(o))
+        assertTrue("scheduled ${o[0]} detected ${o[1]}", abs(o[0] - o[1]) <= 2)
+        assertTrue("scheduled ${o[0]}", abs(o[0] - (48_000 + 10 * HK.BLOCK)) < 48)
+    }
 }

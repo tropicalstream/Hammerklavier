@@ -428,8 +428,24 @@ class EngineCore(private val dsp: DspSet, private val cursors: VoiceCursorBoard,
 
     // ═══════════ render (HKAudio) ═══════════
 
+    /**
+     * WP4's output clock jumped (a skipped or repeated block): move every output-frame stamp by the
+     * same delta so CoreClockState, debug onsets, END timing and steal ages follow WP4's timeline.
+     */
+    private fun resyncOutFrame(to: Long) {
+        val d = to - outFrame
+        outFrame = to
+        endStartOut += d
+        if (dbgScheduled >= 0) dbgScheduled += d
+        if (dbgArmedOut >= 0) dbgArmedOut += d
+        if (dbgDetected >= 0) dbgDetected += d
+        val vs = pool.voices
+        for (i in 0 until VoicePool.TOTAL) vs[i].startedOut += d
+    }
+
     override fun render(out: FloatArray, blockStartFrame: Long) {
         val block = HK.BLOCK
+        if (blockStartFrame != outFrame) resyncOutFrame(blockStartFrame)
         val s0 = songFrames()
         val songNow = (s0 * 1e6 / sampleRate).toLong()
         state.songUs = songNow; state.rate = rate; state.playing = playing; state.epoch = epoch
