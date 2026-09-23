@@ -43,10 +43,14 @@ Private test helpers: `EngineTestKit.kt` (`Harness`, `IdentityMaster`, `TestBank
 
 ## Test results
 
-`tools/gw :core:test`: 103 tests (WP0's 37 + WP2's 66), 0 failures, 0 skipped. `tools/check_purity.sh`: OK.
+After merging main (contracts-v1.1, WP11 fixtures, WP7 MeshBuilder): `tools/gw :core:test`: 131 tests, 0 failures, 0 skipped, no `@Ignore`. `tools/check_purity.sh`: OK.
 JVM bench on this Mac (PassThroughDsp): Hermite ≈ 8 ns, linear ≈ 5 ns, copy ≈ 4 ns per voice-frame.
 
-## Remaining
+## Wiring
+
+`docs/wiring/WP2.md` (Wiring.kt constructs `EngineCore(dsp, cursors, head, HK.SR)` and hands it to WP4's AudioOutput).
+
+## Remaining (outside this task)
 
 - Device work (M1 with WP4): `--ez bench true` numbers, the on-device HKAudio allocation count around
   10 s of `storm64` (debug build), T-CPU, T-UND, T-GC. Not allowed in this task (no adb).
