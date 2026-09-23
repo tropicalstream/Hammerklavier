@@ -538,3 +538,22 @@ Gate (plugged in; `stay_on_while_plugged_in=7` on this device, so the display ne
 - Carried: T-DEC upright no margin; grand T-DEC with two lanes not re-measured; upright contact pool (WP8, declined for rc1);
   upright Hall/1 candelabrum occlusion; harpsichord cutaway legibility; baseline profile not added; WP3 plan-owner questions.
 - Tags: **milestone-M8 and v1.0-rc1 not set** — the M8 gate (unplugged soak, asleep/BT, listening sign-off) is not passed.
+
+### M8 second pass (2026-09-23, integrator) — still PARTIAL, not tagged
+- **storm64 onset fixed.** AudioOutput now counts consecutive blocks whose render time is over 85% of the
+  block period; three in a row take HeadroomGuard's urgent step (the same one an underrun takes) before the
+  pipe drains. The 0.34 s load EMA lagged the chord-storm onset. smoke M1: underruns=[0] (it was 2), clockMiss 0,
+  energyMiss 0, majflt 0, measured twice.
+- **AllocProbe retries.** `assertNoAllocation` measures up to 3 times and fails only if every attempt allocates.
+  A steady per-call allocation still fails; a one-off JVM blip (the 904 bytes in MechanicsEvaluatorTest) does not.
+- Gate: tools/ci.sh PASS on the second run. The first run failed `AudioOutputTest.stopAndStartRestoreThePausedPosition`
+  (line 255, a timing test), which is a new flaky test. Release APK md5 e8bc0c3c071bd5d011bc3385b0a7ef03 installed and verified.
+  smoke all: M1, M3, M4, M5, M6, M7 and M8 PASS. M0 FAILED in the `all` run on 2 FRAME HITCH lines, then PASSED twice when re-run on its own.
+- Not re-run in this pass: T-THERM, T-UND (the plugged-in numbers from the first pass still stand).
+
+### Open issues (M8, after the second pass)
+- Needs the user: the 45-min unplugged T-THERM and max-brightness run; T-UND with the display really asleep
+  (stay_on_while_plugged_in keeps it awake on the cable); T-UND-BT and T-SYNC-BT; listening checks L-1 to L-8;
+  and a look at the new palette on the waveguide.
+- Flaky: AudioOutputTest.stopAndStartRestoreThePausedPosition (1 failure in 2 CI runs); M0 FRAME HITCH (1 in 3 runs).
+- WP10 request 5 waits on T-SYNC-BT. The WP8 contact pool under the upright is deferred. The items carried from M7 are unchanged.

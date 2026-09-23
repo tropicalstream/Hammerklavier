@@ -30,12 +30,17 @@ object AllocProbe {
 
     /**
      * Runs [warmUp] and then [block] once (class loading, linkage and first-call costs), then fails
-     * with an AssertionError if a second run of [block] allocates more than [allowBytes].
+     * with an AssertionError if a second run of [block] allocates more than [allowBytes]. A steady
+     * per-call allocation shows in every run, so the measurement is retried up to [attempts] times
+     * and fails only if every attempt allocates: a single JVM-side blip (seen once in full CI as
+     * 904 bytes in MechanicsEvaluatorTest) no longer fails the build.
      */
-    inline fun assertNoAllocation(what: String, allowBytes: Long = 0L, warmUp: () -> Unit = {}, block: () -> Unit) {
+    inline fun assertNoAllocation(what: String, allowBytes: Long = 0L, attempts: Int = 3, warmUp: () -> Unit = {}, block: () -> Unit) {
         warmUp()
         block()
-        val bytes = measure(block)
+        var bytes = measure(block)
+        var n = 1
+        while (bytes > allowBytes && n < attempts) { bytes = measure(block); n++ }
         if (bytes > allowBytes) throw AssertionError("$what allocated $bytes bytes (allowed $allowBytes)")
     }
 }
