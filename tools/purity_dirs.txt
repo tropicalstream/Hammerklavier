@@ -1,0 +1,4 @@
+# Directories whose sources must be pure (PLAN §2.2, R95): Kotlin/Java that imports only kotlin.*,
+# java.* (not java.awt), org.json.* and the project's own packages, and names no android.*,
+# androidx.*, java.awt or javax.* class. One path per line, relative to the repository root.
+core/src/main

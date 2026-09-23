@@ -1,0 +1,23 @@
+# Line endings: text normalised to LF; scripts must stay LF to run.
+* text=auto eol=lf
+*.sh text eol=lf
+gradlew text eol=lf
+tools/gw text eol=lf
+
+# Binary files (never diffed or normalised).
+*.jar binary
+*.png binary
+*.mid binary
+*.midi binary
+*.kar binary
+*.opus binary
+*.ogg binary
+*.wav binary
+*.flac binary
+*.bin binary
+
+# Large kit assets (Opus units and env.bin) go through Git LFS (WP11 writes them; PLAN §6.10);
+# map.json stays text. The test fixtures under core/src/test/resources/wp11/ stay ordinary git
+# objects (small, needed by every clone).
+app/src/main/assets/instruments/**/*.opus filter=lfs diff=lfs merge=lfs -text
+app/src/main/assets/instruments/**/*.bin filter=lfs diff=lfs merge=lfs -text

@@ -1,0 +1,26 @@
+# --- build output ---------------------------------------------------------
+.gradle/
+build/
+app/build/
+.kotlin/
+captures/
+.idea/
+*.iml
+local.properties
+
+# --- raw downloads (large; rebuilt by tools/) -----------------------------
+tools/cache/
+
+# --- credentials ----------------------------------------------------------
+*.jks
+*.keystore
+*.pem
+*.p12
+*.env
+
+# --- build artefacts ------------------------------------------------------
+*.apk
+*.apk.idsig
+
+# --- OS -------------------------------------------------------------------
+.DS_Store

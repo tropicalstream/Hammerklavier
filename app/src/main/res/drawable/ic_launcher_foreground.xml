@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Hammerklavier launcher icon: one hammer, a hair's breadth after it has struck. Three strings of a
+  treble unison run across the top; the felt head has just left them on its rebound and the strings
+  are still bright with the blow. Below, the shank runs back to the flange. It reads as a hammer at
+  48dp, which a keyboard does not: at that size a keyboard is a barcode.
+
+  Everything sits inside the 66dp safe zone (x 21..87, y 21..87 of a 108 viewport).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- The three strings of the unison, still ringing. -->
+    <path android:pathData="M22,30h64" android:strokeColor="#FFF4DDA8" android:strokeWidth="1.6" />
+    <path android:pathData="M22,34h64" android:strokeColor="#FFF4DDA8" android:strokeWidth="1.6" />
+    <path android:pathData="M22,38h64" android:strokeColor="#FFF4DDA8" android:strokeWidth="1.6" />
+    <!-- The glow where the felt met them. -->
+    <path android:pathData="M54,34m-9,0a9,5 0,1 1,18 0a9,5 0,1 1,-18 0" android:fillColor="#FFFFE7B0" android:fillAlpha="0.28" />
+
+    <!-- The felt head: a rounded, slightly pear-shaped hammer on its moulding. -->
+    <path android:pathData="M45,44 C45,40 63,40 63,44 L62,56 C62,59 46,59 46,56 Z" android:fillColor="#FFF2EAD8" />
+    <path android:pathData="M47,56 L61,56 L60,62 L48,62 Z" android:fillColor="#FFC9A36A" />
+
+    <!-- The shank, running back and down to the flange. -->
+    <path android:pathData="M52.5,62 L55.5,62 L57,84 L51,84 Z" android:fillColor="#FFE3C089" />
+    <path android:pathData="M46,82h16v5h-16z" android:fillColor="#FFB8894C" />
+</vector>

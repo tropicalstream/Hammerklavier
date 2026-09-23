@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Hammerklavier overlay colours, from contract/Pal (PLAN §5.9). On the waveguide black is
+         transparent, so the window and every background are pure black. -->
+    <color name="black">#FF000000</color>
+    <color name="hud_text">#FFFFECC8</color>     <!-- Pal.HUD_TEXT 255,236,200 -->
+    <color name="hud_accent">#FFF0BE64</color>   <!-- Pal.HUD_ACCENT 240,190,100 -->
+    <color name="gilt_lit">#FFE2A84E</color>     <!-- Pal.GILT_LIT 226,168,78 -->
+</resources>

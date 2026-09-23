@@ -1,0 +1,37 @@
+package com.tropicalstream.hammerklavier.testutil
+
+import java.lang.management.ManagementFactory
+
+/**
+ * Per-thread allocation assertions for JVM tests (PLAN §2.1 rule 1, T2.10). Uses HotSpot's
+ * `com.sun.management.ThreadMXBean.getThreadAllocatedBytes`; tests run with escape analysis off
+ * (`-XX:-DoEscapeAnalysis -XX:-EliminateAllocations`, core/build.gradle.kts), so scalar
+ * replacement cannot hide what ART would allocate.
+ *
+ *     AllocProbe.assertNoAllocation("render") { repeat(1000) { core.render(out, 0L) } }
+ */
+object AllocProbe {
+    private val bean: com.sun.management.ThreadMXBean =
+        ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean
+
+    init { if (!bean.isThreadAllocatedMemoryEnabled) bean.isThreadAllocatedMemoryEnabled = true }
+
+    /** Bytes allocated so far by the calling thread. */
+    fun allocatedBytes(): Long = bean.currentThreadAllocatedBytes
+
+    /** Bytes allocated by the calling thread while [block] runs (the probe's own overhead removed). */
+    inline fun measure(block: () -> Unit): Long {
+        val overhead = run { val a = allocatedBytes(); val b = allocatedBytes(); b - a }
+        val start = allocatedBytes()
+        block()
+        val end = allocatedBytes()
+        return (end - start - overhead).coerceAtLeast(0L)
+    }
+
+    /** Runs [warmUp] once, then fails with an AssertionError if [block] allocates more than [allowBytes]. */
+    inline fun assertNoAllocation(what: String, allowBytes: Long = 0L, warmUp: () -> Unit = {}, block: () -> Unit) {
+        warmUp()
+        val bytes = measure(block)
+        if (bytes > allowBytes) throw AssertionError("$what allocated $bytes bytes (allowed $allowBytes)")
+    }
+}
