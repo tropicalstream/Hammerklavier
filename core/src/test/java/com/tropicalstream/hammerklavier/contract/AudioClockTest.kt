@@ -149,9 +149,9 @@ class AudioClockTest {
         val c = AudioClock()
         for (k in 0 until 300) block(c, k * B, k * 5333L)
         c.publishTimestamp(100 * B, 0L)
-        AllocProbe.assertNoAllocation("AudioClock") {
-            for (i in 0 until 10_000) { c.sample(i * 1000L, out); block(c, (300 + i) * B, i.toLong()); if (i % 16 == 0) c.publishTimestamp(100 * B + i * 16L * 256, i * 85_333_333L + 1) }
-        }
+        fun run(base: Int) { for (i in 0 until 10_000) { val j = base + i; c.sample(j * 1000L, out); block(c, (300 + j) * B, j.toLong()); if (i % 16 == 0) c.publishTimestamp(100 * B + j * 16L * 256, j * 85_333_333L + 1) } }
+        run(0)                                  // warm-up: HotSpot's (re)compilation may charge a few hundred bytes once
+        AllocProbe.assertNoAllocation("AudioClock") { run(10_000) }
     }
 
     /** 10⁶ reads against a writer thread: never a torn record (checksum fields) nor a torn anchor. */

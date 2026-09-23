@@ -909,7 +909,7 @@
      "hasSustain": false,
      "hasSoft": false,
      "hasSostenuto": false,
-     "pedalMode": "SWITCH",
+     "pedalMode": "NONE",
      "folds": {
       "grand": 0,
       "upright": 0,
@@ -949,7 +949,7 @@
      "hasSustain": false,
      "hasSoft": false,
      "hasSostenuto": false,
-     "pedalMode": "SWITCH",
+     "pedalMode": "NONE",
      "folds": {
       "grand": 0,
       "upright": 0,

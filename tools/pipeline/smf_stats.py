@@ -17,7 +17,7 @@ Definitions (also written into the golden file):
   without an off ends at the end of its track; a zero-length note lasts 30 ms (§4.3 step 3);
 - cc64/cc66/cc67 = controller event counts on the kept channels; has* = any value > 0;
 - pedalMode = CONTINUOUS if CC64 takes ≥ 8 distinct values strictly between 0 and 127, SWITCH if
-  there is any CC64 event, else NONE (§4.3 step 2);
+  any CC64 value is > 0, else NONE (§4.3 step 2; a file whose only CC64 is 0 has no pedalling);
 - folds[instrument] = notes outside the instrument's compass (grand and upright 21–108,
   harpsichord 29–89);
 - flatVelocity = true when ≥ 95% of the notes share one velocity (catalogue velocityPolicy flat).
@@ -235,7 +235,7 @@ def stats(data, name=""):
     for n in notes:
         vel_hist[n[3]] += 1
     mid = {v for _u, v in cc[64] if 0 < v < 127}
-    pedal = "CONTINUOUS" if len(mid) >= 8 else ("SWITCH" if cc[64] else "NONE")
+    pedal = "CONTINUOUS" if len(mid) >= 8 else ("SWITCH" if any(v > 0 for _u, v in cc[64]) else "NONE")
     ncount = len(notes)
     return {
         "bytes": len(data), "sha1Hex": common.sha1_bytes(data),
@@ -264,7 +264,7 @@ DEFINITIONS = {
                      "zero-length notes last 30 ms; CC120/CC123 end a channel's open notes",
     "durationSec": "lastNoteOffUs / 1e6, rounded to 1 ms (the catalogue's durationSec)",
     "cc": "controller event counts; has* = any value > 0",
-    "pedalMode": "CONTINUOUS if CC64 has >= 8 distinct values strictly between 0 and 127; SWITCH if any CC64; else NONE",
+    "pedalMode": "CONTINUOUS if CC64 has >= 8 distinct values strictly between 0 and 127; SWITCH if any CC64 > 0; else NONE",
     "folds": "notes outside the compass: grand/upright 21-108, harpsichord 29-89",
     "flatVelocity": ">= 95% of the notes share one velocity",
 }

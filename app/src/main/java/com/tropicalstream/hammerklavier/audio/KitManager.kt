@@ -42,7 +42,9 @@ import java.util.concurrent.atomic.AtomicInteger
  * map is missing or invalid, and to the in-code [SynthBank] when no decoder works, the probe
  * fails, or storage is too short even for the reduced grand. Callbacks are posted to main.
  */
-class KitManager(ctx: Context, private val voicer: ExecutorService, private val loader: ExecutorService) : KitService {
+class KitManager(ctx: Context, private val voicer: ExecutorService, private val loader: ExecutorService,
+                 /** Integrator (M1): true = every instrument opens the stub kit (the stand-in bank). */
+                 private val standIn: () -> Boolean = { false }) : KitService {
     private val app = ctx.applicationContext
     private val main = Handler(Looper.getMainLooper())
     private val prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -177,9 +179,11 @@ class KitManager(ctx: Context, private val voicer: ExecutorService, private val 
     private fun openTask(k: Kit) {
         runCatching { Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND) }
         try {
-            var idx = k.index ?: loadIndex(k.id.key)
+            val forceStub = runCatching { standIn() }.getOrDefault(false)
+            var idx = if (forceStub) null else k.index ?: loadIndex(k.id.key)
             var reason: FallbackReason? = null
             var assetDir = k.id.key
+            if (forceStub) Log.i(HK.TAG_KIT, "${k.id.key}: stand-in stub kit (kit.standIn)")
             if (idx == null) {
                 reason = FallbackReason.BANK_MISSING
                 idx = loadIndex("stub")

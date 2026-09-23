@@ -36,5 +36,6 @@ class StubUi : UiStateMachine {
     override fun onEvent(e: UiEvent, facts: UiFacts, nowMs: Long) {}
 
     override fun render(facts: UiFacts, nowMs: Long): OverlayState =
-        StubOverlayState(title = "Hammerklavier", line = "${facts.view.name.lowercase()} · ${if (facts.playing) "playing" else "paused"} · ${facts.version}")
+        StubOverlayState(title = "Hammerklavier", line = "${facts.view.name.lowercase()} · ${if (facts.playing) "playing" else "paused"} · ${facts.version}" +
+            (facts.debug?.let { "\n$it" } ?: ""))
 }

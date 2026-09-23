@@ -72,11 +72,18 @@ class AppController(private val ctx: Context, private val w: Wiring) {
     private val selfTest = SelfTest(ctx, w, w.main)
     private var media: MediaButtons? = null
     val soak = SoakRecorder(ctx, w.main, SoakSource())
+    /** M1 interim playback driver (kits → audio, `play`, `bench`, stats lines); WP12 replaces it. */
+    val playback = Playback(w).also { pb ->
+        pb.onVoiceCap = { cap -> q0Cap = cap; applyQuality(quality.level) }
+        pb.onPlaying = { runCatching { w.kits.setPlaybackHint(true, InstrumentId.GRAND, quality, governor.effectiveTenths) } }
+    }
+    private val debugTick = object : Runnable { override fun run() { if (!debug) return; refreshOverlay(); w.main.postDelayed(this, 500) } }
 
     fun startEngine() {
         if (engineRunning) return
         engineRunning = true
         w.audio.start()
+        playback.start()
         governor.start(); control.start(); perf.start()
         if (media == null) media = runCatching { MediaButtons(ctx) { a -> applyAll(listOf(a)) } }.getOrNull()
         Log.i(HK.TAG_UI, "engine started")
@@ -85,7 +92,7 @@ class AppController(private val ctx: Context, private val w: Wiring) {
     fun stopEngine() {
         if (!engineRunning) return
         engineRunning = false
-        soak.stop(); perf.stop(); control.stop(); governor.stop()
+        playback.stop(); soak.stop(); perf.stop(); control.stop(); governor.stop()
         media?.release(); media = null
         w.audio.stop()
         Log.i(HK.TAG_UI, "engine stopped")
@@ -144,7 +151,7 @@ class AppController(private val ctx: Context, private val w: Wiring) {
         when (a) {
             UiAction.PlayPause -> {
                 w.audio.clock.sample(System.nanoTime(), clockSample)
-                if (clockSample.playing) w.audio.pause() else w.audio.play()
+                if (clockSample.playing) w.audio.pause() else { w.audio.play(); w.main.postDelayed({ playback.logClock("resume") }, 1000) }
                 media?.setPlaying(!clockSample.playing, positionMs())
             }
             is UiAction.SetView -> { view = a.view; framing = a.framing; gl?.setView(view, framing) }
@@ -178,7 +185,7 @@ class AppController(private val ctx: Context, private val w: Wiring) {
                 "view" -> ViewId.entries.getOrNull(b.getInt(k, -1))?.let { applyAll(listOf(UiAction.SetView(it, framing))) } ?: unknown(k, b)
                 "framing" -> applyAll(listOf(UiAction.SetView(view, b.getInt(k, 0).coerceIn(0, 1))))
                 "pause" -> if (b.getBoolean(k)) { w.audio.pause(); media?.setPlaying(false, positionMs()) }
-                "resume" -> if (b.getBoolean(k)) { w.audio.play(); media?.setPlaying(isPlaying(), positionMs()) }
+                "resume" -> if (b.getBoolean(k)) { w.audio.play(); w.main.postDelayed({ playback.logClock("resume") }, 1000); media?.setPlaying(isPlaying(), positionMs()) }
                 "seek" -> w.audio.seek(b.getLong(k, 0L) * 1000 + HK.PRE_ROLL_US)
                 "rate" -> w.audio.setRate(b.getFloat(k, 1f))
                 "leave" -> if (b.getBoolean(k)) apply(UiAction.Leave)
@@ -186,9 +193,14 @@ class AppController(private val ctx: Context, private val w: Wiring) {
                 "faketemp" -> governor.fakeTenths(b.getInt(k, -1))
                 "recenter" -> if (b.getBoolean(k)) gl?.recenter()
                 "brightness" -> { brightnessOverride = b.getFloat(k, -1f).let { if (it < 0f) -2f else it.coerceIn(0.05f, 1f) }; if (resumed) applyBrightness() }
-                "debug" -> { debug = b.getBoolean(k); onDebug?.invoke(debug) }
+                "debug" -> { debug = b.getBoolean(k); onDebug?.invoke(debug); w.main.removeCallbacks(debugTick); if (debug) w.main.post(debugTick) else refreshOverlay() }
+                "play" -> b.getString(k)?.let { playback.play(it) } ?: unknown(k, b)
+                "bench" -> if (b.getBoolean(k)) playback.bench(b.getInt("benchsecs", 2).coerceIn(1, 30))
+                "lowlatency" -> w.settings.putBool("audio.lowLatency", b.getBoolean(k))
+                "standin" -> w.settings.putBool(Wiring.KEY_STAND_IN, b.getBoolean(k))              // applies at the next launch
+                "stats" -> if (b.getBoolean(k)) playback.logStats()
                 "selftest" -> if (b.getBoolean(k)) selfTest.run(gl, b.getInt("selftestsecs", 60).coerceIn(1, 600))
-                "selftestsecs", "soakplan", "mono", "echo", "n" -> {}                   // parameters of other keys; echo is for the smoke test
+                "selftestsecs", "benchsecs", "soakplan", "mono", "echo", "n" -> {}                   // parameters of other keys; echo is for the smoke test
                 "gcstats" -> if (b.getBoolean(k)) logGcStats()
                 "dump" -> if (b.getBoolean(k)) dump()
                 "soak" -> if (b.getBoolean(k)) soak.start(b.getString("soakplan")) else soak.stop()
@@ -257,7 +269,8 @@ class AppController(private val ctx: Context, private val w: Wiring) {
             instrument = InstrumentId.GRAND, view = view, framing = framing, kitStates = emptyMap(), library = null,
             settings = DEFAULT_SETTINGS, nextTitle = null, quality = quality.level, companionUrl = null, companionToken = "",
             route = w.audio.route, status = emptyList(), perfInfo = null, firstRun = false, sessions = 0, resumeTitle = null,
-            recent = emptyList(), shelfId = null, version = "${BuildConfig.VERSION_NAME} ${BuildConfig.GIT_COMMIT}", debug = null)
+            recent = emptyList(), shelfId = null, version = "${BuildConfig.VERSION_NAME} ${BuildConfig.GIT_COMMIT}",
+            debug = if (debug) playback.debugLine() else null)
     }
 
     companion object {
