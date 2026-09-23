@@ -389,6 +389,9 @@ class AudioOutput internal constructor(
             unavailable = false
             core.reset()                                   // a stale tail can never replay
             beginSession()
+            // The whole replay (bank, key map, SET_PERF at the paused position...) lands before the
+            // first published block, so a new session never shows song time 0 for one block.
+            if (alive(gen)) ring.drain(Int.MAX_VALUE, tap)
             while (alive(gen)) {
                 if (parked) { parkWait(gen); continue }
                 if (!block(gen)) break

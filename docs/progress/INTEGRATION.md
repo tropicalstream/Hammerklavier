@@ -557,3 +557,26 @@ Gate (plugged in; `stay_on_while_plugged_in=7` on this device, so the display ne
   and a look at the new palette on the waveguide.
 - Flaky: AudioOutputTest.stopAndStartRestoreThePausedPosition (1 failure in 2 CI runs); M0 FRAME HITCH (1 in 3 runs).
 - WP10 request 5 waits on T-SYNC-BT. The WP8 contact pool under the upright is deferred. The items carried from M7 are unchanged.
+
+### M8 third pass (2026-09-23, integrator) — still PARTIAL, not tagged
+- **AudioOutputTest.stopAndStartRestoreThePausedPosition fixed at the source.** The replay after stop/start
+  (bank, key map, quality, room, mix, registration, rate, duck, SET_PERF at the paused position, route) could
+  exceed the 16-command drain of the first block, so the new session published one block at song time 0 before
+  SET_PERF landed (the test sampled it; the UI could show 0:00 for one block). HKAudio now drains the whole ring
+  once after beginSession(), before the first block. AudioOutputTest 7/7 green runs; tools/ci.sh PASS twice.
+- **M0 FRAME HITCH is characterised, not fixed.** FRAME HITCH now logs its gap and the previous frame's GL work.
+  It reproduces on the **first M0 run after every install** (5/5, 122–141 ms, prevWork 3–7 ms, ~70–150 ms after
+  the first `overlay context=MENU`), and never on later runs without a reinstall (0/4), even 90 s after install.
+  No `slow main` line (actions + overlay build < 16 ms). The GL frame itself is cheap: the gap is outside
+  onDrawFrame (swap / HWUI RenderThread on the shared GPU), consistent with the per-install shader caches
+  being cold. A prewarm that drew the menu card at start (alpha 0.01, then alpha 1) did not remove it and was
+  reverted. `smoke all` runs M0 straight after run.sh, which is why it fails there.
+- Release APK installed and md5-verified. smoke all (this pass): M1, M3, M4, M5, M6, M7, M8 PASS; M0 FAIL (the
+  first-after-install hitch above), M0 re-runs PASS 2/2.
+
+### Open issues (M8, after the third pass)
+- Needs the user: 45-min unplugged T-THERM and max-brightness run; T-UND with the display truly asleep;
+  T-UND-BT, T-SYNC-BT; listening L-1..L-8; the palette on the waveguide.
+- M0 first-launch-after-install FRAME HITCH (~130 ms once per install, on the first menu open). Next step: a
+  perfetto trace of that first open (RenderThread + GL thread) to find the compile/upload.
+- WP10 request 5 waits on T-SYNC-BT; WP8 upright contact pool deferred; M7 carry-overs unchanged.
