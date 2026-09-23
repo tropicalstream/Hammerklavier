@@ -1,8 +1,9 @@
-# WP6 wiring (wp6-render, f43a9f8)
+# WP6 wiring (wp6-render, after merging main v1.1)
 
 ## Swap
-- `Wiring.glHost(ctx, msaa)`: `StubGlHost(ctx)` → `render.HkGlView(ctx, loader = loader, msaa = msaa, head = head)`
-  (`head` = the process's `HeadPose` singleton once WP0 adds it to Wiring; until then omit it, it defaults to null).
+- `Wiring.kt` line 63: `fun glHost(ctx: Context, msaa: Boolean): GlHost = StubGlHost(ctx)` →
+  `render.HkGlView(ctx, loader = loader, msaa = msaa, head = head)` (`head` is Wiring's existing `val head = HeadPose()`);
+  drop the `StubGlHost` import. Nothing else in Wiring changes; `scenes` stays StubScenes until WP7/WP8 swap in.
 
 ## Hook-ups
 - MainActivity (as today): `gl.onResume()` / `gl.onPause()` from the activity; `gl.setStereo(!mono)` for `--ez mono true`.
