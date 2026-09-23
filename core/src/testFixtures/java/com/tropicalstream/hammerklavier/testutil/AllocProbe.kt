@@ -28,9 +28,13 @@ object AllocProbe {
         return (end - start - overhead).coerceAtLeast(0L)
     }
 
-    /** Runs [warmUp] once, then fails with an AssertionError if [block] allocates more than [allowBytes]. */
+    /**
+     * Runs [warmUp] and then [block] once (class loading, linkage and first-call costs), then fails
+     * with an AssertionError if a second run of [block] allocates more than [allowBytes].
+     */
     inline fun assertNoAllocation(what: String, allowBytes: Long = 0L, warmUp: () -> Unit = {}, block: () -> Unit) {
         warmUp()
+        block()
         val bytes = measure(block)
         if (bytes > allowBytes) throw AssertionError("$what allocated $bytes bytes (allowed $allowBytes)")
     }

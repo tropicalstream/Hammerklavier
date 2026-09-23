@@ -80,7 +80,7 @@ exactly in Kotlin, the choice below is now the contract.
 
 ### Stub signatures (the §2.3 behaviour paragraph named them without signatures)
 
-19. `FakeClock(nanos: () -> Long = System::nanoTime)`: `setPerformance(generation, startUs, endUs =
+19. `FakeClock(nanos: () -> Long = { System.nanoTime() })`: `setPerformance(generation, startUs, endUs =
     Long.MAX_VALUE)` (bumps the epoch), `play()`, `pause()`, `seek(us)` (bumps the epoch),
     `setRate(r)`, `setRegistration(mask)`, `songUsNow()`, `atEnd()`, `isPlaying`,
     `currentGeneration`. Song time stops at `endUs`.
@@ -136,6 +136,26 @@ exactly in Kotlin, the choice below is now the contract.
     block and extrapolates at the nominal rate; no ring, fit, rejection or `clockMiss` yet) and
     **`VisualClock`** (passes the raw time through, held monotone, with simple exposure windows).
     Both get their §2.5 implementations and the §7.2 WP0 tests in contracts-v1.1 (bodies only).
+
+### Tested with this entry (JVM, `tools/gw :core:test`)
+
+32. `PedalCurve.nextCrossing` rounds an interpolated crossing to the **nearest µs** (float levels
+    such as 0.33f would otherwise land 1 µs late under a ceiling).
+33. JVM tests shipped with contracts-v1: PhysicalCurvesTest, TuningProfileTest, PedalCurveTest
+    (cursor = binary search at 10⁵ times incl. backward steps; bind/advance allocate nothing),
+    PerformanceHelpersTest, SmallPrimitivesTest (Playlist, QualityLadder, ThermalPolicy's
+    37 → 39.1 → 42.2 → 44.1 → 43.0 → 42.4 → 41.0 → 40.4 °C sequence, Conventions for the grand's
+    Player pose, KonzertzimmerAcoustics areas and T60, HeadPose, Pal, MaterialTable), RingsTest
+    (CommandRing 2·10⁶ items SPSC without loss or reordering, drops counted, drain allocation-free;
+    EnergyRing selection, misses and no torn reads under a concurrent writer; VoiceCursorBoard),
+    StubContractTest (every synthetic kind × instrument passes `testutil/PerformanceValidator`;
+    the §4.5 table; folds, latches, pedal noises, legato hold; twin recognition; SineCore onset
+    exact at frame 48,000 (rate 1) and 96,000 (rate 0.5), held across a pause, −12 dBFS RMS and
+    lane 39 = 0.25 at v127, allocation-free render, one end; SineBank and KeyMapFixtures;
+    NullAudio's single onEnded), MeshBuilderTest (winding agrees with unit normals, one-hot lanes,
+    the 65,535 split with unsigned indices, the stub keyboard).
+34. `testutil/PerformanceValidator` (core test fixtures, WP0) is available to every WP's tests;
+    `AllocProbe.assertNoAllocation` runs the block once as warm-up before measuring it.
 
 ### `FixedRoom.PLAYER` generator (the §3.12 numbers, run once)
 

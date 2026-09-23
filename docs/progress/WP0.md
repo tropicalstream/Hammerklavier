@@ -22,7 +22,9 @@ Branch `main`, repository `/Users/me/Projects/Hammerklavier`. Plan: PLAN §7.2 W
   StubLibrary, StubUi (+ StubOverlayState), MemSettings; SyntheticSpecs is in `contract/`. App:
   `contract/stub/android/StubGlHost.kt`, `StubOverlay.kt`. All have working bodies except
   AudioClock and VisualClock (trivial, see contracts-changelog item 31).
-- **Test fixtures (`core/src/testFixtures/.../testutil`):** AllocProbe, AwtPainter.
+- **Test fixtures (`core/src/testFixtures/.../testutil`):** AllocProbe, AwtPainter,
+  PerformanceValidator.
+- **`system/ThermalPolicy.kt`** (core, pure): the §5.11 enter/relax table with one-step relaxation.
 - **`mesh/MeshBuilder.kt`** day-0 subset (part, color, vertex, tri, quad, box, build with split).
 - **Shell:** HammerklavierApp (HKLoader/HKVoicer executors, crash.txt handler, Wiring,
   AppController), MainActivity (GL view + BinocularSbsLayout overlay, black, keep-screen-on,
@@ -36,11 +38,10 @@ Branch `main`, repository `/Users/me/Projects/Hammerklavier`. Plan: PLAN §7.2 W
 
 ## Remaining (days 1–2 → contracts-v1.1)
 
-- AudioClock and VisualClock to the full §2.5 algorithms; the §7.2 WP0 JVM tests (AudioClockTest,
-  VisualClockTest, EnergyRingTest, CommandRingTest, VoiceCursorBoardTest, HeadPoseTest,
-  PedalCurveTest, PhysicalCurvesTest, TuningTest, ConventionsTest, PlaylistTest,
-  QualityLadderTest, ThermalPolicyTest, StubContractTest incl. PerformanceValidator).
-- `system/*` (ThermalPolicy (core), Settings, ThermalGovernor, DebugControl, PerfProbe, SelfTest,
+- AudioClock and VisualClock to the full §2.5 algorithms with AudioClockTest and VisualClockTest
+  (the only trivial bodies left). Extend the shipped tests to the full §7.2 lists: CommandRing at
+  10⁷ items, EnergyRing/AudioClock torn-read with a checksum field per record.
+- `system/*` (Settings, ThermalGovernor, DebugControl, PerfProbe, SelfTest,
   SoakRecorder, MediaButtons), `platform/TrackpadGestureEngine.kt` (WanderQuest copy + cyttsp6
   filter + firm-click dedup), `platform/DeviceInfo.kt`; the §1.10 lifecycle in full; CONTROL
   receiver; Wiring's VoiceCursorBoard/HeadPose singletons.
@@ -53,8 +54,13 @@ See `docs/contracts-changelog.md` (2026-09-22) and `docs/plan-changelog.md` (202
 
 ## Test results
 
-- `tools/gw :core:test :app:assembleDebug`: green (2026-09-22).
-- `tools/gw :app:assembleRelease :app:testDebugUnitTest`: green.
+- `tools/gw :core:test :app:assembleDebug`: green (2026-09-22); 37 JVM tests in 8 classes, 0
+  failures (list in contracts-changelog item 33).
+- `tools/ci.sh`: PASS (purity, `:core:test :app:testDebugUnitTest :app:assembleRelease`; the WP11
+  pipeline steps SKIP until delivered).
+- `tools/ci.sh --contracts` and `tools/wt.sh`, exercised in a throw-away clone: the worktree gets
+  its branch, local.properties and identity; a contract rename that a branch uses is reported
+  BROKEN and the temporary worktree is removed.
 - `tools/check_purity.sh`: OK (negative test with android/javax/java.awt references fails as
   expected).
 - `tools/device/lock.sh`: exit codes propagate, a second holder waits, stdin is passed through.

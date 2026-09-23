@@ -84,7 +84,7 @@ class PedalCurve(@JvmField val us: LongArray, @JvmField val v: FloatArray) {
                 val t0 = us[i]; val t1 = us[i + 1]
                 val t = if (t1 <= t0) t1 else {
                     val f = (level - v0).toDouble() / (v1 - v0).toDouble()
-                    t0 + Math.ceil(f * (t1 - t0)).toLong()
+                    t0 + Math.round(f * (t1 - t0))                 // nearest µs (float levels)
                 }
                 if (t >= fromUs) return t
             }
