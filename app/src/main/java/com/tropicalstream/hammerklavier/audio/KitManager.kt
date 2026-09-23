@@ -384,7 +384,7 @@ class KitManager(ctx: Context, private val voicer: ExecutorService, private val 
         val afd = try { app.assets.openFd("instruments/$assetDir/${u.file}") } catch (e: Exception) {
             Log.e(HK.TAG_KIT, "${k.id.key}: ${u.file} unreadable", e); return false
         }
-        val res = afd.use { d.decodeUnit(it, regions, layout, ch, offset) { scheduler.shouldYield() || k.released } }
+        val res = afd.use { d.decodeUnit(it, regions, layout, ch, offset) { (scheduler.shouldYield() && k.plan?.playable(k.ready.mask) != false) || k.released } }
         when (res) {
             is DecodeResult.Done -> {
                 val bank = k.bank

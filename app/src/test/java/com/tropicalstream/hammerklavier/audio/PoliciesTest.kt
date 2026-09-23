@@ -91,6 +91,8 @@ class PoliciesTest {
         assertTrue(v.mayVoice(InstrumentId.GRAND, playableYet = true, activeComplete = false))
         v.update(true, InstrumentId.GRAND, q0, 300)
         assertTrue(v.shouldYield()); assertFalse(v.mayVoice(InstrumentId.GRAND, true, false))
+        assertTrue("playing before playable must not deadlock", v.mayVoice(InstrumentId.GRAND, false, false))
+        assertFalse(v.mayVoice(InstrumentId.UPRIGHT, false, false))
         now = 1_000
         v.update(false, InstrumentId.GRAND, q1, 300)
         assertFalse("Q1 forbids voicing", v.mayVoice(InstrumentId.GRAND, true, false))

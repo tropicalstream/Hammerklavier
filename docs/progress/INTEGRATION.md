@@ -163,3 +163,16 @@ release build (`isDebuggable=false`, `cmd package compile -m speed -f`, md5 veri
 - Plan owner: the Q0 budget and step-down order with these numbers; T-ALIGN needs isolated onsets (a
   `synth:sync`-style score) to get more than 1–2 samples per run.
 - Carried from M1: bimodal device speed, T-CLOCK route change, HOME kills the app.
+
+### M2 fix round (2026-09-23): first-run voicing deadlock
+- Fixed: `VoicingScheduler.mayVoice` now lets the active kit voice its playable set while a performance is
+  already playing (nothing can sound without it); the decoder yields during playback only once the plan is
+  playable. `AppController` re-sends `setPlaybackHint(playing, GRAND, ...)` on every play/pause edge (500 ms
+  poll) and `applyQuality` passes GRAND instead of null. Unit test added (PoliciesTest).
+- Device (pm clear, play BWV 846 at +12 s, before v10): releases/pedals voiced, v10 voiced 4 s after play
+  started (16x, 691 MHz), wavdump 20 s: peak -3.2 dBFS, RMS -18.0, 100 ms windows -21.1..-14.0, 0 clipped,
+  0 underruns. Pause broadcast: voicing resumed at once, units voiced every ~14 s. An earlier run with no
+  play reached `complete gen=1 stub=false`.
+- Still open: T-DEC (14-15 s/unit at 691 MHz, ~8.5 s at 2 GHz; > 120 s total), T-CPU at Q0 (cpu 56-60%, p99
+  4.55-4.75 ms with ~10 voices, 88 combs), storm64/T-PF/T-ALIGN/reboot not re-run; the idle overlay reads
+  "paused" while the M1 playback driver plays (WP12 SessionController not wired). M2 not tagged.

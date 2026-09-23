@@ -77,6 +77,14 @@ class AppController(private val ctx: Context, private val w: Wiring) {
         pb.onVoiceCap = { cap -> q0Cap = cap; applyQuality(quality.level) }
         pb.onPlaying = { runCatching { w.kits.setPlaybackHint(true, InstrumentId.GRAND, quality, governor.effectiveTenths) } }
     }
+    /** Re-sends the playback hint on every play/pause edge (pause and end paths do not call back). */
+    private var hintPlaying = false
+    private val hintTick = object : Runnable { override fun run() {
+        if (!engineRunning) return
+        val p = isPlaying()
+        if (p != hintPlaying) { hintPlaying = p; runCatching { w.kits.setPlaybackHint(p, InstrumentId.GRAND, quality, governor.effectiveTenths) } }
+        w.main.postDelayed(this, 500)
+    } }
     private val debugTick = object : Runnable { override fun run() { if (!debug) return; refreshOverlay(); w.main.postDelayed(this, 500) } }
 
     fun startEngine() {
@@ -85,6 +93,7 @@ class AppController(private val ctx: Context, private val w: Wiring) {
         w.audio.start()
         playback.start()
         governor.start(); control.start(); perf.start()
+        w.main.removeCallbacks(hintTick); w.main.post(hintTick)
         if (media == null) media = runCatching { MediaButtons(ctx) { a -> applyAll(listOf(a)) } }.getOrNull()
         Log.i(HK.TAG_UI, "engine started")
     }
@@ -166,7 +175,7 @@ class AppController(private val ctx: Context, private val w: Wiring) {
     private fun applyQuality(level: Int) {
         quality = QualityLadder.of(level, q0Cap)
         w.audio.setQuality(quality)
-        runCatching { w.kits.setPlaybackHint(isPlaying(), null, quality, governor.effectiveTenths) }
+        runCatching { w.kits.setPlaybackHint(isPlaying(), InstrumentId.GRAND, quality, governor.effectiveTenths) }
         if (resumed) { gl?.setQuality(quality); applyBrightness() }
         refreshOverlay()
     }

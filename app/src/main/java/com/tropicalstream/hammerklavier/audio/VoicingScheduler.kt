@@ -36,8 +36,10 @@ class VoicingScheduler(private val nowMs: () -> Long) {
      * kit (if another) is complete.
      */
     fun mayVoice(id: InstrumentId, playableYet: Boolean, activeComplete: Boolean): Boolean {
-        if (playing) return false
         val active = activeId
+        // Nothing can sound until the active kit's playable set exists, so a performance that
+        // started early must not block it (M2 verifier: first-run deadlock).
+        if (playing) return !playableYet && (id == active || active == null)
         if (id == active || active == null) {
             return !playableYet || (voicingAllowed && coolEnough())
         }
