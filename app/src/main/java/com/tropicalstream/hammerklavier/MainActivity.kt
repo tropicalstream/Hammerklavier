@@ -6,15 +6,19 @@ import android.graphics.Color
 import android.media.AudioManager
 import android.os.Bundle
 import android.os.PowerManager
+import android.util.Log
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.FrameLayout
 import com.tropicalstream.hammerklavier.contract.Gesture
+import com.tropicalstream.hammerklavier.contract.HK
 import com.tropicalstream.hammerklavier.contract.android.GlHost
 import com.tropicalstream.hammerklavier.contract.android.OverlayHost
 import com.tropicalstream.hammerklavier.platform.BinocularSbsLayout
+import com.tropicalstream.hammerklavier.platform.TrackpadGestureEngine
 
 /**
  * Attaches the GL view, BinocularSbsLayout and the overlay host to the process singletons, and
@@ -23,14 +27,17 @@ import com.tropicalstream.hammerklavier.platform.BinocularSbsLayout
  * Black window (transparent on the waveguide), screen kept on, immersive, music volume stream.
  * `--ez mono true` (am start -S) draws one flat view for screenshots.
  *
- * contracts-v1: keys only (DPAD_CENTER/ENTER = tap, BACK = system back); the trackpad gesture
- * engine, the §1.10 display-asleep rules and the CONTROL receiver arrive in contracts-v1.1.
+ * Input: touch, key and generic-motion events go to the [TrackpadGestureEngine] first (the
+ * right pad's light taps and swipes, firm clicks as DPAD_CENTER/BUTTON_A/ENTER with the touch/key
+ * dedup, the left arm (cyttsp6) filtered); KEYCODE_BACK is the system back gesture. Extras of the
+ * launching intent (`am start -S … --ez selftest true`) are handed to the CONTROL handler.
  */
 class MainActivity : Activity() {
     private lateinit var controller: AppController
     private lateinit var gl: GlHost
     private lateinit var overlay: OverlayHost
     private lateinit var sbs: BinocularSbsLayout
+    private val gestures = TrackpadGestureEngine()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,8 +58,13 @@ class MainActivity : Activity() {
         root.addView(sbs, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         setContentView(root)
         applyMono(intent)
+        gestures.onGesture = { g, src -> controller.onGesture(g, src) }
+        root.addOnLayoutChangeListener { _, l, t, r, b, _, _, _, _ -> gestures.setScreenSize(r - l, b - t) }
         controller.onLeave = { finish() }
+        controller.onBrightness = { b -> window.attributes = window.attributes.apply { screenBrightness = b } }
+        controller.onDebug = { on -> gestures.debugSink = if (on) { m -> Log.d(HK.TAG_INPUT, "raw $m") } else null }
         controller.attach(gl, overlay)
+        forwardExtras(intent)
         applyImmersive()
     }
 
@@ -60,6 +72,13 @@ class MainActivity : Activity() {
         super.onNewIntent(intent)
         setIntent(intent)
         applyMono(intent)
+        forwardExtras(intent)
+    }
+
+    private fun forwardExtras(i: Intent?) {
+        val b = i?.extras ?: return
+        val control = Bundle(b).apply { remove("mono") }
+        if (!control.isEmpty) controller.onControl(control)
     }
 
     private fun applyMono(i: Intent?) {
@@ -86,20 +105,25 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        gestures.release()
+        controller.onLeave = null; controller.onBrightness = null; controller.onDebug = null
         controller.detach()
         controller.onDestroy(finishing = isFinishing)
         super.onDestroy()
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        val g = when (event.keyCode) {
-            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> Gesture.TAP
-            KeyEvent.KEYCODE_BACK -> Gesture.SYSTEM_BACK
-            else -> null
-        } ?: return super.dispatchKeyEvent(event)
-        if (event.action == KeyEvent.ACTION_UP && event.repeatCount == 0) controller.onGesture(g)
-        return true
+        if (event.keyCode == KeyEvent.KEYCODE_BACK) {
+            if (event.action == KeyEvent.ACTION_UP && !event.isCanceled) controller.onGesture(Gesture.SYSTEM_BACK, "key")
+            return true
+        }
+        if (gestures.onKeyEvent(event)) return true
+        return super.dispatchKeyEvent(event)
     }
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean = gestures.onTouchEvent(ev) || super.dispatchTouchEvent(ev)
+
+    override fun dispatchGenericMotionEvent(ev: MotionEvent): Boolean = gestures.onGenericMotion(ev) || super.dispatchGenericMotionEvent(ev)
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
