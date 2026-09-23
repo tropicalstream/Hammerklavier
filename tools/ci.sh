@@ -43,6 +43,9 @@ step "purity"
 step "gradle :core:test :app:testDebugUnitTest :app:assembleRelease"
 "$ROOT/tools/gw" :core:test :app:testDebugUnitTest :app:assembleRelease
 
+step "nio linkage (ART-safe java.nio calls in :core)"
+"$ROOT/tools/check_nio_linkage.sh"
+
 step "pipeline unit tests"
 if [ -d tools/pipeline/tests ]; then python3 -m unittest discover tools/pipeline/tests; else echo "[ci] SKIP tools/pipeline/tests (not delivered yet)"; fi
 

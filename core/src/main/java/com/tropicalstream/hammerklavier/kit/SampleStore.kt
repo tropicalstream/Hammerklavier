@@ -4,6 +4,7 @@ import com.tropicalstream.hammerklavier.contract.SampleReader
 import java.io.File
 import java.io.IOException
 import java.io.RandomAccessFile
+import java.nio.Buffer
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.MappedByteBuffer
@@ -35,7 +36,7 @@ class SampleStore private constructor(val file: File, val layout: PcmCacheFormat
     fun newReader(): SampleReader = Reader()
 
     private inner class Reader : SampleReader {
-        private val shorts = map.duplicate().order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
+        private val shorts = (map as ByteBuffer).duplicate().order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
         private val buf: ByteBuffer by lazy { ByteBuffer.allocateDirect(CHUNK) }   // prefetch thread only
         @Volatile private var slow = 0
 
@@ -48,7 +49,7 @@ class SampleStore private constructor(val file: File, val layout: PcmCacheFormat
             if (b <= a) { java.util.Arrays.fill(dst, dstOff, dstOff + 2 * frames, 0); return 0 }
             if (a > fromFrame) java.util.Arrays.fill(dst, dstOff, dstOff + 2 * (a - fromFrame), 0)
             val t0 = System.nanoTime()
-            shorts.position(((layout.offsets[region] shr 1) + 2L * a).toInt())
+            (shorts as Buffer).position(((layout.offsets[region] shr 1) + 2L * a).toInt())
             shorts.get(dst, dstOff + 2 * (a - fromFrame), 2 * (b - a))
             if (System.nanoTime() - t0 > SLOW_NS) slow++
             if (end > b) java.util.Arrays.fill(dst, dstOff + 2 * (b - fromFrame), dstOff + 2 * frames, 0)
@@ -66,9 +67,9 @@ class SampleStore private constructor(val file: File, val layout: PcmCacheFormat
             var got = 0L
             try {
                 while (pos < stop) {
-                    buf.clear()
+                    (buf as Buffer).clear()
                     val want = stop - pos
-                    if (want < CHUNK) buf.limit(want.toInt())
+                    if (want < CHUNK) (buf as Buffer).limit(want.toInt())
                     val n = channel.read(buf, pos)
                     if (n <= 0) break
                     pos += n; got += n

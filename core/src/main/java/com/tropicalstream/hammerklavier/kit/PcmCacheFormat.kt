@@ -3,6 +3,7 @@ package com.tropicalstream.hammerklavier.kit
 import java.io.File
 import java.io.IOException
 import java.io.RandomAccessFile
+import java.nio.Buffer
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
@@ -68,7 +69,7 @@ object PcmCacheFormat {
         b.put(hexToBytes(l.sha1))
         b.putInt(l.regionCount)
         for (i in 0 until l.regionCount) { b.putLong(l.offsets[i]); b.putInt(l.frames[i]) }
-        b.position(0)
+        (b as Buffer).position(0)
         return b
     }
 
@@ -108,7 +109,7 @@ object PcmCacheFormat {
         if (n <= 0 || n > 100_000) return Header.Bad("region count $n")
         val all = ByteBuffer.allocate(FIXED + n * PER_REGION)
         readFully(ch, all, 0)
-        all.flip()
+        (all as Buffer).flip()
         return decodeHeader(all, ch.size(), expectedSha1)
     }
 
@@ -181,11 +182,11 @@ object PcmCacheFormat {
             var pos = l.offsets[r]
             var left = l.byteLength(r)
             while (left > 0) {
-                scratch.clear()
-                if (left < scratch.capacity()) scratch.limit(left.toInt())
+                (scratch as Buffer).clear()
+                if (left < scratch.capacity()) (scratch as Buffer).limit(left.toInt())
                 val n = ch.read(scratch, pos)
                 if (n <= 0) throw IOException("short read at $pos")
-                scratch.flip()
+                (scratch as Buffer).flip()
                 crc.update(scratch)
                 pos += n; left -= n
             }
