@@ -1,0 +1,213 @@
+{
+ "schema": 1,
+ "generated": "2026-09-22T00:00:00Z",
+ "startHere": ["test.pair.1", "test.clicks.1", "test.scale.2"],
+ "shelves": [
+  {
+   "id": "test-piano",
+   "title": "Test piano",
+   "works": ["test.pair", "test.scale"]
+  },
+  {
+   "id": "test-harpsichord",
+   "title": "Test harpsichord",
+   "works": ["test.clicks"]
+  }
+ ],
+ "sources": {
+  "krueger": {
+   "credit": "Performance: Bernd Krueger · piano-midi.de · CC BY-SA 3.0 DE",
+   "licence": "CC-BY-SA-3.0-DE",
+   "licenceUrl": "https://creativecommons.org/licenses/by-sa/3.0/de/deed.en",
+   "sourceUrl": "http://www.piano-midi.de",
+   "licenceFile": "licenses/CC-BY-SA-3.0-DE.txt",
+   "performanceType": "step-sequenced",
+   "tier": "A",
+   "exportAllowed": false
+  },
+  "sankey": {
+   "credit": "Harpsichord: John Sankey · johnsankey.ca/harpsichord.html · free-copy notice",
+   "licence": "SANKEY",
+   "licenceUrl": "https://www.johnsankey.ca/copyright.html",
+   "sourceUrl": "https://www.johnsankey.ca/harpsichord.html",
+   "licenceFile": "licenses/SANKEY.txt",
+   "performanceType": "performed",
+   "tier": "A",
+   "exportAllowed": false
+  },
+  "mutopia": {
+   "credit": "Engraving: The Mutopia Project · mutopiaproject.org · public domain",
+   "licence": "PD",
+   "licenceUrl": "https://www.mutopiaproject.org/legal.html",
+   "sourceUrl": "https://www.mutopiaproject.org",
+   "licenceFile": null,
+   "performanceType": "engraved",
+   "tier": "C",
+   "exportAllowed": true
+  }
+ },
+ "works": [
+  {
+   "id": "test.pair",
+   "composer": "Hammerklavier Test Suite",
+   "composerShort": "Test",
+   "title": "Format pair in C major (format 1 and format 0)",
+   "shortTitle": "Format pair",
+   "catalogue": "HK 1",
+   "year": 2026,
+   "era": "classical",
+   "shelf": "test-piano",
+   "defaultInstrument": "grand",
+   "altInstruments": ["upright"],
+   "source": "krueger",
+   "tier": "A",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "test.pair.1",
+     "title": "I. Format 1",
+     "asset": "midi/test/format1.mid",
+     "sha1Hex": "1d01fe669b6d561fe370f76934ab0e50b8e9422b",
+     "sha1b32": "DUA74ZU3NVLB7Y3Q65UTJKYOKC4OSQRL",
+     "bytes": 982,
+     "durationSec": 16.796,
+     "lowKey": 36,
+     "highKey": 79,
+     "notes": 86,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    },
+    {
+     "id": "test.pair.2",
+     "title": "II. Format 0",
+     "asset": "midi/test/format0.mid",
+     "sha1Hex": "9576b707d5f06a05d1309eb47474a10320221232",
+     "sha1b32": "SV3LOB6V6BVALUJQT22HI5FBAMQCEERS",
+     "bytes": 946,
+     "durationSec": 16.796,
+     "lowKey": 36,
+     "highKey": 79,
+     "notes": 86,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "test.clicks",
+   "composer": "Hammerklavier Test Suite",
+   "composerShort": "Test",
+   "title": "Sync clicks for harpsichord at A415",
+   "shortTitle": "Sync clicks",
+   "catalogue": "HK 2",
+   "year": 1747,
+   "era": "baroque",
+   "shelf": "test-harpsichord",
+   "defaultInstrument": "harpsichord",
+   "altInstruments": ["grand", "upright"],
+   "source": "sankey",
+   "tier": "A",
+   "velocityPolicy": "flat",
+   "tuning": {
+    "aHz": 415.0,
+    "temperament": "WERCKMEISTER_III"
+   },
+   "movements": [
+    {
+     "id": "test.clicks.1",
+     "title": "Clicks",
+     "asset": "midi/test/sync.mid",
+     "sha1Hex": "4832c679076ad969518731a91e7dc9799ea9f0ea",
+     "bytes": 1004,
+     "durationSec": 59.469,
+     "lowKey": 69,
+     "highKey": 69,
+     "notes": 100,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "test.scale",
+   "composer": "Hammerklavier Test Suite",
+   "composerShort": "Test",
+   "title": "Scales and running status",
+   "shortTitle": "Scales",
+   "catalogue": null,
+   "year": null,
+   "era": "galant",
+   "shelf": "test-piano",
+   "defaultInstrument": "grand",
+   "altInstruments": [],
+   "source": "mutopia",
+   "tier": "C",
+   "velocityPolicy": "as-is",
+   "tuning": null,
+   "movements": [
+    {
+     "id": "test.scale.1",
+     "title": "I. Chromatic scale",
+     "asset": "midi/test/scale.mid",
+     "sha1Hex": "9c20c609a6cdcc0a6f30df2a4db1ed904bfde47a",
+     "bytes": 898,
+     "durationSec": 21.95,
+     "lowKey": 21,
+     "highKey": 108,
+     "notes": 88,
+     "hasSustain": false,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "NONE",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 27
+     }
+    },
+    {
+     "id": "test.scale.2",
+     "title": "II. Running status",
+     "asset": "midi/test/running_status.mid",
+     "sha1Hex": "1935a6ab75b64135d524d4ba6d1a6442f9021d49",
+     "bytes": 197,
+     "durationSec": 3.55,
+     "lowKey": 60,
+     "highKey": 79,
+     "notes": 12,
+     "hasSustain": true,
+     "hasSoft": false,
+     "hasSostenuto": false,
+     "pedalMode": "SWITCH",
+     "folds": {
+      "grand": 0,
+      "upright": 0,
+      "harpsichord": 0
+     }
+    }
+   ]
+  }
+ ]
+}
