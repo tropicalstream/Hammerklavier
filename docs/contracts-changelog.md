@@ -267,3 +267,8 @@ Recorded by the integrator while merging WP1, WP2, WP3, WP4 and WP11 for M1 (doc
   in Stage views (gain Player 0.37, Action cutaway 0.30, overhead 0.26); in the Hall it is folded into the fade quad (gain 0.74).
 - `SceneAssembler.overheadDraws` counts the extra quad outside the Hall (Hall stays at the 28-draw limit).
 - Interim: WP6/WP7/WP8 should bring the materials down so these gains can rise toward 1.
+
+## 2026-09-23 M5 integrator: Hall framing and venue visuals (no interface change)
+- PLAN §5.6 Hall wide (grand, harpsichord) target (0, 1.95, −1.9) → (0, 1.65, −1.9); chandelier stays overhead.
+- `RoomShell` wall glow: per-wall max-blended grid replaces overlapping discs (z-fighting); same colours and radius.
+- `SpriteBatch.build(n, right, up, eye?)`: minimum angular sprite size 0.010 rad; `Fixtures.CANDLE_RGB` darkened.

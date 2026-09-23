@@ -329,7 +329,7 @@ class StereoRenderer(private val loader: ExecutorService?,
         frame.lights(lightRig)
         val nSprites = if (level == RoomLevel.PASSTHROUGH.ordinal) 0
             else scn.flames.update(tSec, rig.centre, d.quality, RoomLevel.entries[level], sprites.sprites)
-        sprites.build(nSprites, rig.right, rig.up)
+        sprites.build(nSprites, rig.right, rig.up, rig.centre)
         frame.clipX = cam.clipX
         frame.stageFade = level == RoomLevel.STAGE.ordinal
         frame.stringWidthPx = drawer.stringWidth(if (director.view == ViewId.HALL) 2 else if (director.view == ViewId.ACTION) director.framing else 2)

@@ -17,7 +17,7 @@ import com.tropicalstream.hammerklavier.mesh.MeshBuilder
 object Fixtures {
     val CHAIR_FRAME_RGB = intArrayOf(170, 124, 58)
     val DAMASK_RGB = intArrayOf(80, 30, 26)
-    val CANDLE_RGB = intArrayOf(214, 204, 184)
+    val CANDLE_RGB = intArrayOf(150, 142, 128)          // M5: was (214,204,184), brighter than the flames it carries
 
     fun build(): List<BakedMesh> {
         val out = ArrayList<BakedMesh>()

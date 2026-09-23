@@ -143,7 +143,7 @@ class InstrumentsTest {
         check(InstrumentId.UPRIGHT, ViewId.ACTION, 1, 64f, 60f, f(1.05f, 1.40f, 0.75f), f(0f, 1.06f, -0.28f), 36f, 0.5f, 1.5f, false, nan, 1f)
         check(InstrumentId.HARPSICHORD, ViewId.ACTION, 1, 64f, 60f, f(0f, 1.85f, 0.45f), f(0f, 0.80f, -0.95f), 44f, 0.5f, 1.8f, false, nan, 1f)
         for (id in listOf(InstrumentId.GRAND, InstrumentId.HARPSICHORD)) {
-            check(id, ViewId.HALL, 0, 60f, 60f, f(0.4f, 1.20f, 3.0f), f(0f, 1.95f, -1.9f), 40f, 1f, 4.9f, true, nan, 0f)
+            check(id, ViewId.HALL, 0, 60f, 60f, f(0.4f, 1.20f, 3.0f), f(0f, 1.65f, -1.9f), 40f, 1f, 4.9f, true, nan, 0f)
             check(id, ViewId.HALL, 1, 60f, 60f, f(0.4f, 1.20f, 3.0f), f(0f, 1.05f, -1.9f), 18.27f, 1f, 4.9f, true, nan, 0f)
         }
         check(InstrumentId.UPRIGHT, ViewId.HALL, 0, 60f, 60f, f(0.4f, 1.20f, 3.0f), f(-1.6f, 1.60f, -2.65f), 40f, 1f, 6.0f, true, nan, 0f)

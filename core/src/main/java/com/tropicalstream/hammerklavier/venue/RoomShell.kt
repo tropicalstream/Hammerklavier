@@ -230,9 +230,11 @@ object RoomShell {
             val plane = if (x > 0f) Konzertzimmer.PLANE_E else Konzertzimmer.PLANE_W
             centres.add(floatArrayOf(plane.toFloat(), FlameLayout.POS[3 * i + 2], FlameLayout.POS[3 * i + 1]))
         }
-        for (c in centres) {
-            val plane = c[0].toInt()
-            Geo.glowDisc(b, Geo.wallPoint(plane, c[1], c[2], 0.01f), Geo.wallTangent(plane), floatArrayOf(0f, 1f, 0f), Geo.wallNormal(plane), GLOW_R, glow)
+        // M5 integration: one grid per wall carrying the max of the overlapping glows. Separate discs at one depth
+        // z-fought where neighbours overlap (the dark shards across the N mirrors in the Hall).
+        for (plane in intArrayOf(Konzertzimmer.PLANE_N, Konzertzimmer.PLANE_E, Konzertzimmer.PLANE_S, Konzertzimmer.PLANE_W)) {
+            val mine = centres.filter { it[0].toInt() == plane }
+            if (mine.isNotEmpty()) glowGrid(b, plane, mine, glow)
         }
         val m = b.build("venue.frames", MaterialId.WINDOW_FRAME, SkinKind.STATIC, Masks.SALON or Masks.STAGE, Masks.ALL_VIEWS,
             clipped = false, program = ProgramId.LIT, drawSlot = 1,
@@ -241,6 +243,45 @@ object RoomShell {
     }
 
     const val GLOW_R = 1.2f
+    private const val GLOW_STEP = 0.15f
+
+    /** A wall-plane grid 1 cm into the room: vertex colour = [rgb] × max over [cs] (plane, along, y) of the disc falloff. */
+    private fun glowGrid(b: MeshBuilder, plane: Int, cs: List<FloatArray>, rgb: IntArray) {
+        val a0 = cs.minOf { it[1] } - GLOW_R; val a1 = cs.maxOf { it[1] } + GLOW_R
+        val y0 = maxOf(0f, cs.minOf { it[2] } - GLOW_R); val y1 = cs.maxOf { it[2] } + GLOW_R
+        val na = kotlin.math.ceil((a1 - a0) / GLOW_STEP).toInt(); val ny = kotlin.math.ceil((y1 - y0) / GLOW_STEP).toInt()
+        val w = FloatArray((na + 1) * (ny + 1))
+        for (j in 0..ny) for (i in 0..na) {
+            val a = a0 + (a1 - a0) * i / na; val y = y0 + (y1 - y0) * j / ny
+            var m = 0f
+            for (c in cs) {
+                val da = a - c[1]; val dy = y - c[2]
+                val fall = 1f - (sqrt(da * da + dy * dy) / GLOW_R).coerceIn(0f, 1f)
+                m = maxOf(m, fall * fall * (3f - 2f * fall))
+            }
+            w[j * (na + 1) + i] = m
+        }
+        val n = Geo.wallNormal(plane)
+        val idx = IntArray((na + 1) * (ny + 1)) { -1 }
+        fun v(i: Int, j: Int): Int {
+            val k = j * (na + 1) + i
+            if (idx[k] < 0) {
+                val p = Geo.wallPoint(plane, a0 + (a1 - a0) * i / na, y0 + (y1 - y0) * j / ny, 0.01f)
+                val q = w[k]
+                b.color(intArrayOf((rgb[0] * q).toInt(), (rgb[1] * q).toInt(), (rgb[2] * q).toInt()))
+                idx[k] = b.vertex(p[0], p[1], p[2], n[0], n[1], n[2], 0f, 0f)
+            }
+            return idx[k]
+        }
+        // (T, Y) is CCW seen from the room; on S and W "along" runs against T
+        val flip = plane == Konzertzimmer.PLANE_S || plane == Konzertzimmer.PLANE_W
+        for (j in 0 until ny) for (i in 0 until na) {
+            val k = j * (na + 1) + i
+            if (w[k] <= 0f && w[k + 1] <= 0f && w[k + na + 1] <= 0f && w[k + na + 2] <= 0f) continue
+            val v00 = v(i, j); val v10 = v(i + 1, j); val v01 = v(i, j + 1); val v11 = v(i + 1, j + 1)
+            if (flip) { b.tri(v00, v11, v10); b.tri(v00, v01, v11) } else { b.tri(v00, v10, v11); b.tri(v00, v11, v01) }
+        }
+    }
 
     /** Intervals along a wall occupied by its openings (merged), sorted. */
     fun occupied(plane: Int): List<FloatArray> {

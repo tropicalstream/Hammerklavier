@@ -1895,7 +1895,7 @@ Piano frame: origin on the floor under the centre of the key fronts; x toward th
 | Grand | Action overhead (lid off) | (0, 1.95, 0.55) | (0, 0.84, −0.90) | 44° | 0.5 | 1.8 m |
 | Upright | Action overhead (top lid open, upper panel off) | (1.05, 1.40, 0.75) | (0, 1.06, −0.28) | 36° | 0.5 | 1.5 m |
 | Harpsichord | Action overhead (lid and jack rail off) | (0, 1.85, 0.45) | (0, 0.80, −0.95) | 44° | 0.5 | 1.8 m |
-| Grand, harpsichord (room frame) | Hall wide | (0.4, 1.20, 3.0) | (0, 1.95, −1.9) | 40° | 1.0 | 4.9 m |
+| Grand, harpsichord (room frame) | Hall wide | (0.4, 1.20, 3.0) | (0, 1.65, −1.9) (M5; was 1.95) | 40° | 1.0 | 4.9 m |
 | Grand, harpsichord (room frame) | Hall life-size | (0.4, 1.20, 3.0) | (0, 1.05, −1.9) | 18.27° (CONTROL `--ef fov`) | 1.0 | 4.9 m |
 | Upright (room frame) | Hall wide / life-size | (0.4, 1.20, 3.0) | (−1.6, 1.60, −2.65) / (−1.8, 1.00, −2.85) | 40° / 18.27° | 1.0 | 6.0 m |
 

@@ -18,14 +18,21 @@ class SpriteBatch(val maxSprites: Int) {
     private var verts = 0
 
     /** [n] sprites in [sprites]; [right]/[up] unit camera axes; [model] null = room frame as is. */
-    fun build(n: Int, right: FloatArray, up: FloatArray) {
+    fun build(n: Int, right: FloatArray, up: FloatArray, eye: FloatArray? = null) {
         count = n.coerceIn(0, maxSprites)
         val d = mesh.data
         var o = 0
         for (i in 0 until count) {
             val b = i * 8
-            val x = sprites[b]; val y = sprites[b + 1]; val z = sprites[b + 2]; val s = sprites[b + 3] * 0.5f
-            val r = sprites[b + 4]; val g = sprites[b + 5]; val bl = sprites[b + 6]; val a = sprites[b + 7]
+            val x = sprites[b]; val y = sprites[b + 1]; val z = sprites[b + 2]; var s = sprites[b + 3] * 0.5f
+            val r = sprites[b + 4]; val g = sprites[b + 5]; val bl = sprites[b + 6]; var a = sprites[b + 7]
+            if (eye != null) {
+                // M5: a 3 cm flame 5–8 m away is 2–4 px on the waveguide; hold every sprite to a minimum angular
+                // half-size and trade the growth for weight (a × (s/s′)^¼), so far candles read as flames.
+                val dx = x - eye[0]; val dy = y - eye[1]; val dz = z - eye[2]
+                val minS = kotlin.math.sqrt(dx * dx + dy * dy + dz * dz) * MIN_HALF_ANGLE
+                if (s < minS) { a *= kotlin.math.sqrt(kotlin.math.sqrt(s / minS)); s = minS }
+            }
             o = corner(d, o, x, y, z, s, right, up, -1f, -1f, r, g, bl, a)
             o = corner(d, o, x, y, z, s, right, up, 1f, -1f, r, g, bl, a)
             o = corner(d, o, x, y, z, s, right, up, 1f, 1f, r, g, bl, a)
@@ -64,5 +71,10 @@ class SpriteBatch(val maxSprites: Int) {
         if (p.aCorner >= 0) GLES20.glDisableVertexAttribArray(p.aCorner)
         if (p.aCol >= 0) GLES20.glDisableVertexAttribArray(p.aCol)
         return 1
+    }
+
+    companion object {
+        /** Minimum sprite half-extent in radians (≈ 7 px on the 40° Hall view). */
+        const val MIN_HALF_ANGLE = 0.010f
     }
 }

@@ -378,3 +378,21 @@ flat beige slabs across the bottom and are the main APL overshoot; the grand is 
 ### M5 third pass (2026-09-23) — still PARTIAL, not tagged
 - Device re-checked: USB powered, status 5 (charging/full), level 100 — the unplugged 30-min T-THERM still cannot run
   without the user pulling the cable. No code change in this pass; 814f292 gate numbers stand.
+
+### M5 fourth pass (2026-09-23) — Hall visuals fixed; still PARTIAL, not tagged (unplugged T-THERM)
+- Mirror shards: the wall glow was one disc per girandole at the same 1 cm offset; neighbouring discs overlap and
+  z-fought (dark outer ring of one over the bright centre of the next). `RoomShell.glowGrid` now bakes one grid per wall
+  whose vertex colour is the max of the overlapping glows. Shards gone.
+- Chandelier cropped: Hall wide (grand, harpsichord) target y 1.95 → 1.65 (pitch 8.6° → 5.2°); the chandelier is now
+  cleanly overhead (reached with the +45° look-around), the grand sits nearer the centre, the front row reads as chair
+  backs with damask (still cut by the frame edge, as a foreground row should be). PLAN §5.6 table and InstrumentsTest updated.
+- Tiny flames: `SpriteBatch.build` holds every sprite to a 0.010 rad half-extent, alpha × (s/s′)^¼; candle wax
+  (214,204,184) → (150,142,128) so the sticks no longer outshine their flames.
+- Gate: `tools/ci.sh` PASS; release md5 69b48c2d52644e2d25eaf319718a9501 installed and verified; `smoke.sh M5` PASS:
+  T-APL Player 8.35%, cutaway 8.55%, overhead 8.56% (≤ 9%), Hall 11.89% (≤ 12%); draws max 24; 30.0 fps; 0 hitches,
+  0 GL errors; 6 setRoom lines; first setRoom 45.5 ms (main thread, then a 500 ms ramp on the audio side; later ones < 1 ms).
+- Shots: `docs/shots/m5_hall.png`, `m5_player.png` refreshed.
+- Still open: unplugged 30-min T-THERM (user must pull the cable: `tools/device/soak.sh start therm30`, unplug,
+  `soak.sh pull`; battery < Q3); APL cap remains a stopgap for WP6/7/8 materials; T12.8; T-CPU with combs, comb
+  calibration; L-2/L-7 listening; real-head look-around; setRoom in AppController until WP12 SessionController (M6);
+  soak CSV movement column.

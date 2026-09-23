@@ -61,7 +61,7 @@ class Anchors(val id: InstrumentId, private val keyboard: Keyboard) : Instrument
                     if (framing == 0) set(out, 0.4f, 1.20f, 3.0f, -1.6f, 1.60f, -2.65f, 40f, 1.0f, 6.0f)
                     else set(out, 0.4f, 1.20f, 3.0f, -1.8f, 1.00f, -2.85f, LIFE_SIZE_FOV, 1.0f, 6.0f)
                 } else {
-                    if (framing == 0) set(out, 0.4f, 1.20f, 3.0f, 0f, 1.95f, -1.9f, 40f, 1.0f, 4.9f)
+                    if (framing == 0) set(out, 0.4f, 1.20f, 3.0f, 0f, 1.65f, -1.9f, 40f, 1.0f, 4.9f)   // M5: was 1.95 (chandelier cut at the top edge; it stays overhead, +45° look-around)
                     else set(out, 0.4f, 1.20f, 3.0f, 0f, 1.05f, -1.9f, LIFE_SIZE_FOV, 1.0f, 4.9f)
                 }
             }
