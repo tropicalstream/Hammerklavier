@@ -103,7 +103,7 @@ object DecayTables {
     /** `exp(−age/3 s)` by table for an age in seconds (clamped to 0..6 s). */
     @JvmStatic fun expAge(ageSec: Float): Float {
         val x = (if (ageSec < 0f) 0f else if (ageSec > 6f) 6f else ageSec) * (64f / 6f)
-        val i = x.toInt()
+        val i = x.toInt().coerceAtMost(63)
         val f = x - i
         return EXPAGE[i] + (EXPAGE[i + 1] - EXPAGE[i]) * f
     }
