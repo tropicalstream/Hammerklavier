@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class RingsTest {
     @Test fun commandRingSpscOrderAndDrops() {
         val ring = CommandRing(256)
-        val n = 2_000_000
+        val n = 10_000_000
         val done = AtomicBoolean(false)
         var expected = 0L
         var bad = 0
