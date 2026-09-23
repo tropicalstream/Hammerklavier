@@ -200,7 +200,8 @@ internal class VoicePool(private val sampleRate: Int, private val cursors: Voice
                 val dt = v.tStep * block
                 v.tFade = if (v.tTarget > v.tFade) minOf(v.tTarget, v.tFade + dt) else maxOf(v.tTarget, v.tFade - dt)
             }
-            val level = v.base * v.damp * v.fade * fin * v.tFade
+            val held = v.base * v.damp * v.fade * fin          // the voice's own level; a pause fade only hides it
+            val level = held * v.tFade
             v.level = level
             var gEnd = level * Voice.SHORT_SCALE
             var i1 = block
@@ -235,7 +236,7 @@ internal class VoicePool(private val sampleRate: Int, private val cursors: Voice
             val abs = v.absFrame()
             val bank = v.bank
             val env = if (bank != null) bank.envByte(v.region, if (abs < 0) 0 else abs / 480) else 255
-            v.levelDb = DecayTables.ENV_DB[env] + DecayTables.lin2db(level)
+            v.levelDb = DecayTables.ENV_DB[env] + DecayTables.lin2db(held)
             val ms = DecayTables.ENV_POW[env] * level * level
             v.envPow = ms
             if (row in 0 until HK.LANES) {
