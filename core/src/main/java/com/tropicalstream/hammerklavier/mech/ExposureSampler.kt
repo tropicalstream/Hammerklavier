@@ -21,11 +21,13 @@ class ExposureSampler {
     private var lastFrom = Long.MIN_VALUE
 
     /** Contact notes of the last [scan]: note indices, count in [count]. */
-    @JvmField val notes = IntArray(512)
+    @JvmField val notes = IntArray(CAPACITY)
     @JvmField var count = 0
+    /** Contacts dropped because [notes] was full, since [bind] (for the debug HUD; expected 0). */
+    @JvmField var overflow = 0L
 
     fun bind(p: Performance?, harpsichord: Boolean) {
-        perf = p; harpsi = harpsichord; cursor = 0; lastFrom = Long.MIN_VALUE; count = 0
+        perf = p; harpsi = harpsichord; cursor = 0; lastFrom = Long.MIN_VALUE; count = 0; overflow = 0L
     }
 
     fun reset() { lastFrom = Long.MIN_VALUE; count = 0 }
@@ -51,8 +53,11 @@ class ExposureSampler {
         var i = cursor
         while (i < n && on[i] <= to + ext) {
             val c = if (only4) on[i] - (HarpsiTiming.staggerMs(p.vel[i].toInt()) * r * 1000f).toLong() else on[i]
-            if (c > from && c <= to && count < notes.size) notes[count++] = i
+            if (c > from && c <= to) { if (count < notes.size) notes[count++] = i else overflow++ }
             i++
         }
     }
+
+    /** 88 keys × 8 strokes per key in a 100 ms window (a key cannot repeat faster than ~12 ms). */
+    companion object { const val CAPACITY = 88 * 8 }
 }

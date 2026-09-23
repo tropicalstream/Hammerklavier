@@ -56,10 +56,9 @@ class UprightActionTest {
         val fastPf = perf(u, listOf(N(1000.0, 50.0, k, 64), N(1100.0, 200.0, k, 64)))
         val fast = secondNote(fastPf)
         assertTrue(fast.fast)
-        // Drawn from half the blow just after its tStart.
-        assertTrue(fresh(fastPf, u, fast.tStartUs + 500).hammer[k] >= 0.5f)
-        val freePf = perf(u, listOf(N(1000.0, 100.0, k, 64), N(1400.0, 200.0, k, 64)))
-        assertTrue(fresh(freePf, u, secondNote(freePf).tStartUs + 500).hammer[k] < 0.1f)
+        // Relaunched toward half the blow from where the hammer is (no jump at tStart, T5.3):
+        // it rises well above its start height before escapement.
+        val hh = fresh(fastPf, u, fast.onUs - 3000).hammer[k]; assertTrue("h=$hh", hh > fresh(fastPf, u, fast.tStartUs).hammer[k] + 0.05f)
     }
 
     @Test fun dampersLiftWithTheKeyAndLand() {

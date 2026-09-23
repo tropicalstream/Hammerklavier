@@ -15,6 +15,9 @@ class NoteCtx {
     @JvmField var d0 = 0f                              // dip at tStart (part-way up after a partial return)
     @JvmField var fast = false                         // fastest physical repetition drawn
     @JvmField var dHeld = 0f                           // dip at offUs
+    // The previous note on this key (valid when !first): for continuity at the hand-off.
+    @JvmField var prevOnUs = 0L; @JvmField var prevOffUs = 0L
+    @JvmField var prevVel = 0; @JvmField var prevDHeld = 0f
 }
 
 /** Per-frame values shared by every key (pedals, sostenuto latch, registration, rate). */
@@ -102,12 +105,27 @@ class NoteTiming(val action: KeyAction) {
         out.dHeld = action.pressDip(out, out.offUs, r)
     }
 
-    /** Fills [out] for the note at keyNotes position [p], including d0 and dHeld. */
+    /**
+     * Fills [out] for the note at keyNotes position [p], including d0 and dHeld.
+     *
+     * The d0 chain starts at an anchor: the latest note in the last [CHAIN] whose key reaches the
+     * bed before its release (its dHeld is 1 whatever its own d0, so the chain is exact from there),
+     * else the first note on the key, else the window start. Consecutive notes therefore share one
+     * chain, so note j's dHeld and note j+1's d0 agree and the dip does not step at tStart.
+     */
     fun fill(p: Int, lo: Int, r: Float, out: NoteCtx) {
         val pf = perf!!
-        val start = maxOf(lo, p - CHAIN)
+        val floor = maxOf(lo, p - CHAIN)
+        var start = floor
+        var i = p - 1
+        while (i > floor) {
+            fillBasic(pf, i, lo, r, scratch)
+            finish(scratch, 0f, r)
+            if (scratch.dHeld >= 1f) { start = i; break }
+            i--
+        }
         var d = 0f
-        var i = start
+        i = start
         while (i < p) {
             fillBasic(pf, i, lo, r, scratch)
             finish(scratch, d, r)
@@ -116,10 +134,16 @@ class NoteTiming(val action: KeyAction) {
             i++
         }
         fillBasic(pf, p, lo, r, out)
+        if (!out.first) {
+            out.prevOnUs = scratch.onUs; out.prevOffUs = scratch.offUs
+            out.prevVel = scratch.vel; out.prevDHeld = scratch.dHeld
+        } else {
+            out.prevOnUs = 0L; out.prevOffUs = 0L; out.prevVel = 0; out.prevDHeld = 0f
+        }
         finish(out, d, r)
     }
 
-    companion object { const val CHAIN = 4 }
+    companion object { const val CHAIN = 8 }
 }
 
 /**

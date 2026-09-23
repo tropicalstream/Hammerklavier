@@ -106,4 +106,42 @@ class GrandActionTest {
             assertTrue("part-way up $minMid", minMid > 0.05f && minMid < 0.95f)
         }
     }
+
+    /** T5.3: the hammer does not jump at the hand-off to a re-strike (grand and upright). */
+    @Test fun restrikeHammerIsContinuous() {
+        for (prof in listOf(g, InstrumentProfile.UPRIGHT)) for (r in floatArrayOf(0.5f, 1f, 1.5f)) {
+            val cases = listOf(
+                perf(prof, listOf(N(500.0, 500.0, k, 80), N(1040.0, 300.0, k, 80))),
+                perf(prof, listOf(N(500.0, 60.0, k, 20), N(600.0, 300.0, k, 90))),   // released in the rebound
+                MechTestKit.synthetic(com.tropicalstream.hammerklavier.contract.SyntheticScore.REPEAT_15, prof))
+            for (pf in cases) {
+                val lo = pf.keyFirst[60]; val hi = pf.keyFirst[61]
+                val timing = NoteTiming(if (prof === g) GrandAction(g) else UprightAction(prof)).also { it.bind(pf) }
+                for (q in lo + 1 until hi) {
+                    val ts = timing.tStartUs(q, lo, r)
+                    // 10 µs steps: the key's own motion moves the hammer < 0.002 per step; a hand-off jump would not.
+                    var prev = fresh(pf, prof, ts - 200, r).hammer[60]
+                    var t = ts - 190
+                    while (t <= ts + 200) {
+                        val h = fresh(pf, prof, t, r).hammer[60]
+                        assertTrue("${prof.id} r=$r note $q step ${h - prev} at ${t - ts}", kotlin.math.abs(h - prev) <= 0.01f)
+                        prev = h; t += 10
+                    }
+                }
+            }
+        }
+    }
+
+    /** T5.3: a run of staccato notes that never reach the bed hands off without a dip step. */
+    @Test fun staccatoRunIsContinuous() {
+        val notes = (0 until 12).map { N(500.0 + 70.0 * it, 15.0, k, 30) }
+        val pf = perf(g, notes)
+        var prev = fresh(pf, g, PRE + 300_000, 1f).keyDip[k]
+        var t = PRE + 300_100L
+        while (t < PRE + 1_400_000L) {
+            val d = fresh(pf, g, t, 1f).keyDip[k]
+            assertTrue("step ${d - prev} at $t", kotlin.math.abs(d - prev) <= 0.02f)
+            prev = d; t += 100
+        }
+    }
 }

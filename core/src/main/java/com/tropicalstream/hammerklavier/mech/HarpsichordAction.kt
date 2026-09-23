@@ -52,14 +52,17 @@ class HarpsichordAction(override val profile: InstrumentProfile = InstrumentProf
         val r = env.r
         var t8 = 0f; var t4 = 0f
         val dip: Float
-        if (t < n.offUs) dip = pressDip(n, t, r) else {
+        if (t < n.offUs) {
+            dip = pressDip(n, t, r)
+            // A fast repetition takes over before the previous note's tongues have flicked.
+            if (!n.first) {
+                val since = (t - n.prevOffUs).toFloat()
+                t8 = flick8(since, n.prevDHeld, env, r); t4 = flick4(since, n.prevDHeld, env, r)
+            }
+        } else {
             val since = (t - n.offUs).toFloat()
             dip = releaseDip(n.dHeld, since, r)
-            val flick = TONGUE_MS * r * 1000f
-            if (env.registration and HK.REG_8 != 0 && n.dHeld >= PLUCK - 1e-4f)
-                t8 = tri((since - HarpsiTiming.quill8PassMs * r * 1000f) / flick)
-            if (env.registration and HK.REG_4 != 0 && n.dHeld >= PLUCK4 - 1e-4f)
-                t4 = tri((since - HarpsiTiming.quill4PassMs * r * 1000f) / flick)
+            t8 = flick8(since, n.dHeld, env, r); t4 = flick4(since, n.dHeld, env, r)
         }
         out.keyDip[k] = dip
         out.hammer[k] = dip * HarpsiTiming.JACK_RATIO
@@ -67,6 +70,14 @@ class HarpsichordAction(override val profile: InstrumentProfile = InstrumentProf
         out.damper[k] = damperLift(dip)
         out.tongue[k] = t8; out.tongue4[k] = t4
     }
+
+    private fun flick8(since: Float, dHeld: Float, env: FrameEnv, r: Float): Float =
+        if (env.registration and HK.REG_8 != 0 && dHeld >= PLUCK - 1e-4f)
+            tri((since - HarpsiTiming.quill8PassMs * r * 1000f) / (TONGUE_MS * r * 1000f)) else 0f
+
+    private fun flick4(since: Float, dHeld: Float, env: FrameEnv, r: Float): Float =
+        if (env.registration and HK.REG_4 != 0 && dHeld >= PLUCK4 - 1e-4f)
+            tri((since - HarpsiTiming.quill4PassMs * r * 1000f) / (TONGUE_MS * r * 1000f)) else 0f
 
     companion object {
         const val PLUCK = HarpsiTiming.PLUCK8_MM / HarpsiTiming.DIP_MM      // 0.70

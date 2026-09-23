@@ -113,34 +113,50 @@ class MechanicsEvaluatorTest {
             val v = VisTime().also { it.generation = 1; it.rate = 1f; it.playing = true }
             val lo = pf.keyFirst[60]; val hi = pf.keyFirst[61]
             assertEquals(90, hi - lo)
+            val act: KeyAction = when (p.id.name) { "GRAND" -> GrandAction(p); "UPRIGHT" -> UprightAction(p); else -> HarpsichordAction(p) }
+            val timing = NoteTiming(act).also { it.bind(pf) }
             fun at(t: Long): MechanismPose { v.tUs = t; v.exposeFromUs = t; v.exposeToUs = t; v.reseed = false; ev.evaluate(v, null, 0f, o); return o }
             v.tUs = PRE - 100_000; v.reseed = true; ev.evaluate(v, null, 0f, o)
             for (q in lo until hi) {
                 val n = pf.keyNotes[q]; val on = pf.onUs[n]; val off = pf.offUs[n]
-                val tStart = if (q > lo) pf.offUs[pf.keyNotes[q - 1]] else PRE - 100_000
-                // Monotone descent from the previous key-up to this note's key-up (never a new descent early).
-                var prev = at(maxOf(tStart, on - 200_000)).keyDip[60]
-                var t = maxOf(tStart, on - 200_000) + 200
-                var rising = true
+                // No new descent before the previous key-up: tStart_q >= off_{q-1}, and the dip is
+                // non-increasing from off_{q-1} until tStart_q.
+                if (q > lo) {
+                    val offPrev = pf.offUs[pf.keyNotes[q - 1]]
+                    val ts = timing.tStartUs(q, lo, 1f)
+                    assertTrue("${p.id} note $q tStart $ts before off_prev $offPrev", ts >= offPrev)
+                    var prev = at(offPrev).keyDip[60]
+                    var t = offPrev + 200
+                    while (t < ts) {
+                        val d = at(t).keyDip[60]
+                        assertTrue("${p.id} note $q early descent at $t", d <= prev + 1e-6f)
+                        prev = d; t += 200
+                    }
+                }
+                // Held from on to off: never released early.
+                var prev = at(on).keyDip[60]
+                var t = on + 200
                 while (t < off) {
                     val d = at(t).keyDip[60]
-                    if (t >= on) assertTrue("${p.id} note $q released before off at $t", d >= prev - 1e-6f)
+                    assertTrue("${p.id} note $q released before off at $t", d >= prev - 1e-6f)
                     prev = d; t += 200
                 }
                 if (p.id.name == "HARPSICHORD") {
                     assertEquals("${p.id} pluck $q", 0.70f, at(on).keyDip[60], 1e-3f)
                     assertTrue(at(on - 500).keyDip[60] < 0.70f + 1e-4f)
+                    // The 8' tongue flick is drawn even when the next note already governs.
+                    if (q + 1 < hi) assertTrue("${p.id} tongue $q", at(off + 30_100 + 12_500).tongue[60] > 0f)
                 } else {
-                    assertEquals("${p.id} contact $q", 1f, at(on).hammer[60], 1e-4f)
-                    assertEquals(1f, at(on + 500).hammer[60], 1e-4f)
-                    assertTrue(at(on - 500).hammer[60] > 0.9f)
+                    var first = Long.MIN_VALUE
+                    var tt = on - 5_000
+                    while (tt <= on + 1_000) { if (at(tt).hammer[60] >= 1f - 1e-4f) { first = tt; break }; tt += 50 }
+                    assertTrue("${p.id} contact $q at ${first - on}", first != Long.MIN_VALUE && kotlin.math.abs(first - on) <= 500)
                 }
                 // The next descent never begins before this note's key-up.
                 if (q + 1 < hi) {
                     val offDip = at(off).keyDip[60]
                     assertTrue(at(off + 200).keyDip[60] <= offDip + 1e-6f)
                 }
-                if (!rising) break
             }
         }
     }
