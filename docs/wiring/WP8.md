@@ -34,3 +34,5 @@
   Stage — non-stage flames fade out beyond 3.5–6 m; turn the head through 360° (look-around) with
   no holes in walls or ceiling; T-APL Hall ≤ 12%, Stage ≤ 9%; no GC log lines on the GL thread
   while the flames animate.
+
+- Call `FlameFieldImpl.setInstrumentOrigin(x, z)` with the current Placement origin when the instrument changes; it picks the N sconce group used as dynamic light 3.

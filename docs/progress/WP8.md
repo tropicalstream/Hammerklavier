@@ -43,6 +43,7 @@ Branch `wp8-venue` (from `contracts-v1`), worktree `/Users/me/Projects/hk-wp8`. 
   (`core/build/venue-review/raster-*.png`); reviewed, geometry reads correctly.
 - `docs/wiring/WP8.md` written.
 - After merge: `tools/gw :core:test` BUILD SUCCESSFUL, 81 tests, 0 failures, 0 skipped.
+- After review fixes: `tools/gw :core:test` BUILD SUCCESSFUL, all green (+2 tests).
 
 ## Decisions and deviations
 
@@ -56,6 +57,15 @@ Branch `wp8-venue` (from `contracts-v1`), worktree `/Users/me/Projects/hk-wp8`. 
   `vertex()`/`tri()` in private helpers (`Geo` in RoomShell.kt). Kept after WP7's builder merged (tested, no benefit to rewriting); the encoding follows the frozen conventions.
 - **Candelabra "at 1.6 m"** read as candle height 1.6 m; placed on the audience side of the grand
   at (−1.70, −0.85) and (1.30, −0.85). Music-desk candles are placed for the grand/harpsichord desk.
+- **Review fixes (round 1):** flicker noise table is now band-limited (cosines of 6–10 Hz at
+  `NOISE_RATE` = 32 steps/s, built in init) instead of [1,2,1]-smoothed white noise at 8 steps/s;
+  T8.3 gains a DFT check (10 s at 30 fps, >70% of global and >60% of sprite energy in 5.5–10.5 Hz).
+  Light 3 is the N sconce group nearest the instrument via `FlameFieldImpl.setInstrumentOrigin`
+  (WP6 asked to call it). Mirror culling rejects hits above the N mirrors' arched head (parabolic,
+  matching the drawn frame). Ceiling 2 m² gap and the per-instrument contact pool filed as
+  requests (docs/requests/WP8.md) rather than changed: both need a contract change. T8.9 stays on
+  §5.4 outlines until integration, when it should switch to the bounds of `Instruments.create`
+  meshes (WP7's code is not on this branch).
 - **Contact pool** is centred on the Stage centre (the grand/harpsichord); the upright's pool would
   need an instrument-aware venue (not in the contract).
 - Chairs are Hall-view only (viewMask bits 4–5); other baked venue meshes are all views.

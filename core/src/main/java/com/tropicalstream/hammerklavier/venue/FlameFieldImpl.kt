@@ -36,29 +36,35 @@ class FlameFieldImpl : FlameField {
     private val img2 = FloatArray(3)
     private val hit = FloatArray(3)
 
-    // lights(): chandelier aggregate, the two candelabra, the centre N sconce group
+    // lights(): chandelier aggregate, the two candelabra, the N sconce group nearest the instrument
     private val lightPos = FloatArray(12)
+    private val sconcePos = FloatArray(9)     // the three N sconce group centroids, west to east
     private val lightWeight = floatArrayOf(18f / 5f, 1f, 1f, 4f / 5f)
 
     override val maxSprites: Int = MAX_SPRITES
 
     init {
         val rng = java.util.Random(0x1747L)
-        // Smoothed noise normalised to exactly [−1, 1]; linear interpolation keeps every read inside.
-        val raw = FloatArray(TABLE) { rng.nextFloat() * 2f - 1f }
-        for (i in 0 until TABLE) noise[i] = (raw[(i + TABLE - 1) % TABLE] + 2f * raw[i] + raw[(i + 1) % TABLE]) / 4f
+        // Band-limited noise: a sum of cosines with whole cycle counts per table (so it wraps), whose
+        // frequencies at NOISE_RATE steps/s span 6..10 Hz. Built once here; reads are table lookups.
+        // Normalised to exactly [−1, 1]; linear interpolation keeps every read inside.
+        for (c in BAND_LO..BAND_HI) {
+            val amp = 0.5f + rng.nextFloat()
+            val ph = rng.nextDouble() * 2.0 * Math.PI
+            for (i in 0 until TABLE) noise[i] += amp * Math.cos(2.0 * Math.PI * c * i / TABLE + ph).toFloat()
+        }
         var mx = 0f
         for (v in noise) mx = maxOf(mx, kotlin.math.abs(v))
         for (i in 0 until TABLE) noise[i] /= mx
         for (i in 0 until n) {
-            rate[i] = 6f + 4f * rng.nextFloat(); phase[i] = rng.nextFloat() * TABLE
-            hRate[i] = 6f + 4f * rng.nextFloat(); hPhase[i] = rng.nextFloat() * TABLE
+            rate[i] = NOISE_RATE * (0.95f + 0.1f * rng.nextFloat()); phase[i] = rng.nextFloat() * TABLE
+            hRate[i] = NOISE_RATE * (0.95f + 0.1f * rng.nextFloat()); hPhase[i] = rng.nextFloat() * TABLE
             val dx = pos[3 * i] - Konzertzimmer.STAGE_CENTRE[0]; val dy = pos[3 * i + 1] - Konzertzimmer.STAGE_CENTRE[1]
             val dz = pos[3 * i + 2] - Konzertzimmer.STAGE_CENTRE[2]
             val d = kotlin.math.sqrt(dx * dx + dy * dy + dz * dz)
             stageFade[i] = if (FlameLayout.STAGE[i]) 1f else 1f - smoothstep(Konzertzimmer.STAGE_FADE_NEAR, Konzertzimmer.STAGE_FADE_FAR, d)
         }
-        for (i in 0 until FlameLayout.CRYSTALS) { cRate[i] = 3f + 5f * rng.nextFloat(); cPhase[i] = rng.nextFloat() * TABLE }
+        for (i in 0 until FlameLayout.CRYSTALS) { cRate[i] = NOISE_RATE * (0.3f + 0.5f * rng.nextFloat()); cPhase[i] = rng.nextFloat() * TABLE }
         // aggregate light positions
         val groups = intArrayOf(FlameLayout.G_CHANDELIER, -1, -2, FlameLayout.G_SCONCE_N + 1)
         for (l in 0 until 4) {
@@ -74,6 +80,30 @@ class FlameFieldImpl : FlameField {
             }
             lightPos[3 * l] = sx / c; lightPos[3 * l + 1] = sy / c; lightPos[3 * l + 2] = sz / c
         }
+        for (k in 0..2) {
+            var sx = 0f; var sy = 0f; var sz = 0f; var c = 0
+            for (i in 0 until n) if (FlameLayout.GROUP[i] == FlameLayout.G_SCONCE_N + k) { sx += pos[3 * i]; sy += pos[3 * i + 1]; sz += pos[3 * i + 2]; c++ }
+            sconcePos[3 * k] = sx / c; sconcePos[3 * k + 1] = sy / c; sconcePos[3 * k + 2] = sz / c
+        }
+    }
+
+    /** Index 0..2 (west to east) of the N sconce group currently used as light 3. */
+    var sconceGroup: Int = 1
+        private set
+
+    /**
+     * Picks light 3 as the N sconce group nearest the instrument's Placement origin (room frame,
+     * metres). Call when the instrument changes; default is the centre bay (grand / harpsichord).
+     */
+    fun setInstrumentOrigin(x: Float, z: Float) {
+        var best = 1; var bd = Float.MAX_VALUE
+        for (k in 0..2) {
+            val dx = sconcePos[3 * k] - x; val dz = sconcePos[3 * k + 2] - z
+            val d = dx * dx + dz * dz
+            if (d < bd) { bd = d; best = k }
+        }
+        sconceGroup = best
+        for (c in 0..2) lightPos[9 + c] = sconcePos[3 * best + c]
     }
 
     /** Noise in [−1, 1] at table position x ≥ 0 (linear interpolation, wraps every 256 steps). */
@@ -86,7 +116,7 @@ class FlameFieldImpl : FlameField {
     }
 
     /** Global flicker factor, 1 ± 4%. */
-    fun globalFlicker(tSec: Float): Float = 1f + GLOBAL_DEPTH * noiseAt(tSec * 8f)
+    fun globalFlicker(tSec: Float): Float = 1f + GLOBAL_DEPTH * noiseAt(tSec * NOISE_RATE)
 
     /** Per-sprite brightness factor relative to the global flicker, 1 ± 8%. */
     fun spriteFlicker(tSec: Float, flame: Int): Float = 1f + SPRITE_DEPTH * noiseAt(tSec * rate[flame] + phase[flame])
@@ -111,7 +141,20 @@ class FlameFieldImpl : FlameField {
         if (t <= 0f || t >= 1f) return false
         val cx = eye[0] + (out[0] - eye[0]) * t
         val cy = eye[1] + (out[1] - eye[1]) * t
-        return cx >= m[o + 1] && cx <= m[o + 2] && cy >= m[o + 3] && cy <= m[o + 4]
+        return inGlass(m, o, mirror, cx, cy)
+    }
+
+    /**
+     * Inside glass [mirror]'s opening: the rectangle, and for the N pier mirrors also under the arched
+     * head (springing 0.15 m below the top, parabolic rise of 0.15 m, as RoomShell draws the frame).
+     */
+    private fun inGlass(m: FloatArray, o: Int, mirror: Int, cx: Float, cy: Float): Boolean {
+        if (cx < m[o + 1] || cx > m[o + 2] || cy < m[o + 3] || cy > m[o + 4]) return false
+        if (!FlameLayout.isNorth(mirror)) return true
+        val spring = m[o + 4] - ARCH_RISE
+        if (cy <= spring) return true
+        val u = 2f * (cx - m[o + 1]) / (m[o + 2] - m[o + 1]) - 1f
+        return cy <= spring + ARCH_RISE * (1f - u * u)
     }
 
     private fun crossesRect(ax: Float, ay: Float, az: Float, bx: Float, by: Float, bz: Float, mirror: Int): Boolean {
@@ -123,7 +166,7 @@ class FlameFieldImpl : FlameField {
         if (t <= 0f || t >= 1f) return false
         val cx = ax + (bx - ax) * t; val cy = ay + (by - ay) * t
         hit[0] = cx; hit[1] = cy; hit[2] = pz
-        return cx >= m[o + 1] && cx <= m[o + 2] && cy >= m[o + 3] && cy <= m[o + 4]
+        return inGlass(m, o, mirror, cx, cy)
     }
 
     /**
@@ -203,7 +246,7 @@ class FlameFieldImpl : FlameField {
 
     /**
      * Four dynamic point lights: the chandelier aggregate, the two candelabra, the sconce group of
-     * the mirror bay behind the instrument. rgb = FLAME_BODY (0..1) × (flames in the group / 5) ×
+     * the N mirror bay nearest the instrument ([setInstrumentOrigin]). rgb = FLAME_BODY (0..1) × (flames in the group / 5) ×
      * flicker; [LightRig.flicker] is the global factor.
      */
     override fun lights(tSec: Float, out: LightRig) {
@@ -219,6 +262,11 @@ class FlameFieldImpl : FlameField {
 
     companion object {
         const val TABLE = 256
+        /** Table steps per second: 256 steps = 8 s, so cycle count c is c/8 Hz. */
+        const val NOISE_RATE = 32f
+        const val BAND_LO = 48   // 6 Hz
+        const val BAND_HI = 80   // 10 Hz
+        const val ARCH_RISE = 0.15f
         const val GLOBAL_DEPTH = 0.04f
         const val SPRITE_DEPTH = 0.08f
         const val HEIGHT_DEPTH = 0.15f

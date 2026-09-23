@@ -127,6 +127,42 @@ class VenueTest {
         for (v in rig.rgb) assertTrue(v >= 0f)
     }
 
+    // ── T8.3 flicker spectrum: 10 s at 30 fps, dominant energy in 6..10 Hz ──
+    @Test fun t8_3_flickerSpectrum() {
+        val f = FlameFieldImpl()
+        val n = 300
+        fun bandShare(sig: (Float) -> Float): Double {
+            val x = DoubleArray(n) { sig(it / 30f).toDouble() }
+            val mean = x.average()
+            var inBand = 0.0; var total = 0.0
+            for (k in 1..n / 2) {
+                var re = 0.0; var im = 0.0
+                for (j in 0 until n) { val a = 2.0 * Math.PI * k * j / n; re += (x[j] - mean) * Math.cos(a); im -= (x[j] - mean) * Math.sin(a) }
+                val e = re * re + im * im; val hz = k * 30.0 / n
+                total += e; if (hz >= 5.5 && hz <= 10.5) inBand += e
+            }
+            return inBand / total
+        }
+        val g = bandShare { f.globalFlicker(it) }
+        assertTrue("global flicker 6-10 Hz share $g", g > 0.7)
+        for (i in intArrayOf(0, 17, 40)) {
+            val s = bandShare { f.spriteFlicker(it, i) }
+            assertTrue("sprite $i 6-10 Hz share $s", s > 0.6)
+        }
+    }
+
+    // ── §5.5 light 3 = the N sconce group nearest the instrument ──
+    @Test fun lightsFollowInstrument() {
+        val f = FlameFieldImpl()
+        assertEquals(1, f.sconceGroup)
+        f.setInstrumentOrigin(-2.20f, -2.95f)
+        assertEquals(0, f.sconceGroup)
+        val rig = LightRig(); f.lights(0f, rig)
+        assertTrue(rig.pos[9] < -2f)
+        f.setInstrumentOrigin(0f, -1.9f)
+        assertEquals(1, f.sconceGroup)
+    }
+
     // ── T8.4 triangle budget ──
     @Test fun t8_4_triangles() {
         for (p in Palette.entries) {
