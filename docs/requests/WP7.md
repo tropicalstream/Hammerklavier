@@ -21,9 +21,9 @@ These fill gaps in §2.3/§5.8; the paired T6.4 decode test should use them.
    geometry), 3 key lever (rad), 4 4′ jack lift (m), 5 4′ tongue (rad); vec4 33 = (8′ offset, 4′ offset, 0, 0),
    which the 4′ jack (part 4) should add along +x. Headers are `(keyX, dim, key, 0)`, dim 1 active / 0.4
    inactive / 0 (all zeros) when `xCutKey` is NaN. Action-set vertices are built at x = 0 (add the header x).
-3. **Tongues** (`TONGUE_ROT`, `TONGUE4_ROT`) ride their jack: the tongue draw needs the jack lift too
-   (hammer lane for 8′, jack4 for 4′) plus the tongue lane. If one lane per draw is a hard limit, merge the
-   tongue into the jack draw and read the tongue angle from the spare lanes; tell WP7 and it will re-pack.
+3. **Tongues** (settled, review round 1): there are **no TONGUE_ROT / TONGUE4_ROT meshes**. Each tongue and quill
+   is merged into its jack's JACK_LIFT / JACK4_LIFT draw at the rest pose, so it rises with the jack under one lane
+   per vertex; the tongue tilt is animated only in the cutaway (action-set parts 1 and 5). WP6 needs no TONGUE program.
 4. **Section caps** (`SECTION_CAP`, drawSlot 17) are built in the plane **x = 0**, facing +x: translate them to
    `clipX`. `clipped = false` on them, on the action set and on the pedals.
 5. **Texture recipes only draw**: the uploader calls `painter.begin(recipe.width, recipe.height)`,
@@ -31,6 +31,12 @@ These fill gaps in §2.3/§5.8; the paired T6.4 decode test should use them.
    the harpsichord soundboard) with a white vertex colour.
 6. **Strings**: one STRING mesh per instrument (steel and copper by vertex colour); partIndex = key − lowKey
    for both harpsichord choirs (they share the key's `stringAmp`). `SkinParams[STRING]` = (2.5, 3.5, 1.5) px.
+
+## CONTRACT-CHANGE REQUEST (WP6 + plan owner, confirm before M7): §5.8 harpsichord action set
+§5.8 defines harpsichord parts 0–2 and a rotation-only axisSign. WP7 packs six parts (item 2 above: 3 key lever,
+4 4′ jack lift, 5 4′ tongue) and uses axisSign 0 = translate +y by the value (m), 2 = translate +x (m), ±1 = rotate
+about +x. Please adopt this in §5.8 / a §10 decision, or reply with the layout WP6 wants and WP7 will re-pack.
+Until then T7.7's harpsichord assertions are the reference for the paired T6.4 decode.
 
 ## To WP0 / WP12
 - Pass the bank's `lastDamper` to `setInstrument` (see `docs/wiring/WP7.md`).

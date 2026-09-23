@@ -54,5 +54,22 @@ upright 8/8/16/12/14/14, harpsichord 9/9/18/13/16/16); upright finishes; texture
 - Section caps are a few fixed quads (key bed/frame, belly rail/back) at x = 0 for WP6 to translate to clipX.
 - Texture recipes do not call begin/end (the uploader does).
 
+## Review fixes (round 1)
+- **major, tongues**: fixed by merging. Each harpsichord tongue + quill is now part of its jack's lift-skinned draw
+  (`harpsichord.jacks8` JACK_LIFT, `harpsichord.jacks4` JACK4_LIFT), at the rest pose, so it rises with the jack
+  in Overhead and Hall under one slot/lane per vertex. No TONGUE_ROT / TONGUE4_ROT meshes or skin params remain;
+  the tongue tilt is shown only in the cutaway by action-set parts 1 and 5. Test `t76TongueRidesJack` decodes a
+  key-29 tongue vertex under a full lift (8′ and 4′). One fewer draw per framing in Action/Hall.
+- **minor, action-set extension (parts 3–5, axisSign 0/2)**: filed as a contract-change request in
+  `docs/requests/WP7.md` (to WP6 / plan owner, confirm before M7). T7.7 harpsichord assertions stay the source for T6.4.
+- **minor, sostenuto rail**: now VM.PLAYER_HALL, clipped = false, slot 15, so it merges with the pedals as §5.3 row 15 says.
+- **minor, T7.4 probes**: camera() and listener() are allocation-probed for every instrument × view × framing.
+- **minor, active slots**: `ActionSetPacker` counts escape, tongue and tongue4 too (KDoc: active = any pose lane moving);
+  T7.7 checks an escape-only and a tongue-only key.
+- **minor, T7.8 limits**: derived in the test: per framing 28 − venue rows 1–6 (≤ 6) − glyph + fade (2) − pedal inset
+  (2, Player follow) = 20 / 18; each mesh's viewMask must lie inside its §5.3 row's "Shown in" framings, and
+  instrument + venue + glyph/fade ≤ 28 is asserted. The venue's own ≤ 6 is WP8's T8.8. That row check moved the
+  harpsichord jack rail from slot 9 (Action/Hall only) to slot 7 (case), since it is shown in Player too.
+
 ## Remaining
 - Nothing on the JVM side. Device: the 18 screencaps and T-APL (integrator, with WP6).

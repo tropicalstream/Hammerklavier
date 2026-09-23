@@ -71,8 +71,6 @@ object HarpsichordModel {
             SkinKind.KEY_ROT to kb.skinParams,
             SkinKind.JACK_LIFT to floatArrayOf(JACK_TRAVEL, REGISTER_OFFSET),
             SkinKind.JACK4_LIFT to floatArrayOf(JACK_TRAVEL, REGISTER_OFFSET),
-            SkinKind.TONGUE_ROT to floatArrayOf(TONGUE_PIVOT_Y, JACK8_Z - 0.003f, TONGUE_MAX_RAD),
-            SkinKind.TONGUE4_ROT to floatArrayOf(TONGUE_PIVOT_Y - (STRING8_Y - STRING4_Y), JACK4_Z - 0.003f, TONGUE_MAX_RAD),
             SkinKind.LID to floatArrayOf(X0, CASE_TOP, 0f, LID_OPEN_RAD),
             SkinKind.STRING to floatArrayOf(2.5f, 3.5f, 1.5f),
             SkinKind.ACTION_SET to ACTION_PIVOTS))
@@ -207,14 +205,14 @@ object HarpsichordModel {
         rail.box(-kw - CHEEK, 0.95f, -0.345f, kw + CHEEK, 0.97f, -0.295f)
         rail.color(Pal.OAK)
         rail.box(0.02f, CASE_TOP, -1.01f, 0.04f, 1.49f, -0.99f)                            // lid stick (static, at the open lid)
-        out += rail.build("harpsichord.jackrail", MaterialId.FLEMISH_CASE, SkinKind.STATIC, VM.LEVELS_ALL, VM.NO_OVER, true, ProgramId.LIT, 9)
+        out += rail.build("harpsichord.jackrail", MaterialId.FLEMISH_CASE, SkinKind.STATIC, VM.LEVELS_ALL, VM.NO_OVER, true, ProgramId.LIT, 7)
 
         // ── Keys (slot 10) ──
         out += kb.meshes(clipped = true)
 
-        // ── Jacks (8′ slot 11, 4′ slot 12): body + cloth damper lift; tongue + quill turn ──
-        out += jacks(kb, profile, JACK8_Z, STRING8_Y, +1f, SkinKind.JACK_LIFT, SkinKind.TONGUE_ROT, 11, "harpsichord.jacks8")
-        out += jacks(kb, profile, JACK4_Z, STRING4_Y, -1f, SkinKind.JACK4_LIFT, SkinKind.TONGUE4_ROT, 12, "harpsichord.jacks4")
+        // ── Jacks (8′ slot 11, 4′ slot 12): body, cloth damper, tongue and quill all lift together ──
+        out += jacks(kb, profile, JACK8_Z, STRING8_Y, +1f, SkinKind.JACK_LIFT, 11, "harpsichord.jacks8")
+        out += jacks(kb, profile, JACK4_Z, STRING4_Y, -1f, SkinKind.JACK4_LIFT, 12, "harpsichord.jacks4")
 
         // ── Strings (slot 14), action set (16), caps (17), edges (18) ──
         out += StringsMesh.build(spans, profile.lowKey, "harpsichord.strings", VM.ACTION_HALL, true)
@@ -233,15 +231,20 @@ object HarpsichordModel {
         return out
     }
 
-    /** One row of 61 jacks: the body and damper (lift), the tongue and quill (turn); the quill points toward [side]·x. */
+    /**
+     * One row of 61 jacks, one lift-skinned draw: the body, cloth damper, tongue and quill share the
+     * jack's lane, so the tongue rises with its jack (one slot and one lane per vertex, §2.3). The
+     * tongue sits at its rest pose here; its tilt is shown only in the Action cutaway, by the action
+     * set (parts 1 and 5). The quill points toward [side]·x.
+     */
     private fun jacks(kb: Keyboard, profile: InstrumentProfile, z: Float, stringY: Float, side: Float,
-                      lift: SkinKind, turn: SkinKind, slot: Int, name: String): List<BakedMesh> {
-        val body = MeshBuilder(VertexLayout.SKINNED, 61 * 48)
-        val tongue = MeshBuilder(VertexLayout.SKINNED, 61 * 48)
+                      lift: SkinKind, slot: Int, name: String): List<BakedMesh> {
+        val body = MeshBuilder(VertexLayout.SKINNED, 61 * 96)
+        val tongue = body
         for (k in profile.lowKey..profile.highKey) {
             val part = k - profile.lowKey
             val x = kb.keyX[k]
-            body.part(part / 4, part % 4); tongue.part(part / 4, part % 4)
+            body.part(part / 4, part % 4)
             body.color(Pal.ACTION_WOOD)
             body.box(x - 0.002f, JACK_BOTTOM, z - 0.005f, x + 0.002f, stringY + 0.030f, z + 0.005f)
             body.color(Pal.CLOTH_RED)
@@ -253,8 +256,7 @@ object HarpsichordModel {
             tongue.color(Pal.FELT)
             tongue.box(minOf(x, sx + side * 0.002f), stringY - 0.0035f, z - 0.0025f, maxOf(x, sx + side * 0.002f), stringY - 0.0015f, z - 0.0015f)
         }
-        return body.build(name, MaterialId.ACTION_WOOD, lift, VM.LEVELS_ALL, VM.ACTION_HALL, true, ProgramId.SKINNED, slot) +
-            tongue.build("$name.tongues", MaterialId.QUILL, turn, VM.LEVELS_ALL, VM.ACTION_HALL, true, ProgramId.SKINNED, slot)
+        return body.build(name, MaterialId.ACTION_WOOD, lift, VM.LEVELS_ALL, VM.ACTION_HALL, true, ProgramId.SKINNED, slot)
     }
 
     /**

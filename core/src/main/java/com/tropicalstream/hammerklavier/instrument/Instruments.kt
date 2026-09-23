@@ -39,7 +39,7 @@ class InstrumentSceneImpl internal constructor(
 
 /**
  * The ACTION_SET block (PLAN §5.8), 136 floats = 34 vec4: vec4 s (0–12) = (xM = keyX of the slot's
- * key, dim 1 active / 0.4 inactive, key, 0); floats 52 + 6·s + p = part p's value for slot s
+ * key, dim 1 active (any of the key's pose lanes moving) / 0.4 inactive, key, 0); floats 52 + 6·s + p = part p's value for slot s
  * (vec4 13 + (6s + p)/4, lane (6s + p) % 4); vec4 33 = [spare] (the harpsichord's register
  * offsets). The 13 slots are the keys round(xCutKey) − 6 … + 6, the window clamped inside the
  * compass. A NaN xCutKey (no cutaway) packs zeros, so dim 0 hides every slot. Allocation-free.
@@ -51,7 +51,8 @@ abstract class ActionSetPacker(val profile: InstrumentProfile, private val keyX:
         val kc = Math.round(xCutKey).coerceIn(profile.lowKey + HALF, profile.highKey - HALF)
         for (s in 0 until SLOTS) {
             val k = kc - HALF + s
-            val active = pose.keyDip[k] > EPS || pose.hammer[k] > EPS || pose.damper[k] > EPS || pose.jack4[k] > EPS
+            val active = pose.keyDip[k] > EPS || pose.hammer[k] > EPS || pose.damper[k] > EPS ||
+                pose.jack4[k] > EPS || pose.escape[k] > EPS || pose.tongue[k] > EPS || pose.tongue4[k] > EPS
             out[4 * s] = keyX[k]; out[4 * s + 1] = if (active) 1f else DIM; out[4 * s + 2] = k.toFloat(); out[4 * s + 3] = 0f
             parts(pose, k, out, ANGLES + PARTS * s)
         }

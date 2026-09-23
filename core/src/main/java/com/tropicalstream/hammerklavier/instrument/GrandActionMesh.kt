@@ -63,7 +63,7 @@ object GrandActionMesh {
         mb.part(0, 0); mb.color(Pal.ACTION_WOOD)
         val kw = kb.widthM / 2f
         mb.box(-kw, SOST_Y - 0.005f, SOST_Z - 0.005f, kw, SOST_Y + 0.005f, SOST_Z + 0.005f)
-        return mb.build("grand.sostenuto", MaterialId.ACTION_WOOD, SkinKind.SOSTENUTO_ROT, VM.LEVELS_ALL, VM.ACTION, true, ProgramId.SKINNED, 15)
+        return mb.build("grand.sostenuto", MaterialId.ACTION_WOOD, SkinKind.SOSTENUTO_ROT, VM.LEVELS_ALL, VM.PLAYER_HALL, false, ProgramId.SKINNED, 15)
     }
 
     const val SOST_Y = 0.805f; const val SOST_Z = -0.535f

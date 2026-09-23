@@ -15,6 +15,7 @@ import com.tropicalstream.hammerklavier.contract.VertexLayout
 import com.tropicalstream.hammerklavier.contract.ViewId
 import com.tropicalstream.hammerklavier.instrument.tex.InstrumentTextures
 import com.tropicalstream.hammerklavier.testutil.AllocProbe
+import com.tropicalstream.hammerklavier.contract.Pal
 import com.tropicalstream.hammerklavier.testutil.AwtPainter
 import com.tropicalstream.hammerklavier.testutil.MeshRaster
 import org.junit.Assert.assertArrayEquals
@@ -166,7 +167,33 @@ class InstrumentsTest {
         assertArrayEquals(f(0f, 1.00f, -0.45f), all.getValue(InstrumentId.UPRIGHT).anchors.soundSource, 0f)
         assertArrayEquals(f(0f, 0.85f, -1.00f), all.getValue(InstrumentId.HARPSICHORD).anchors.soundSource, 0f)
         assertArrayEquals(f(0f, 1.15f, 0.50f), all.getValue(InstrumentId.HARPSICHORD).anchors.benchEar, 0f)
-        AllocProbe.assertNoAllocation("camera") { all.getValue(InstrumentId.GRAND).anchors.camera(ViewId.PLAYER, 1, 64f, 60f, cam) }
+        for (id in InstrumentId.entries) for (v in ViewId.entries) for (fr in 0..1) {
+            val a = all.getValue(id).anchors
+            AllocProbe.assertNoAllocation("$id $v $fr camera") { a.camera(v, fr, 64f, 60f, cam) }
+            AllocProbe.assertNoAllocation("$id $v $fr listener") { a.listener(v, fr, out) }
+        }
+    }
+
+    /** The major review fix: a tongue vertex decoded under a fully lifted 8′ / 4′ jack rises with it. */
+    @Test fun t76TongueRidesJack() {
+        val h = meshes.getValue(InstrumentId.HARPSICHORD)
+        val tongueRgb = Geo.mul(Pal.ACTION_WOOD, 0.8f)
+        for ((kind, restTop) in listOf(SkinKind.JACK_LIFT to HarpsichordModel.TONGUE_PIVOT_Y,
+                                       SkinKind.JACK4_LIFT to HarpsichordModel.TONGUE_PIVOT_Y - (HarpsichordModel.STRING8_Y - HarpsichordModel.STRING4_Y))) {
+            val m = h.single { it.skin == kind }
+            val fl = m.layout.floats
+            val travel = all.getValue(InstrumentId.HARPSICHORD).skin.p.getValue(kind)[0]
+            var top = -1f; var bodyTop = -1f
+            for (i in 0 until m.vertexCount) {
+                val o = i * fl
+                if (m.vertices[o + 12] != 0f || m.vertices[o + 13] != 1f) continue          // key 29: slot 0, lane 0
+                val lifted = m.vertices[o + 1] + 1f * travel                                 // JACK_LIFT: y += value · travel
+                val isTongue = (0..2).all { Math.abs(m.vertices[o + 8 + it] - tongueRgb[it] / 255f) < 1e-4f }
+                if (isTongue) top = maxOf(top, lifted) else bodyTop = maxOf(bodyTop, lifted)
+            }
+            assertEquals("$kind tongue top lifted", restTop + travel, top, 1e-5f)
+            assertTrue("$kind tongue stays inside its lifted jack", top < bodyTop)
+        }
     }
 
     private fun f(vararg v: Float) = v
@@ -219,7 +246,7 @@ class InstrumentsTest {
         val h = meshes.getValue(InstrumentId.HARPSICHORD)
         val jacks = parts(h.filter { it.skin == SkinKind.JACK_LIFT }).size + parts(h.filter { it.skin == SkinKind.JACK4_LIFT }).size
         assertEquals(122, jacks)
-        assertEquals(122, parts(h.filter { it.skin == SkinKind.TONGUE_ROT }).size + parts(h.filter { it.skin == SkinKind.TONGUE4_ROT }).size)
+        assertTrue("tongues ride their jack draw", h.none { it.skin == SkinKind.TONGUE_ROT || it.skin == SkinKind.TONGUE4_ROT })
         assertEquals(122, h.filter { it.skin == SkinKind.STRING }.sumOf { it.vertexCount } / StringsMesh.VERTS_PER_STRING)
         val hc = Geo.bounds(h.filter { it.name == "harpsichord.case" })
         val width = hc[3] - hc[0]
@@ -242,6 +269,9 @@ class InstrumentsTest {
                 pose.tongue[k] = ((k * 7) % 100) / 100f; pose.tongue4[k] = ((k * 3) % 100) / 100f; pose.jack4[k] = ((k * 29) % 100) / 100f
             }
             pose.keyDip[66] = 0f; pose.hammer[66] = 0f; pose.damper[66] = 0f; pose.jack4[66] = 0f
+            pose.escape[66] = 0f; pose.tongue[66] = 0f; pose.tongue4[66] = 0f
+            for (k in intArrayOf(60, 61)) { pose.keyDip[k] = 0f; pose.hammer[k] = 0f; pose.damper[k] = 0f; pose.jack4[k] = 0f; pose.tongue4[k] = 0f }
+            pose.escape[60] = 0.5f; pose.tongue[60] = 0f; pose.escape[61] = 0f; pose.tongue[61] = 0.5f   // escape-only, tongue-only: active
             pose.registers = 2
             val a = FloatArray(136) { 7f }; val b = FloatArray(136)
             sc.packActionSet(pose, 63.6f, a); sc.packActionSet(pose, 63.6f, b)
@@ -288,7 +318,14 @@ class InstrumentsTest {
 
     // ── T7.8 programs and merge keys ──
     @Test fun t78ProgramsAndDrawCounts() {
-        val limits = intArrayOf(12, 12, 18, 15, 16, 16)       // instrument share of §5.3 per framing (bit order)
+        // §5.3 instrument rows 7–18 and the framings their "Shown in" column names (bit order Player,
+        // Player follow, cutaway, overhead, Hall, Hall close).
+        val rowMask = mapOf(7 to VM.ALL, 8 to VM.NO_OVER, 9 to VM.ACTION_HALL, 10 to VM.ALL, 11 to VM.ACTION_HALL,
+            12 to VM.ACTION_HALL, 13 to VM.ACTION, 14 to VM.ACTION_HALL, 15 to VM.PLAYER_HALL, 16 to VM.CUT, 17 to VM.CUT, 18 to VM.ALL)
+        // Per framing: 28 hard budget − venue rows 1–6 (at most 6 draws, every level) − glyphs (row 19) − fade/sync
+        // (row 22) − the pedal inset (rows 20–21, Player follow only). WP8's T8.8 holds the venue to its 6.
+        val venueMax = 6; val glyphFade = 2
+        val limits = IntArray(6) { bit -> 28 - venueMax - glyphFade - (if (bit == 1) 2 else 0) }
         for ((id, ms) in meshes) {
             for (m in ms) {
                 when {
@@ -299,6 +336,7 @@ class InstrumentsTest {
                 if (m.skin == SkinKind.STATIC || m.skin == SkinKind.LID) assertEquals(m.name, VertexLayout.STATIC, m.layout)
                 assertTrue(m.name, m.drawSlot in 7..18)
                 assertTrue(m.name, m.viewMask in 1..63 && m.levelMask in 1..15)
+                assertEquals("${m.name} shown only where §5.3 row ${m.drawSlot} is", 0, m.viewMask and rowMask.getValue(m.drawSlot).inv())
                 if (m.texture != null) assertTrue(m.name, m.texture in all.getValue(id).textures().map { it.name })
             }
             for (bit in 0 until 6) {
@@ -306,6 +344,7 @@ class InstrumentsTest {
                     .map { listOf(it.program, it.material, it.skin, it.texture, it.levelMask, it.viewMask, it.clipped, it.drawSlot) }.toSet()
                 println("T7.8 $id framing bit $bit: ${keys.size} draws")
                 assertTrue("$id framing $bit: ${keys.size}", keys.size <= limits[bit])
+                assertTrue("$id framing $bit total", keys.size + venueMax + glyphFade + (if (bit == 1) 2 else 0) <= 28)
             }
         }
         val edge = Instruments.create(InstrumentId.GRAND, InstrumentLook(UprightFinish.WALNUT, true), 88).meshes().single { it.drawSlot == 18 }
