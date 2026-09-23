@@ -33,7 +33,8 @@ class HammerklavierApp : Application() {
         val loader = backgroundExecutor("HKLoader")
         val voicer = backgroundExecutor("HKVoicer")
         wiring = Wiring(this, loader, voicer, Handler(Looper.getMainLooper()))
-        controller = AppController(wiring)
+        controller = AppController(this, wiring)
+        controller.startEngine()                                    // the engine services outlive the activity (§1.10)
         Log.i(HK.TAG_LOADER, "Hammerklavier ${BuildConfig.VERSION_NAME} branch=${BuildConfig.GIT_BRANCH} commit=${BuildConfig.GIT_COMMIT}")
     }
 
