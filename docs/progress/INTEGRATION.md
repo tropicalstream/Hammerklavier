@@ -222,5 +222,8 @@ not caught by screencap but is detected at every click in the scrcpy recordings 
 
 ### Open issues (M3)
 - Flaky `AudioOutputTest.stopAndStartRestoreThePausedPosition` (AudioOutputTest.kt:255), WP4.
+  Follow-up 2026-09-23: 5/5 isolated runs pass; under 8 CPU hogs it failed 1 run in ~15 (plus one
+  `hkAudioLoopAllocatesNothingAfterWarmUp` failure), so it is load-timing; not yet diagnosed (failure XML not captured).
+  tools/ci.sh re-run at 39f10b4: PASS. M3 still not tagged: remaining gate items need a 240 fps phone, a BT headset and the user.
 - WP7 request (harpsichord action-set layout) still to be decided by the plan owner before M7.
 - Pass the bank's `lastDamper` to `setInstrument` when WP12 lands (profile default 88 is correct for Salamander).
