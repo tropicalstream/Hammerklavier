@@ -36,17 +36,53 @@ Branch `main`, repository `/Users/me/Projects/Hammerklavier`. Plan: PLAN §7.2 W
 - **Docs:** `docs/contracts/map-json.md` (frozen §6.6), `docs/contracts-changelog.md`,
   `docs/plan-changelog.md`, `docs/wiring/README.md`.
 
-## Remaining (days 1–2 → contracts-v1.1)
+## Days 1–2 → contracts-v1.1 (2026-09-22): done, M0 passed on the glasses
 
-- AudioClock and VisualClock to the full §2.5 algorithms with AudioClockTest and VisualClockTest
-  (the only trivial bodies left). Extend the shipped tests to the full §7.2 lists: CommandRing at
-  10⁷ items, EnergyRing/AudioClock torn-read with a checksum field per record.
-- `system/*` (Settings, ThermalGovernor, DebugControl, PerfProbe, SelfTest,
-  SoakRecorder, MediaButtons), `platform/TrackpadGestureEngine.kt` (WanderQuest copy + cyttsp6
-  filter + firm-click dedup), `platform/DeviceInfo.kt`; the §1.10 lifecycle in full; CONTROL
-  receiver; Wiring's VoiceCursorBoard/HeadPose singletons.
-- `tools/device/*` (run.sh, smoke.sh, soak.sh, cpu.sh, apl.sh, push_scores.sh) and the M0 gate.
-- Tag `contracts-v1` and create the worktrees: done by the auditor, not WP0 (this session).
+- **AudioClock** (full §2.5): 256 seqlocked records in `AtomicLongArray` (version, F, S, rate/playing/registration,
+  epoch/generation, checksum), a seqlocked anchor (frame, nanos, fs_fit, flags, checksum), `reset()` (head 0, anchor
+  dropped, estimate mode, session bump), timestamps accepted only if advancing and within ±0.5% of the fit measured
+  against the oldest pair of the 32-pair least-squares window, `latFrames`, drift p99 over 128 pairs, `clockMiss`
+  on the oldest-record fallback (H clamped to that record's start), H ≤ newestF + BLOCK. **VisualClock**: hold,
+  follow, 10% slew, reseed (< −60 ms, > +250 ms, session/epoch/generation, invalid sample), tiling exposure windows,
+  empty while paused and after a reseed. Both allocation-free (AllocProbe).
+- Tests: `AudioClockTest` (11 cases incl. 10⁶ reads vs a writer: 0 torn records, 0 torn anchors), `VisualClockTest`
+  (8), `CommandRingTest` now 10⁷ items. All other primitives were already implemented and tested on day 0.
+- **system/**: Settings (SharedPreferences, listeners; replaces MemSettings in Wiring), ThermalGovernor (sticky battery
+  + thermal listener, engine lifetime, faketemp/quality overrides, heartbeat line every 60 s), DebugControl (DUMP
+  permission, echo line `HKUi CONTROL k=v`), PerfProbe (FRAME HITCH > 120 ms, majflt, cpufreq, time_in_state, 10 s
+  HKPerf line), SelfTest (§8.3, 60 s torn-read test; `--ei selftestsecs N` added for short runs), SoakRecorder (CSV every
+  10 s, plans therm45/bright/rest10/sleep20), MediaButtons (framework MediaSession).
+- **platform/**: TrackpadGestureEngine (WanderQuest copy + cyttsp6 key-path filter + firm-click dedup, left-arm taps
+  removed, `onGesture` contract sink), DeviceInfo.
+- **Shell:** AppController owns the engine services (start at process start and every resume, stop only on finishing),
+  applies the quality ladder (audio always; GL and brightness when resumed), handles the §8.2 extras it can without
+  SessionController (gesture, view, framing, pause, resume, seek, rate, leave, quality, faketemp, recenter, brightness,
+  debug, selftest, gcstats, dump, soak); the rest are logged `deferred (SessionController, WP12)`. MainActivity feeds
+  touch/key/generic motion to the gesture engine, BACK → SYSTEM_BACK, forwards `am start` extras to CONTROL.
+  Wiring holds the HeadPose and VoiceCursorBoard singletons.
+- **tools/device/**: run.sh (ci, install, md5 check, compile speed, launch; `--no-ci`, `--mono`), smoke.sh M0 (streams
+  logcat to `build/smoke/M0/logcat.txt` because the device ring is only 64 KiB; checks both eye halves match),
+  push_scores.sh (§1.7), soak.sh (start/pull). Every adb sequence runs under lock.sh.
+
+## M0 gate on A06B4A96A733283 (release build, md5 verified): PASS
+
+tap (touch) · DPAD_CENTER → exactly one tap (key) · `--es gesture double/triple` · `input swipe` → FORWARD · CONTROL echo ·
+HKThermal lines, `faketemp 405` → Q1, `faketemp 425` → Q2 with the display asleep · selftest: version/branch/commit,
+GL info (Adreno 621, ES 3.2), torn-read 10.5 M reads 0 mismatches in 60 s, pass=9 fail=0 skip=3 (decoderProbe,
+audiotrack, companion: stubs) · BACK at the root leaves the app · eye halves identical (0.00% differing).
+
+## For the user: physical checks (cannot be done from adb)
+
+1. One firm click on the RIGHT pad logs exactly one `HKInput tap` (not a touch tap plus a key tap).
+2. A firm click on the LEFT arm logs nothing on HKInput.
+3. A physical double-tap on the right pad logs `double` (and does not also toggle play/pause).
+4. A broadcast from another app is ignored (enforced by the DUMP permission; needs a second app to prove).
+Watch with: `adb -s A06B4A96A733283 logcat -s HKInput`.
+
+## Remaining
+
+- Tag `contracts-v1.1` (by the auditor/integrator on main, not this branch). cpu.sh and apl.sh (§8.4 measurements)
+  arrive with the milestones that need them (M1/M5).
 
 ## Decisions and deviations
 
