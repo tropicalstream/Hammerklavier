@@ -6,7 +6,6 @@ import com.tropicalstream.hammerklavier.contract.Temperament
 import com.tropicalstream.hammerklavier.contract.TuningSpec
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Test
 import kotlin.math.abs
 import kotlin.math.ln
@@ -215,7 +214,6 @@ class KeyMapBuilderTest {
         assertTrue(a.region.contentEquals(b.region) && a.rate.contentEquals(b.rate) && a.velGainA.contentEquals(b.velGainA))
     }
 
-    @Ignore("needs wp11 fixture")
     @Test fun wp11FixtureWorkedExample() {
         val json = String(javaClass.classLoader.getResourceAsStream("wp11/map_fixture.json")!!.readBytes())
         val env = javaClass.classLoader.getResourceAsStream("wp11/env_fixture.bin")!!.readBytes()

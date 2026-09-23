@@ -431,6 +431,6 @@ class KitManager(ctx: Context, private val voicer: ExecutorService, private val 
         const val PREFS = "hk_kits"
         const val HEAD_FRAMES = HK.SR * 150 / 1000
         const val PRELOAD_MAX = 96L * 1024 * 1024
-        const val BENCH_ASSET = "instruments/bench.opus"
+        const val BENCH_ASSET = "instruments/stub/u/bench.opus"
     }
 }

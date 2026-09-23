@@ -18,7 +18,18 @@ Branch `wp4-audio` (from contracts-v1), worktree `/Users/me/Projects/hk-wp4`. Pl
   `KitManager` (KitService), `PlaybackService` (disabled).
 - docs/wiring/WP4.md, docs/requests/WP4.md.
 
-## Tests (2026-09-22)
+## Stage 2 (2026-09-22, after merging main = contracts-v1.1 + WP11 fixtures + WP7)
+- Merged main cleanly. All `@Ignore` markers removed; the three WP11-fixture tests run and pass on `wp11/map_fixture.json` +
+  `env_fixture.bin`. WP11 ships no `wp11/bad/`: the bad-fixture test derives 7 invalid variants from the WP11 fixture
+  (plus a truncated env.bin) and also reads `wp11/bad/*.json` if it ever appears.
+- contracts-v1.1's AudioClock rejects timestamps whose implied rate is > 0.5% off; the unpaced test FakeSink now reports
+  sink-clock nanos consistent with 48 kHz, and the test polls sampleClock (the seqlocked reader keeps its previous sample
+  when an unpaced writer outruns its retries). No main-code change needed.
+- Decode-bench asset path corrected to the plan's `instruments/stub/u/bench.opus` (now on main).
+- Results: `:core:test kit.*` 73 tests, 0 skipped, 0 failures; `:app:testDebugUnitTest audio.*` 17, 0 failures;
+  `:app:assembleDebug` OK; `check_purity.sh` OK.
+
+## Tests (2026-09-22, stage 1)
 - `tools/gw :core:test --tests 'com.tropicalstream.hammerklavier.kit.*'`: 73 tests, 0 failures, 3 skipped
   (`@Ignore("needs wp11 fixture")`: map_fixture parse, bad fixtures, the worked example on the WP11 fixture).
   T4.1 KitMapCodecTest (41), T4.2 KeyMapBuilderTest (15), T4.3/T4.4 CacheAndStoreTest (10), T4.5/T4.6 SynthBankAndPlanTest (7).
@@ -30,8 +41,7 @@ Branch `wp4-audio` (from contracts-v1), worktree `/Users/me/Projects/hk-wp4`. Pl
   HKAudio over 2000 blocks; PoliciesTest 8).
 - `tools/check_purity.sh` OK; `:app:assembleDebug` builds.
 
-## Remaining
-- Un-ignore the three WP11-fixture tests when `core/src/test/resources/wp11/` lands (map_fixture.json, env_fixture.bin, bad/*.json).
+## Remaining (device only; the integrator runs these at the milestones)
 - Device checks (not allowed in this stage): M1, decode bench, T-DEC, T-ALIGN, T-RESUME, T-PF, T-CLOCK, route switch,
   focus duck, `--ez lowlatency true`, DecoderProbe offset, T-UND on Bluetooth (M3).
 

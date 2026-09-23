@@ -5,7 +5,6 @@ import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
-import org.junit.Ignore
 import org.junit.Test
 
 /** T4.1: map.json parses; every §6.6 rule rejects a broken kit with a reason. */
@@ -100,7 +99,6 @@ class KitMapCodecTest {
 
     private fun res(name: String): ByteArray? = javaClass.classLoader.getResourceAsStream("wp11/$name")?.use { it.readBytes() }
 
-    @Ignore("needs wp11 fixture")
     @Test fun wp11FixtureParses() {
         val json = String(res("map_fixture.json")!!, Charsets.UTF_8)
         val env = res("env_fixture.bin")!!
@@ -111,15 +109,27 @@ class KitMapCodecTest {
         assertEquals(setOf(58, 60, 62), idx.regions.filter { it.kind == RegionKind.SUSTAIN }.map { it.root }.toSet())
     }
 
-    @Ignore("needs wp11 fixture")
+    /** WP11 ships no bad/ directory; bad variants are derived from its fixture here (plus any wp11/bad files if they appear). */
     @Test fun wp11BadFixturesRejected() {
         val env = res("env_fixture.bin")!!
-        val dir = javaClass.classLoader.getResource("wp11/bad") ?: error("no wp11/bad")
-        val files = java.io.File(dir.toURI()).listFiles { f -> f.name.endsWith(".json") }!!
-        assertTrue(files.isNotEmpty())
-        for (f in files) {
-            val r = KitMapCodec.decode(f.readText(), env)
-            assertTrue("${f.name} must be rejected", r is KitMapCodec.Result.Invalid)
+        val good = String(res("map_fixture.json")!!, Charsets.UTF_8)
+        val mutations: List<(org.json.JSONObject) -> Unit> = listOf(
+            { it.put("schema", 99) },
+            { it.remove("layers") },
+            { it.put("mode", "BOGUS") },
+            { it.getJSONArray("units").getJSONObject(1).put("id", 0) },
+            { it.getJSONArray("regions").getJSONObject(0).put("unit", 999) },
+            { it.getJSONArray("regions").getJSONObject(0).put("onsetFrame", 1_000_000) },
+            { it.getJSONArray("stops").getJSONObject(0).put("name", "16'") },
+        )
+        val texts = mutations.map { m -> org.json.JSONObject(good).also(m).toString() }.toMutableList()
+        javaClass.classLoader.getResource("wp11/bad")?.let { d ->
+            java.io.File(d.toURI()).listFiles { f -> f.name.endsWith(".json") }?.forEach { texts += it.readText() }
         }
+        for ((i, t) in texts.withIndex()) {
+            val r = KitMapCodec.decode(t, env)
+            assertTrue("bad variant $i must be rejected: $r", r is KitMapCodec.Result.Invalid)
+        }
+        assertTrue(KitMapCodec.decode(good, env.copyOf(env.size / 2)) is KitMapCodec.Result.Invalid)
     }
 }

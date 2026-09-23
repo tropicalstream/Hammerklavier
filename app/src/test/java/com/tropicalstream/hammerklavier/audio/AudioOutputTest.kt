@@ -36,6 +36,7 @@ class AudioOutputTest {
         @Volatile var peak = 0f
         private var failed = false
         private var n = 0
+        private val t0 = System.nanoTime()
         override fun write(buf: FloatArray, off: Int, frames: Int): Int {
             if (!failed && failAt >= 0 && written >= failAt) { failed = true; return TrackSupervisor.ERROR_DEAD_OBJECT }
             for (i in off until off + 2 * frames) { val a = Math.abs(buf[i]); if (a > peak) peak = a }
@@ -48,7 +49,10 @@ class AudioOutputTest {
         override fun release() { released = true }
         override fun timestamp(out: LongArray): Boolean {
             if (written < lag) return false
-            out[0] = written - lag; out[1] = System.nanoTime(); return true
+            // The sink runs faster than real time, so report sink-clock nanos consistent with 48 kHz
+            // (the contracts-v1.1 AudioClock rejects pairs whose implied rate is off by more than 0.5%).
+            val f = written - lag
+            out[0] = f; out[1] = t0 + f * 1_000_000_000L / 48_000L; return true
         }
         override fun playbackHeadPosition(): Long = maxOf(0L, written - lag)
         override fun underrunCount(): Int = 0
@@ -110,9 +114,10 @@ class AudioOutputTest {
         loadScale(a)
         a.start()
         waitFor(10_000, "timestamps") { val c = com.tropicalstream.hammerklavier.contract.ClockStats(); a.clockStats(c); c.tsAccepted > 3 }
+        // The unpaced writer can outrun the seqlocked reader's retries; a reader then keeps its previous sample.
         val s = ClockSample()
-        a.sampleClock(s)
-        assertTrue(s.valid); assertTrue(s.fromTimestamp)
+        waitFor(5_000, "valid sample") { a.sampleClock(s); s.valid }
+        assertTrue(s.fromTimestamp)
         assertEquals(OutputRoute.SPEAKER, a.route.route)
         assertTrue(a.latencyAllowance(OutputRoute.SPEAKER) > 0)
     }
