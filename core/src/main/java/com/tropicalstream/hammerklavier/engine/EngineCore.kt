@@ -477,7 +477,13 @@ class EngineCore(private val dsp: DspSet, private val cursors: VoiceCursorBoard,
         state.endedGeneration = endedGeneration
         state.idle = (!playing || p == null) && !pool.anyActive() && !dsp.room.tailActive
 
-        if (bench.running) bench.step(BENCH_SLICE_NS)
+        if (bench.running) {
+            if (!bench.step(BENCH_SLICE_NS)) {
+                // The bench drove the live stages with its own buffers: restore their modes and clear their state.
+                dsp.resonance.setMode(resonanceMode, profile.id, combs, dispersion)
+                dsp.resonance.reset(); dsp.soft.reset()
+            }
+        }
     }
 
     /** After the cap was lowered: steal the excess into kill slots, a block at a time. */

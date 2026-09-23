@@ -120,4 +120,16 @@ class EngineTimingTest {
         assertEquals(1, st.generation)
         assertEquals(3, st.registration)
     }
+
+    @Test fun debugOnsetReportsTheScheduledAndDetectedFrames() {
+        val h = Harness()
+        val o = LongArray(2)
+        h.play(perfSong(listOf(N(1000.0, 1050.0, 69, 118))))
+        h.renderTo(40_000)
+        assertTrue(!h.core.debugOnset(o))
+        h.renderTo(50_000)
+        assertTrue(h.core.debugOnset(o))
+        assertTrue("scheduled ${o[0]} detected ${o[1]}", abs(o[0] - o[1]) <= 2)
+        assertTrue(abs(o[0] - 48_000) < 48)
+    }
 }
