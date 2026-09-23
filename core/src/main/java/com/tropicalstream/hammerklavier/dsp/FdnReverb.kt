@@ -10,7 +10,7 @@ import kotlin.math.sqrt
  * mutually prime lines of 853 … 2521 frames, per-line 3-band loss (Jot): a mid gain
  * 10^(−3·d/(fs·t60Mid)), a complementary low shelf toward `t60Low` (one-pole split at 125 Hz) and
  * a one-pole low-pass that meets `t60High` at 8 kHz. Lines 2 and 5 are modulated ±12 frames at
- * 0.31 and 0.47 Hz (table sine, linear-interpolated read). Input spread with alternating signs;
+ * 0.31 and 0.47 Hz (table sine; the fractional read is a first-order allpass interpolator, not the plan's linear one, because linear interpolation loses up to 3 dB per pass at high frequencies and biased T60 and the energy normalisation). Input spread with alternating signs;
  * output lines 0/2/4/6 → L, 1/3/5/7 → R with alternating signs. Energy-normalised: a steady input
  * of RMS x gives an output of RMS ≈ x per channel. [setLines] (4) runs lines 0–3 with a 4×4
  * Hadamard (Q3). [setT60] uses only tables and sqrt (audio-thread safe). Allocation-free.
@@ -20,6 +20,7 @@ class FdnReverb(sampleRate: Int = HK.SR) {
     private val buf = FloatArray(LINES * LEN)
     private var pos = 0
     private var lines = LINES
+    private val apY = FloatArray(LINES)       // allpass-interpolator state of the modulated lines
 
     private val gMid = FloatArray(LINES)
     private val gLow = FloatArray(LINES)
@@ -73,7 +74,7 @@ class FdnReverb(sampleRate: Int = HK.SR) {
     val lineCount: Int get() = lines
 
     fun reset() {
-        java.util.Arrays.fill(buf, 0f); java.util.Arrays.fill(loS, 0f); java.util.Arrays.fill(hiS, 0f)
+        java.util.Arrays.fill(buf, 0f); java.util.Arrays.fill(loS, 0f); java.util.Arrays.fill(hiS, 0f); java.util.Arrays.fill(apY, 0f)
     }
 
     /** Adds the reverb of [input] × [inGain] (per frame) into [outL]/[outR]. */
@@ -88,12 +89,16 @@ class FdnReverb(sampleRate: Int = HK.SR) {
             // Read the line outputs.
             for (k in 0 until nl) {
                 if (k == 2 || k == 5) {
+                    // First-order allpass interpolation (flat magnitude, so the modulation adds no loss).
                     val ph = if (k == 2) ph2 else ph5
                     val dd = DELAYS[k] + MOD_DEPTH * DspTables.sinT(ph)
-                    val di = dd.toInt(); val f = dd - di
+                    val mi = (dd - 0.5f).toInt(); val d = dd - mi
+                    val eta = (1f - d) / (1f + d)
                     val base = k * LEN
-                    val x0 = buf[base + ((p - di) and MASK)]; val x1 = buf[base + ((p - di - 1) and MASK)]
-                    r[k] = x0 + (x1 - x0) * f
+                    val x0 = buf[base + ((p - mi) and MASK)]; val x1 = buf[base + ((p - mi - 1) and MASK)]
+                    val y = eta * (x0 - apY[k]) + x1
+                    apY[k] = y
+                    r[k] = y
                 } else {
                     r[k] = buf[k * LEN + ((p - DELAYS[k]) and MASK)]
                 }
