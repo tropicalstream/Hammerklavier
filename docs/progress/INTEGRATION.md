@@ -593,3 +593,17 @@ Gate (plugged in; `stay_on_while_plugged_in=7` on this device, so the display ne
   M6/M7 had one-off failures (adb push EOF, T-LEAVE asleep, upright remap) that passed on standalone re-runs.
 - versionName is **1.0-rc1** (About shows `Hammerklavier 1.0-rc1 <commit>`; screenshot build/smoke/M6/t5_11_about.png).
 - tools/device/lock.sh is re-entrant (HK_DEVICE_LOCK_HELD); `lock.sh -- tools/device/smoke.sh M0` no longer deadlocks.
+- USER (2026-09-23): unplugged therm45 soak run on the glasses; user reports no heat anomalies (accepted as T-THERM pass by the user; CSV to be pulled on reconnect). Still hears a muffled "mic rubbing" noise with Speaker bass OFF (suspect pedal/release noises). Wants the wood (case/outside) to match the TapGem wood theme (~/Projects/tapgem PanelTextures.wood: base #2B1A10, light #4A2E1A, dark #170D07, procedural grain); keys are fine.
+- **Gate re-verified on 8f5a84f** (clean build via run.sh: tools/ci.sh PASS, release APK md5 01ac7c2ab6a986c243a5f3a7a6fea42c):
+  `lock.sh -- smoke.sh all` (re-entrant lock, no deadlock): M0–M6 PASS, M7/M8 failed only on an adb USB drop
+  ("device not found" mid-M7); standalone M7 PASS, M8 PASS. Then `run.sh --no-ci` reinstall + `smoke.sh all`:
+  **M0, M1, M3, M4, M5, M6, M7, M8 all PASS, no FRAME HITCH**, T-START 1.78 s, T-MEM heap 16.7 MiB /
+  PSS−mapped 33.9 MiB / RSS 304.3 MiB, underruns while playing [0, 0]. About: `Hammerklavier 1.0-rc1 8f5a84f390f7`
+  (docs/shots/m8_about_1.0-rc1.png, both eyes). Tagged milestone-M8 and v1.0-rc1.
+- T-THERM / T-UND: only the earlier plugged-in runs (46 min at Q0; 40 min, 0 underruns); not re-run this pass.
+
+### Open issues (after v1.0-rc1)
+- Needs the user: 45-min unplugged T-THERM and max-brightness run; T-UND with the display truly asleep (cable out);
+  T-UND-BT, T-SYNC-BT; listening L-1..L-8; the palette on the waveguide.
+- WP10 request 5 waits on T-SYNC-BT; WP8 upright contact pool deferred; M7 carry-overs unchanged.
+- Occasional adb USB drop during long smoke runs (host/transport, not the app); re-run the milestone when it happens.
