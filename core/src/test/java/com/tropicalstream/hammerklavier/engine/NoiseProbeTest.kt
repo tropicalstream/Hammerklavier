@@ -38,8 +38,13 @@ import java.nio.ByteOrder
  * skipped otherwise, so CI never runs it.
  */
 class NoiseProbeTest {
-    private val out = File("../build/noise")
-    private val units = intArrayOf(5, 8, 11, 62, 63)
+    private val root = File("../build/noise")
+    // `kit=upright` / `kit=harpsichord` in ENABLE renders that kit (units pre-decoded to build/noise/<kit>/).
+    private val tokens by lazy { File(root, "ENABLE").takeIf { it.isFile }?.readText()?.trim()?.split(Regex("\\s+"))?.filter { it.isNotEmpty() } ?: emptyList() }
+    private val kit by lazy { tokens.firstOrNull { it.startsWith("kit=") }?.substringAfter('=') ?: "grand" }
+    private val out by lazy { if (kit == "grand") root else File(root, kit) }
+    private val units by lazy { when (kit) { "upright" -> intArrayOf(0, 1, 2, 62, 63); "harpsichord" -> intArrayOf(0, 1, 62); else -> intArrayOf(5, 8, 11, 62, 63) } }
+    private val profile by lazy { when (kit) { "upright" -> InstrumentProfile.UPRIGHT; "harpsichord" -> InstrumentProfile.HARPSICHORD; else -> InstrumentProfile.GRAND } }
 
     private class PcmBank(val index: KitIndex, val pcm: Map<Int, ShortArray>) : LoadedBank {
         override val info: BankInfo = index.toBankInfo(id = index.instrumentId(), fallback = null)
@@ -71,7 +76,9 @@ class NoiseProbeTest {
     }
 
     private fun load(): Pair<KitIndex, PcmBank> {
-        val d = File("../app/src/main/assets/instruments/grand")
+        // `map=<dir>` (repo-relative) reads map.json + env.bin from another kit directory (an A/B of a map patch)
+        val d = tokens.firstOrNull { it.startsWith("map=") }?.let { File("..", it.substringAfter('=')) }
+            ?: File("../app/src/main/assets/instruments/$kit")
         val idx = (KitMapCodec.decode(File(d, "map.json").readText(), File(d, "env.bin").readBytes()) as KitMapCodec.Result.Ok).index
         val pcm = units.associateWith { u ->
             val b = File(out, "u$u.s16").readBytes()
@@ -82,16 +89,16 @@ class NoiseProbeTest {
 
     private fun perf(name: String): Performance {
         val b = File("../tools/cache/midi/krueger/$name.mid").readBytes()
-        return (ScoreCompilerImpl().compile(b, name, 1, InstrumentProfile.GRAND, CompileOptions()) as CompileResult.Ok).perf
+        return (ScoreCompilerImpl().compile(b, name, 1, profile, CompileOptions()) as CompileResult.Ok).perf
     }
 
-    private class V(val name: String, val mix: MixSettings, val passThrough: Boolean = false, val relTrimDb: Float = 0f)
+    private class V(val name: String, val mix: MixSettings, val passThrough: Boolean = false, val relTrimDb: Float = 0f, val reg: Int = HK.REG_8 or HK.REG_4)
 
     private fun mix(rev: ReverbMode = ReverbMode.ROOM, res: ResonanceMode = ResonanceMode.NATURAL, rel: Boolean = true, ped: Boolean = true) =
         MixSettings(reverb = rev, resonance = res, speakerBass = SpeakerBass.OFF, masterDb = -6f, releaseNoises = rel, pedalNoises = ped)
 
     @Test fun probe() {
-        assumeTrue("noise probe not enabled", File(out, "ENABLE").isFile)
+        assumeTrue("noise probe not enabled", File(root, "ENABLE").isFile)
         val (idx, bank) = load()
         var mask = 0L; for (u in units) mask = mask or (1L shl u)
         val km0 = KeyMapBuilder.build(idx, TuningSpec.A440_EQUAL, mask)
@@ -99,8 +106,11 @@ class NoiseProbeTest {
             V("all", mix()), V("relOff", mix(rel = false)), V("pedOff", mix(ped = false)),
             V("combsOff", mix(res = ResonanceMode.OFF)), V("roomOff", mix(rev = ReverbMode.DRY)),
             V("rawPass", mix(), passThrough = true), V("rawPassRelOff", mix(rel = false), passThrough = true),
-            V("rel-37", mix(), relTrimDb = -37f), V("rel-30", mix(), relTrimDb = -30f))
-        val only = File(out, "ENABLE").readText().trim().split(Regex("\\s+")).filter { it.isNotEmpty() }.toSet()
+            V("rel-37", mix(), relTrimDb = -37f), V("rel-30", mix(), relTrimDb = -30f),
+            V("reg8", mix(), reg = HK.REG_8), V("reg8RelOff", mix(rel = false), reg = HK.REG_8),
+            V("rawPassReg8RelOff", mix(rel = false), passThrough = true, reg = HK.REG_8))
+        val only = tokens.filter { !it.startsWith("kit=") && !it.startsWith("map=") && !it.startsWith("tag=") }.toSet()
+        val tag = tokens.firstOrNull { it.startsWith("tag=") }?.substringAfter('=')?.let { "_$it" } ?: ""
         for (piece in listOf("mond_1", "mz_311_3")) {
             val p = perf(piece)
             val secs = if (piece == "mond_1") 40 else 25
@@ -114,11 +124,12 @@ class NoiseProbeTest {
                 val g = Math.pow(10.0, v.relTrimDb / 20.0).toFloat()
                 val km: KeyMap = if (v.relTrimDb == 0f) km0 else km0.copy(releaseGain = FloatArray(km0.releaseGain.size) { km0.releaseGain[it] * g })
                 val core = EngineCore(if (v.passThrough) PassThroughDsp.create() else DspFactory.create(HK.SR), VoiceCursorBoard(), HeadPose())
-                core.on(Cmd.SET_BANK, 0L, 0f, core.prepareBank(bank, km, InstrumentProfile.GRAND))
+                core.on(Cmd.SET_BANK, 0L, 0f, core.prepareBank(bank, km, profile))
+                if (kit == "harpsichord") core.on(Cmd.REGISTRATION, v.reg.toLong(), 0f, null)
                 core.on(Cmd.QUALITY, 0L, 0f, QualityLadder.of(0, 96))
                 core.on(Cmd.MIX, 0L, 0f, v.mix)
                 core.on(Cmd.SET_PERF, 0L, 1f, p)
-                OfflineRender.writeWavTo(File(out, "${piece}_${v.name}.wav"), OfflineRender.render(core, secs * HK.SR))
+                OfflineRender.writeWavTo(File(out, "${piece}_${v.name}$tag.wav"), OfflineRender.render(core, secs * HK.SR))
             }
         }
     }

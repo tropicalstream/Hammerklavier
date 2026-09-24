@@ -326,3 +326,12 @@ Recorded by the integrator while merging WP1, WP2, WP3, WP4 and WP11 for M1 (doc
 - tools/device/lock.sh is re-entrant: the child gets `HK_DEVICE_LOCK_HELD=<lock path>`, and a nested lock.sh with the
   same lock path runs its command directly (wrapping smoke.sh/run.sh in lock.sh no longer deadlocks).
 - versionName 0.1-alpha → 1.0-rc1.
+
+### VCSL release level (integrator, 2026-09-23)
+- `KeyMap.releaseAttackRel: Boolean = false` (new, last, defaulted). When true, `releaseGain` is relative to the
+  released note's attack: EngineCore multiplies it by the loudest sounding main voice of (key, stop) — `base` × its
+  region's loudest env block in the first 50 ms — instead of VEL07 (the upright keeps the age rule; the harpsichord's
+  quill releases have none, as its SFZ). No release when no main voice of that key/stop sounds.
+- map.json: optional `regions[].attackRelDb` on release regions (KitIndex `RegionDef.attackRelDb`, NaN when absent).
+  KeyMapBuilder sets `releaseAttackRel` when every release region has it, with `releaseGain = 10^((attackRelDb −
+  envMaxDb)/20)`. The upright and harpsichord maps now carry it and `releaseCarriesTail: false` (no handoff).

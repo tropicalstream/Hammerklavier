@@ -586,7 +586,15 @@ class EngineCore(private val dsp: DspSet, private val cursors: VoiceCursorBoard,
         if (rel < 0) return
         val note = keys.lastNote[k]
         var g = km.keyMap.releaseGain[k]
-        if (note >= 0) {
+        if (km.keyMap.releaseAttackRel) {
+            // VCSL upright: under the released note's attack (velocity is in it), then the age rule (SFZ rt_decay)
+            g *= attackLevel(k, HK.STOP_MAIN)
+            if (g <= 0f) return
+            if (note >= 0) {
+                val ea = DecayTables.expAge((p.offUs[note] - p.onUs[note]) * 1e-6f)
+                g *= if (ea < 0.25f) 0.25f else ea
+            }
+        } else if (note >= 0) {
             val v = p.vel[note].toInt() and 0x7F
             val age = (p.offUs[note] - p.onUs[note]) * 1e-6f
             val ea = DecayTables.expAge(age)
@@ -609,8 +617,31 @@ class EngineCore(private val dsp: DspSet, private val cursors: VoiceCursorBoard,
         if (rel < 0) return
         val note = keys.lastNote[k]
         var g = km.keyMap.releaseGain[i]
-        if (note >= 0) g *= DecayTables.VEL07[p.vel[note].toInt() and 0x7F]
+        if (km.keyMap.releaseAttackRel) {                  // VCSL jack fall: under this stop's note attack (SFZ: no rt_decay)
+            g *= attackLevel(k, stop)
+            if (g <= 0f) return
+        } else if (note >= 0) g *= DecayTables.VEL07[p.vel[note].toInt() and 0x7F]
         startNoise(Voice.RELEASE_NOISE, rel, km.keyMap.releaseRate[i], g, pf + o, k, 0)
+    }
+
+    /**
+     * The attack level (linear) of the loudest sounding main voice of ([k], [stop]): its gain times its
+     * region's loudest env block in the first 50 ms; 0 when none sounds. Allocation-free.
+     */
+    private fun attackLevel(k: Int, stop: Int): Float {
+        val bt = bankTok ?: return 0f
+        val vs = pool.voices
+        var best = 0f
+        for (j in 0 until VoicePool.TOTAL) {
+            val v = vs[j]
+            if (v.role != Voice.ROLE_MAIN || v.key != k || v.stop != stop) continue
+            if (v.state != Voice.PLAYING && v.state != Voice.FADING) continue
+            var m = 255
+            for (t in 0 until ATTACK_BLOCKS) { val b = bt.bank.envByte(v.region, t); if (b < m) m = b }
+            val a = v.base * DecayTables.db2lin(DecayTables.ENV_DB[m])
+            if (a > best) best = a
+        }
+        return best
     }
 
     /**
@@ -746,6 +777,8 @@ class EngineCore(private val dsp: DspSet, private val cursors: VoiceCursorBoard,
         const val TWO32 = 4294967296.0
         const val MAX_PER_KEY = 3
         const val MINUS_9DB = 0.35481339f
+        /** A sustain's attack: its loudest 10 ms env block in the first 50 ms (kit_build ATTACK_BLOCKS). */
+        const val ATTACK_BLOCKS = 5
         /** A pending-list onset more than 50 ms past its frame is dropped (counted) instead of started. */
         const val LATE_DROP_FRAMES = 2400L
         const val BENCH_SLICE_NS = 2_000_000L

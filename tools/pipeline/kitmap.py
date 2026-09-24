@@ -31,7 +31,7 @@ STOP_FIELDS = ("index", "name")
 UNIT_FIELDS = ("id", "label", "order", "file", "frames", "sha1")
 REGION_REQUIRED = ("id", "kind", "unit", "streamStart", "frames", "stop", "layer", "root", "lo", "hi",
                    "rr", "onsetFrame", "thrFrame", "gainDb", "envOffset", "envCount")
-REGION_OPTIONAL = ("pitchCents", "borrowable", "seamGainDb", "seamLpHz")
+REGION_OPTIONAL = ("pitchCents", "borrowable", "seamGainDb", "seamLpHz", "attackRelDb")
 RELEASE_RULE_FIELDS = ("relGainDb", "velExp", "ageTauS", "floor", "heldDb")
 def _sha1_file(path):
     import hashlib
@@ -289,6 +289,8 @@ def validate(m, kit_dir=None, env=None):
         for f in ("seamGainDb", "seamLpHz"):
             if f in R and not _is(R[f], "num"):
                 errs.append("region %d: %s must be a number" % (i, f))
+        if "attackRelDb" in R and (kind != "release" or not _is(R["attackRelDb"], "num")):
+            errs.append("region %d: attackRelDb must be a number on a release region" % i)
         if ("seamGainDb" in R or "seamLpHz" in R) and not R.get("borrowable", False):
             errs.append("region %d: seam trims only on borrowable regions" % i)
     for kind, rrs in rr_seen.items():

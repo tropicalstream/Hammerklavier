@@ -11,7 +11,7 @@
  "aOffsetCents": -1.7157129,
  "recordedAHz": 439.5641608,
  "pedalGainDb": -12.0,
- "releaseCarriesTail": true,
+ "releaseCarriesTail": false,
  "embeddedRoomDb": 3.121415,
  "embeddedEdtS": 1.1083886,
  "layers": [
@@ -1135,7 +1135,8 @@
    "pitchCents": 0.0,
    "gainDb": -27.8202075,
    "envOffset": 27696,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -24.7513823
   },
   {
    "id": 55,
@@ -1154,7 +1155,8 @@
    "pitchCents": 0.0,
    "gainDb": -27.926407,
    "envOffset": 27756,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -25.856333
   },
   {
    "id": 56,
@@ -1173,7 +1175,8 @@
    "pitchCents": 0.0,
    "gainDb": -36.5108154,
    "envOffset": 27816,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -23.2628621
   },
   {
    "id": 57,
@@ -1192,7 +1195,8 @@
    "pitchCents": 0.0,
    "gainDb": -27.9901992,
    "envOffset": 27876,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -23.7206298
   },
   {
    "id": 58,
@@ -1211,7 +1215,8 @@
    "pitchCents": 0.0,
    "gainDb": -26.4439546,
    "envOffset": 27936,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -24.0494773
   },
   {
    "id": 59,
@@ -1230,7 +1235,8 @@
    "pitchCents": 0.0,
    "gainDb": -26.1924187,
    "envOffset": 27996,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -19.8581003
   },
   {
    "id": 60,
@@ -1249,7 +1255,8 @@
    "pitchCents": 0.0,
    "gainDb": -35.7522203,
    "envOffset": 28056,
-   "envCount": 55
+   "envCount": 55,
+   "attackRelDb": -21.8090411
   },
   {
    "id": 61,
@@ -1268,7 +1275,8 @@
    "pitchCents": 0.0,
    "gainDb": -25.4889332,
    "envOffset": 28111,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -23.8118949
   },
   {
    "id": 62,
@@ -1287,7 +1295,8 @@
    "pitchCents": 0.0,
    "gainDb": -30.2630272,
    "envOffset": 28171,
-   "envCount": 50
+   "envCount": 50,
+   "attackRelDb": -25.00616
   },
   {
    "id": 63,
@@ -1306,7 +1315,8 @@
    "pitchCents": 0.0,
    "gainDb": -35.185867,
    "envOffset": 28221,
-   "envCount": 35
+   "envCount": 35,
+   "attackRelDb": -23.8498484
   },
   {
    "id": 64,
@@ -1325,7 +1335,8 @@
    "pitchCents": 0.0,
    "gainDb": -31.4876526,
    "envOffset": 28256,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -23.8142813
   },
   {
    "id": 65,
@@ -1344,7 +1355,8 @@
    "pitchCents": 0.0,
    "gainDb": -25.8505022,
    "envOffset": 28316,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -22.3898643
   },
   {
    "id": 66,
@@ -1363,7 +1375,8 @@
    "pitchCents": 0.0,
    "gainDb": -24.8296806,
    "envOffset": 28376,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -20.2285302
   },
   {
    "id": 67,
@@ -1382,7 +1395,8 @@
    "pitchCents": 0.0,
    "gainDb": -27.9707056,
    "envOffset": 28436,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -25.3201117
   },
   {
    "id": 68,
@@ -1401,7 +1415,8 @@
    "pitchCents": 0.0,
    "gainDb": -33.5745478,
    "envOffset": 28496,
-   "envCount": 40
+   "envCount": 40,
+   "attackRelDb": -24.5150295
   },
   {
    "id": 69,
@@ -1420,7 +1435,8 @@
    "pitchCents": 0.0,
    "gainDb": -32.3377654,
    "envOffset": 28536,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -26.1620568
   },
   {
    "id": 70,
@@ -1439,7 +1455,8 @@
    "pitchCents": 0.0,
    "gainDb": -36.5065039,
    "envOffset": 28596,
-   "envCount": 40
+   "envCount": 40,
+   "attackRelDb": -22.9422785
   },
   {
    "id": 71,
@@ -1458,7 +1475,8 @@
    "pitchCents": 0.0,
    "gainDb": -31.9775379,
    "envOffset": 28636,
-   "envCount": 50
+   "envCount": 50,
+   "attackRelDb": -27.6514499
   },
   {
    "id": 72,
@@ -1477,7 +1495,8 @@
    "pitchCents": 0.0,
    "gainDb": -25.8324801,
    "envOffset": 28686,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -26.0009493
   },
   {
    "id": 73,
@@ -1496,7 +1515,8 @@
    "pitchCents": 0.0,
    "gainDb": -27.5461132,
    "envOffset": 28746,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -23.2056261
   },
   {
    "id": 74,
@@ -1515,7 +1535,8 @@
    "pitchCents": 0.0,
    "gainDb": -29.1531206,
    "envOffset": 28806,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -22.2061332
   },
   {
    "id": 75,
@@ -1534,7 +1555,8 @@
    "pitchCents": 0.0,
    "gainDb": -20.9982423,
    "envOffset": 28866,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -19.3439488
   },
   {
    "id": 76,
@@ -1553,7 +1575,8 @@
    "pitchCents": 0.0,
    "gainDb": -27.0394003,
    "envOffset": 28926,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -23.0098641
   },
   {
    "id": 77,
@@ -1572,7 +1595,8 @@
    "pitchCents": 0.0,
    "gainDb": -29.7777471,
    "envOffset": 28986,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -25.2167646
   },
   {
    "id": 78,
@@ -1591,7 +1615,8 @@
    "pitchCents": 0.0,
    "gainDb": -27.1639486,
    "envOffset": 29046,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -24.2781829
   },
   {
    "id": 79,
@@ -1610,7 +1635,8 @@
    "pitchCents": 0.0,
    "gainDb": -31.1915793,
    "envOffset": 29106,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -21.7675297
   },
   {
    "id": 80,
@@ -1629,7 +1655,8 @@
    "pitchCents": 0.0,
    "gainDb": -31.5391476,
    "envOffset": 29166,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -24.6798382
   },
   {
    "id": 81,
@@ -1648,7 +1675,8 @@
    "pitchCents": 0.0,
    "gainDb": -21.5277505,
    "envOffset": 29226,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -24.644124
   },
   {
    "id": 82,
@@ -1667,7 +1695,8 @@
    "pitchCents": 1200.0,
    "gainDb": -27.5249793,
    "envOffset": 29286,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -21.1938391
   },
   {
    "id": 83,
@@ -1686,7 +1715,8 @@
    "pitchCents": 1200.0,
    "gainDb": -24.4060042,
    "envOffset": 29346,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -23.3873004
   },
   {
    "id": 84,
@@ -1705,7 +1735,8 @@
    "pitchCents": 1200.0,
    "gainDb": -30.2728363,
    "envOffset": 29406,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -17.6371459
   },
   {
    "id": 85,
@@ -1724,7 +1755,8 @@
    "pitchCents": 1200.0,
    "gainDb": -29.5652086,
    "envOffset": 29466,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -15.5554591
   },
   {
    "id": 86,
@@ -1743,7 +1775,8 @@
    "pitchCents": 1200.0,
    "gainDb": -16.4235109,
    "envOffset": 29526,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -18.6431878
   },
   {
    "id": 87,
@@ -1762,7 +1795,8 @@
    "pitchCents": 1200.0,
    "gainDb": -22.7265286,
    "envOffset": 29586,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -12.9544907
   },
   {
    "id": 88,
@@ -1781,7 +1815,8 @@
    "pitchCents": 1200.0,
    "gainDb": -23.463599,
    "envOffset": 29646,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -17.715152
   },
   {
    "id": 89,
@@ -1800,7 +1835,8 @@
    "pitchCents": 1200.0,
    "gainDb": -27.3399501,
    "envOffset": 29706,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -22.7878853
   },
   {
    "id": 90,
@@ -1819,7 +1855,8 @@
    "pitchCents": 1200.0,
    "gainDb": -25.6892824,
    "envOffset": 29766,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -18.7045361
   },
   {
    "id": 91,
@@ -1838,7 +1875,8 @@
    "pitchCents": 1200.0,
    "gainDb": -27.8121981,
    "envOffset": 29826,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -21.8518278
   },
   {
    "id": 92,
@@ -1857,7 +1895,8 @@
    "pitchCents": 1200.0,
    "gainDb": -26.1121238,
    "envOffset": 29886,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -20.6200577
   },
   {
    "id": 93,
@@ -1876,7 +1915,8 @@
    "pitchCents": 1200.0,
    "gainDb": -23.9658832,
    "envOffset": 29946,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -22.0805704
   },
   {
    "id": 94,
@@ -1895,7 +1935,8 @@
    "pitchCents": 1200.0,
    "gainDb": -28.0626827,
    "envOffset": 30006,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -19.7130297
   },
   {
    "id": 95,
@@ -1914,7 +1955,8 @@
    "pitchCents": 1200.0,
    "gainDb": -28.9581718,
    "envOffset": 30066,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -28.8351089
   },
   {
    "id": 96,
@@ -1933,7 +1975,8 @@
    "pitchCents": 1200.0,
    "gainDb": -27.461051,
    "envOffset": 30126,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -23.1792197
   },
   {
    "id": 97,
@@ -1952,7 +1995,8 @@
    "pitchCents": 1200.0,
    "gainDb": -30.017803,
    "envOffset": 30186,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -21.3998034
   },
   {
    "id": 98,
@@ -1971,7 +2015,8 @@
    "pitchCents": 1200.0,
    "gainDb": -25.3296061,
    "envOffset": 30246,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -15.631613
   },
   {
    "id": 99,
@@ -1990,7 +2035,8 @@
    "pitchCents": 1200.0,
    "gainDb": -29.0150677,
    "envOffset": 30306,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -22.0112545
   },
   {
    "id": 100,
@@ -2009,7 +2055,8 @@
    "pitchCents": 1200.0,
    "gainDb": -23.2445849,
    "envOffset": 30366,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -18.0758527
   },
   {
    "id": 101,
@@ -2028,7 +2075,8 @@
    "pitchCents": 1200.0,
    "gainDb": -21.3605123,
    "envOffset": 30426,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -17.4499667
   },
   {
    "id": 102,
@@ -2047,7 +2095,8 @@
    "pitchCents": 1200.0,
    "gainDb": -26.0108695,
    "envOffset": 30486,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -15.0646658
   },
   {
    "id": 103,
@@ -2066,7 +2115,8 @@
    "pitchCents": 1200.0,
    "gainDb": -28.0385268,
    "envOffset": 30546,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -20.0736319
   },
   {
    "id": 104,
@@ -2085,7 +2135,8 @@
    "pitchCents": 1200.0,
    "gainDb": -26.0947847,
    "envOffset": 30606,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -15.0483906
   },
   {
    "id": 105,
@@ -2104,7 +2155,8 @@
    "pitchCents": 1200.0,
    "gainDb": -28.0580387,
    "envOffset": 30666,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -13.9012577
   },
   {
    "id": 106,
@@ -2123,7 +2175,8 @@
    "pitchCents": 1200.0,
    "gainDb": -27.3757196,
    "envOffset": 30726,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -17.2853392
   },
   {
    "id": 107,
@@ -2142,7 +2195,8 @@
    "pitchCents": 1200.0,
    "gainDb": -26.0967228,
    "envOffset": 30786,
-   "envCount": 60
+   "envCount": 60,
+   "attackRelDb": -8.9797784
   }
  ],
  "stretchCents": [0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.015666, 0.0476545, 0.0779382, 0.1065171, 0.1333913, 0.1585608, 0.1820255, 0.2037855, 0.2238407, 0.2421912, 0.258837, 0.273778, 0.2870142, 0.2985458, 0.3083725, 0.3164946, 0.3229118, 0.3276244, 0.3306322, 0.3319352, 0.3315335, 0.3294271, 0.3256159, 0.3201, 0.3128793, 0.3039539, 0.2933238, 0.2809889, 0.2669492, 0.2512048, 0.2337557, 0.2146018, 0.1937432, 0.1711798, 0.1469117, 0.1209389, 0.0932613, 0.0638789, 0.0327918, 0.0, -0.0344966, -0.0706979, -0.108604, -0.1482148, -0.1895303, -0.2325506, -0.2772756, -0.3237054, -0.37184, -0.4216792, -0.4732232, -0.526472, -0.5814255, -0.6380837, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467, -0.6964467],

@@ -168,11 +168,11 @@ fun KeyMap.copy(rate: FloatArray = this.rate, onsetOut: IntArray = this.onsetOut
                 velGainA: FloatArray = this.velGainA, velGainB: FloatArray = this.velGainB,
                 release: IntArray = this.release, releaseRate: FloatArray = this.releaseRate, releaseGain: FloatArray = this.releaseGain,
                 pedalDown: IntArray = this.pedalDown, pedalUp: IntArray = this.pedalUp, pedalGain: Float = this.pedalGain,
-                region: IntArray = this.region, lpHz: FloatArray = this.lpHz): KeyMap =
+                region: IntArray = this.region, lpHz: FloatArray = this.lpHz, releaseAttackRel: Boolean = this.releaseAttackRel): KeyMap =
     KeyMap(tuning = tuning, readyMask = readyMask, layers = layers, stops = stops, velLayerA = velLayerA, velLayerB = velLayerB,
         velGainA = velGainA, velGainB = velGainB, region = region, rate = rate, gain = gain, onsetOut = onsetOut, lpHz = lpHz,
         release = release, releaseRate = releaseRate, releaseGain = releaseGain, pedalDown = pedalDown, pedalUp = pedalUp,
-        pedalGain = pedalGain, f0Hz = f0Hz, inharmB = inharmB, strings = strings)
+        pedalGain = pedalGain, f0Hz = f0Hz, inharmB = inharmB, strings = strings, releaseAttackRel = releaseAttackRel)
 
 /** [km] with key [key] of every (stop, layer) playing at [rate] (onsetOut recomputed). */
 fun KeyMap.withRate(key: Int, rate: Float, stop: Int = -1): KeyMap {

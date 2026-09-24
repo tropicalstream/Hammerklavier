@@ -16,7 +16,7 @@ import kotlin.math.exp
 class ReleaseNoiseTest {
     private class Start(val frame: Long, val kind: Int, val region: Int, val base: Float, val key: Int)
 
-    private fun kit(instrument: InstrumentId = InstrumentId.GRAND, tail: Boolean = false): Pair<TestBank, KeyMap> {
+    private fun kit(instrument: InstrumentId = InstrumentId.GRAND, tail: Boolean = false, attackRel: Boolean = false): Pair<TestBank, KeyMap> {
         val waves = listOf(
             TestBank.decayingSine(2000.0, 0.4, 0.2, 0.3),      // 0: release of every key
             TestBank.decayingSine(90.0, 1.0, 0.1, 1.0),        // 1, 2: pedal down
@@ -28,20 +28,22 @@ class ReleaseNoiseTest {
         val km = KeyMapFixtures.forSineBank(1).copy(
             release = IntArray(HK.KEYS) { bank.extraRegion(0) }, releaseGain = FloatArray(HK.KEYS) { 0.5f },
             pedalDown = intArrayOf(bank.extraRegion(1), bank.extraRegion(2)), pedalUp = intArrayOf(bank.extraRegion(3), bank.extraRegion(4)),
-            pedalGain = 0.1f)
+            pedalGain = 0.1f, releaseAttackRel = attackRel)
         return bank to km
     }
 
     private fun run(notes: List<N>, sustain: PedalCurve = PedalCurve.EMPTY, frames: Int, profile: InstrumentProfile = InstrumentProfile.GRAND,
-                    tail: Boolean = false, pedalNoises: Boolean = true): Pair<Harness, List<Start>> {
-        val (bank, km) = kit(profile.id, tail)
+                    tail: Boolean = false, pedalNoises: Boolean = true, attackRel: Boolean = false, releaseNoises: Boolean = true,
+                    mains: MutableMap<Int, Float>? = null): Pair<Harness, List<Start>> {
+        val (bank, km) = kit(profile.id, tail, attackRel)
         val h = Harness(profile = profile, bank = bank, keyMap = km)
-        h.mix(pedalNoises = pedalNoises)
+        h.mix(pedalNoises = pedalNoises, releaseNoises = releaseNoises)
         val starts = ArrayList<Start>()
         h.onBlock = { b ->
             for (v in h.core.pool.voices) {
                 if ((v.state == Voice.RELEASE_NOISE || v.state == Voice.PEDAL_NOISE) && v.startedOut >= b && v.startedOut < b + 256)
                     starts.add(Start(v.startedOut, v.state, v.region, v.base, v.key))
+                if (mains != null && v.role == Voice.ROLE_MAIN && v.state == Voice.PLAYING) mains[v.key] = maxOf(mains[v.key] ?: 0f, v.base)
             }
         }
         h.play(perfSong(notes, profile = profile, sustainSong = sustain))
@@ -71,6 +73,24 @@ class ReleaseNoiseTest {
         // An undamped treble key (above lastDamper) also plays only the key-return noise.
         val (_, treble) = run(listOf(N(1000.0, 1500.0, 100, 100)), frames = 80_000)
         assertEquals(ruleGain(100, 0.5) * 0.35481339, treble.single().base.toDouble(), 2e-3)
+    }
+
+    /** INTEGRATION.md (VCSL release level): attack-relative releases follow the released note's level, not VEL07. */
+    @Test fun attackRelativeReleasesTrackTheNoteAndIgnoreVel07() {
+        val ratio = { vel: Int ->
+            val mains = HashMap<Int, Float>()
+            val (_, starts) = run(listOf(N(1000.0, 1500.0, 60, vel)), frames = 80_000, profile = InstrumentProfile.UPRIGHT,
+                attackRel = true, mains = mains)
+            val s = starts.single { it.kind == Voice.RELEASE_NOISE }
+            s.base.toDouble() / mains.getValue(60)
+        }
+        val soft = ratio(40); val loud = ratio(110)
+        assertTrue("release/note $soft", soft > 0.0 && soft < 0.5)        // 0.5 × the attack env (< 0 dB) × the age rule
+        assertEquals(soft, loud, soft * 1e-3)
+        // Key release noise: Off in the Sound menu → none
+        val (_, off) = run(listOf(N(1000.0, 1500.0, 60, 100)), frames = 80_000, profile = InstrumentProfile.UPRIGHT, attackRel = true,
+            releaseNoises = false)
+        assertTrue(off.none { it.kind == Voice.RELEASE_NOISE })
     }
 
     @Test fun tailCarryingKitsPlayNoReleaseWhenTheDamperDoesNotLand() {

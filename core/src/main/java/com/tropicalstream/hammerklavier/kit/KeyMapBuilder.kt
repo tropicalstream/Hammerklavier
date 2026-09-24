@@ -120,6 +120,10 @@ object KeyMapBuilder {
         // releaseRule.relGainDb: the kit's release level under its notes (the grand's Salamander rel<n>
         // are key-release noises recorded near note level; the SFZ plays them at volume=-37).
         val relTrim = index.releaseRule.relGainDb
+        // VCSL kits (attackRelDb on every release): releaseGain is relative to the released note's attack,
+        // so that the release's loudest 10 ms block lands attackRelDb under it (the SFZ's release volume).
+        val allRel = index.regions.filter { it.kind == RegionKind.RELEASE }
+        val attackRel = allRel.isNotEmpty() && allRel.all { !it.attackRelDb.isNaN() }
         if (ready(KitIndex.UNIT_RELEASES)) for (stop in 0 until stops) {
             val octave = index.stops[stop].octaveSemis
             val rel = index.regions.filter { it.kind == RegionKind.RELEASE && it.stop == stop }
@@ -134,7 +138,8 @@ object KeyMapBuilder {
                 val best = own ?: nearest(rel, target, k)
                 val r = 2.0.pow((target - best.nativeCents) / 1200.0)
                 val i = stop * HK.KEYS + k
-                release[i] = best.id; releaseRate[i] = r.toFloat(); releaseGain[i] = db(best.gainDb + relTrim)
+                release[i] = best.id; releaseRate[i] = r.toFloat(); releaseGain[i] =
+                    if (attackRel) db(best.attackRelDb - envMaxDb(index, best)) else db(best.gainDb + relTrim)
             }
         }
 
@@ -154,7 +159,14 @@ object KeyMapBuilder {
             region = region, rate = rate, gain = gain, onsetOut = onsetOut, lpHz = lpHz,
             release = release, releaseRate = releaseRate, releaseGain = releaseGain,
             pedalDown = pedalDown, pedalUp = pedalUp, pedalGain = db(index.pedalGainDb),
-            f0Hz = f0, inharmB = index.inharmB.copyOf(), strings = strings)
+            f0Hz = f0, inharmB = index.inharmB.copyOf(), strings = strings, releaseAttackRel = attackRel)
+    }
+
+    /** The loudest 10 ms env block of [r] in dBFS (env byte b = −b/2 dB). */
+    private fun envMaxDb(index: KitIndex, r: RegionDef): Float {
+        var m = 255
+        for (t in 0 until r.envCount) { val b = index.envByte(r.id, t); if (b < m) m = b }
+        return -m / 2f
     }
 
     /** `100·k + c(k) + stretch[k]` for the sounding key k + octave (cents re A440 ET). */

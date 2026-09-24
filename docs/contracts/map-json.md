@@ -20,7 +20,7 @@ ship with it on day 1 under `core/src/test/resources/wp11/`.
 | `lastDamper` | int | MIDI key | yes | measured (upright), SFZ (grand), 127 (harpsichord) |
 | `aOffsetCents` · `recordedAHz` | float · float | cents re A440 · Hz | yes | reported; `recordedAHz` used nowhere else |
 | `pedalGainDb` | float | dB | yes | |
-| `releaseCarriesTail` | bool | – | yes | upright and harpsichord true |
+| `releaseCarriesTail` | bool | – | yes | false for every shipped kit since the VCSL release-level fix (upright and harpsichord were true) |
 | `embeddedRoomDb` · `embeddedEdtS` | float · float | dB (direct / reverberant) · s | yes | |
 | `layers[]` | object | `{index, velLo, velHi, velRef, unit}` | yes | splits cover 1–127 without gaps |
 | `stops[]` | object | `{index, name: main \| 8' \| 4'}` | yes | |
@@ -35,6 +35,7 @@ ship with it on day 1 under `core/src/test/resources/wp11/`.
 | `regions[].gainDb` | float | dB restoring the natural level | yes | |
 | `regions[].envOffset` · `envCount` | int | byte index into `env.bin` · bytes (10 ms each, from region frame 0) | yes | |
 | `regions[].borrowable` · `seamGainDb` · `seamLpHz` | bool · float · float | – · dB · Hz | optional (harpsichord 4′) | §3.5 |
+| `regions[].attackRelDb` | float | dB: the release's loudest 10 ms block re the released note's attack (loudest of its first 5 env blocks), from the SFZ volumes | optional (release regions; VCSL upright and harpsichord) | INTEGRATION.md, VCSL release level |
 | `stretchCents` | float[128] | cents, shape only (0 at key 69) | yes | |
 | `inharmB` | float[128] | – | yes | |
 | `damperT60` | float[128] | s | yes | formula values for the grand |

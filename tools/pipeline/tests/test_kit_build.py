@@ -81,6 +81,15 @@ class KitBuildTest(unittest.TestCase):
         self.assertEqual(len(fitted), 2)
         self.assertTrue(flag.startswith("DAMPER-FIT"))
 
+    def test_release_attack_levels_follow_the_sfz_volumes(self):
+        regs = [{"id": 0, "kind": "sustain", "stop": 0, "layer": 1, "root": 60, "_sfzDb": -10.0},
+                {"id": 1, "kind": "sustain", "stop": 0, "layer": 2, "root": 60, "_sfzDb": 0.0},
+                {"id": 2, "kind": "release", "stop": 0, "layer": -1, "root": 60, "_sfzDb": -40.0},
+                {"id": 3, "kind": "release", "stop": 0, "layer": -1, "root": 63, "_sfzDb": -35.0}]
+        kit_build.release_attack_levels(regs, 1, [])
+        self.assertAlmostEqual(regs[2]["attackRelDb"], -30.0)
+        self.assertAlmostEqual(regs[3]["attackRelDb"], -25.0)      # nearest root's sustain on the reference layer
+
     def test_harpsichord_like_kit(self):
         with tempfile.TemporaryDirectory() as d:
             orig = kit_build.harpsichord_sources
@@ -93,7 +102,8 @@ class KitBuildTest(unittest.TestCase):
             self.assertEqual(kitmap.validate(m, kit_dir=out), [])
             self.assertEqual(m["mode"], "HARD")
             self.assertEqual(m["lastDamper"], 127)
-            self.assertTrue(m["releaseCarriesTail"])
+            # VCSL releases play at their SFZ level under the note (attackRelDb), with no handoff
+            self.assertFalse(m["releaseCarriesTail"])
             # the recording's pitch standard is separated from the shape (−1 c at key 60, +0.02 c/key)
             self.assertAlmostEqual(m["aOffsetCents"], -1.0 + 0.02 * 9, delta=0.5)
             self.assertAlmostEqual(m["stretchCents"][89] - m["stretchCents"][29], 0.02 * 60, delta=0.6)

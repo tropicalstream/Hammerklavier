@@ -27,7 +27,9 @@ class RegionDef(
     val stop: Int, val layer: Int, val root: Int, val lo: Int, val hi: Int, val rr: Int,
     val onsetFrame: Int, val thrFrame: Int, val pitchCents: Float, val gainDb: Float,
     val envOffset: Int, val envCount: Int,
-    val borrowable: Boolean = false, val seamGainDb: Float = 0f, val seamLpHz: Float = 0f) {
+    val borrowable: Boolean = false, val seamGainDb: Float = 0f, val seamLpHz: Float = 0f,
+    /** Release regions (VCSL kits): loudest 10 ms block re the released note's attack, from the SFZ; NaN = none. */
+    val attackRelDb: Float = Float.NaN) {
     /** Measured sounding pitch re A440 ET in cents (§3.5 `nativeCents`). */
     val nativeCents: Float get() = 100f * root + pitchCents
 }

@@ -64,9 +64,12 @@ def sustain_seconds(instrument, key):
 RELEASE_SECONDS = {"grand": 0.4, "upright": 1.0, "harpsichord": 0.6}
 # Release level under the notes (releaseRule.relGainDb). The Salamander rel<n> are damper/key noises
 # recorded near note level and played by its SFZ at volume=-37 (hammer.txt); at 0 dB they sounded as a
-# per-note "rubbing" as loud as the music (INTEGRATION.md, release-noise level). The tail-carrying
-# upright/harpsichord releases are level-matched at the handoff, so their value is unused.
+# per-note "rubbing" as loud as the music (INTEGRATION.md, release-noise level). The VCSL upright and
+# harpsichord releases are set per region instead (attackRelDb, from their SFZ volumes: see
+# release_attack_levels), so their value is unused.
 RELEASE_GAIN_DB = {"grand": -37.0, "upright": 0.0, "harpsichord": 0.0}
+# The layer whose SFZ sustains the VCSL releases are measured against (upright vl1 = mf; harpsichord's one).
+RELEASE_REF_LAYER = {"upright": 1, "harpsichord": 0}
 PEDAL_SECONDS = {"pedalDown": 4.5, "pedalUp": 0.5}
 
 
@@ -219,7 +222,7 @@ def assemble_kit(out_dir, meta, regions, units, report):
         row["gainDb"] = float(r["gainDb"])
         row["envOffset"] = len(env)
         row["envCount"] = len(eb)
-        for f in ("borrowable", "seamGainDb", "seamLpHz"):
+        for f in ("borrowable", "seamGainDb", "seamLpHz", "attackRelDb"):
             if f in r:
                 row[f] = r[f]
         env += eb
@@ -446,8 +449,9 @@ class Source:
     """One recorded sample: file path, kind, stop, layer, root, lo, hi, rr, start offset."""
 
     def __init__(self, path, kind, stop, layer, root, lo, hi, rr=0, start=None, tune_nat=0.0, tune_ret=0.0,
-                 octave=1.0, borrowable=False):
+                 octave=1.0, borrowable=False, sfz_volume=None):
         self.path, self.kind, self.stop, self.layer = path, kind, stop, layer
+        self.sfz_volume = sfz_volume
         self.root, self.lo, self.hi, self.rr, self.start = root, lo, hi, rr, start
         self.tune_nat, self.tune_ret, self.octave, self.borrowable = tune_nat, tune_ret, octave, borrowable
 
@@ -518,9 +522,11 @@ def upright_sources():
             continue
         if r["trigger"] == "attack":
             li = 1 if "_vl1_" in r["sample"] else 2
-            srcs.append(Source(_find(r["sample"], ["upright-sustain"]), "sustain", 0, li, r["root"], r["lokey"], r["hikey"]))
+            srcs.append(Source(_find(r["sample"], ["upright-sustain"]), "sustain", 0, li, r["root"], r["lokey"], r["hikey"],
+                               sfz_volume=r["volume"]))
         else:
-            srcs.append(Source(_find(r["sample"], ["upright-release"]), "release", 0, -1, r["root"], r["lokey"], r["hikey"]))
+            srcs.append(Source(_find(r["sample"], ["upright-release"]), "release", 0, -1, r["root"], r["lokey"], r["hikey"],
+                               sfz_volume=r["volume"]))
     mp = sfz.vsco_mapping(os.path.join(common.SAMPLES, "upright-pp-docs", "MappingChart.txt"))
     pp_dir = os.path.join(common.SAMPLES, "upright-sustain-pp")
     for f in sorted(os.listdir(pp_dir)):
@@ -550,10 +556,10 @@ def harpsichord_sources():
             octave = 2.0 if stop == 1 else 1.0
             if r["trigger"] == "attack":
                 srcs.append(Source(_find(r["sample"], [grp]), "sustain", stop, 0, r["root"], r["lokey"], r["hikey"],
-                                   octave=octave, borrowable=(stop == 1 and r["root"] + 12 >= 85)))
+                                   octave=octave, borrowable=(stop == 1 and r["root"] + 12 >= 85), sfz_volume=r["volume"]))
             else:
                 srcs.append(Source(_find(r["sample"], [rgrp]), "release", stop, -1, r["root"], r["lokey"], r["hikey"],
-                                   octave=octave))
+                                   octave=octave, sfz_volume=r["volume"]))
     return layers, stops, units, srcs
 
 
@@ -610,6 +616,8 @@ def build_real_kit(kit, out_dir, report_path):
         r = {"id": len(regions), "kind": s.kind, "stop": s.stop, "layer": s.layer, "root": s.root, "lo": s.lo,
              "hi": s.hi, "rr": s.rr, "onsetFrame": info["onsetFrame"], "thrFrame": info["thrFrame"],
              "gainDb": info["gainDb"], "pcm": seg}
+        if s.sfz_volume is not None:
+            r["_sfzDb"] = sfz_natural_db(seg, s.kind, info["gainDb"]) + s.sfz_volume
         if s.kind == "sustain":
             r["unit"] = unit_of[(s.stop, s.layer)]
         elif s.kind == "release":
@@ -753,6 +761,11 @@ def build_real_kit(kit, out_dir, report_path):
                 r["seamGainDb"] = float(ref_l - l4)
                 r["seamLpHz"] = float(_seam_lp(r["pcm"], ref_c))
                 report.append("seam root %d: gain %+.2f dB, lp %.0f Hz" % (r["root"], r["seamGainDb"], r["seamLpHz"]))
+    if instrument in RELEASE_REF_LAYER:
+        release_attack_levels(regions, RELEASE_REF_LAYER[instrument], report)
+        release_carries = False
+    for r in regions:
+        r.pop("_sfzDb", None)
     credit, source = CREDITS[instrument]
     meta = {"instrument": instrument, "kit": kit, "version": version_string(), "mode": mode, "xfadeSteps": xsteps,
             "xfadeLaw": law, "lastDamper": last_damper, "aOffsetCents": a_off,
@@ -767,6 +780,42 @@ def build_real_kit(kit, out_dir, report_path):
     report.append("sha1 %s, %d regions, %d units" % (m["sha1"], len(m["regions"]), len(m["units"])))
     common.write_text(report_path, "\n".join(report) + "\n")
     return m
+
+
+ATTACK_BLOCKS = 5                  # a sustain's attack level: its loudest 10 ms block in the first 50 ms
+
+
+def sfz_natural_db(seg, kind, gain_db):
+    """The natural level (dBFS of the source) a VCSL SFZ region is compared at: a sustain's loudest
+    10 ms block in its first 50 ms (its attack), a release's loudest 10 ms block."""
+    blocks = [-b / 2.0 for b in audio.env_bytes(seg)]
+    lvl = max(blocks[:ATTACK_BLOCKS]) if kind == "sustain" else max(blocks)
+    return lvl + gain_db
+
+
+def release_attack_levels(regions, ref_layer, report):
+    """VCSL upright / harpsichord: each release region's attackRelDb = its loudest 10 ms block re the
+    attack of the same root's sustain (layer ref_layer, same stop), both at their SFZ volumes: the SFZ
+    plays these release takes at a fixed volume well under the notes (INTEGRATION.md, VCSL release
+    level). The engine plays the release so that its loudest block sits attackRelDb under the attack
+    (the loudest of the first 5 env blocks, at the voice's gain) of the note that is released."""
+    sus = {(r["stop"], r["root"]): r for r in regions
+           if r["kind"] == "sustain" and r["layer"] == ref_layer and "_sfzDb" in r}
+    vals = []
+    for r in regions:
+        if r["kind"] != "release" or "_sfzDb" not in r:
+            continue
+        cand = [v for (st, root), v in sus.items() if st == r["stop"]]
+        if not cand:
+            raise KitBuildError("release region %d: no sustain on stop %d to level against" % (r["id"], r["stop"]))
+        s = sus.get((r["stop"], r["root"])) or min(cand, key=lambda v: abs(v["root"] - r["root"]))
+        r["attackRelDb"] = float(r["_sfzDb"] - s["_sfzDb"])
+        vals.append((r["stop"], r["root"], r["attackRelDb"]))
+    if vals:
+        a = np.array([v[2] for v in vals])
+        report.append("release attackRelDb (SFZ volumes): median %.1f dB, range %.1f..%.1f over %d regions" % (
+            float(np.median(a)), float(a.min()), float(a.max()), len(a)))
+    return vals
 
 
 def _centroid(pcm):
@@ -794,11 +843,54 @@ def _seam_lp(pcm, target_centroid):
     return math.sqrt(lo * hi)
 
 
+def patch_release_levels(kit, kit_dir):
+    """Apply release_attack_levels to an already built VCSL kit's map.json in place (units and env.bin
+    untouched, so the kit sha1 and the device PCM cache stay valid): the same process_sample levels a
+    full build computes, from the same sources."""
+    import json
+    _layers, _stops, _units, srcs = upright_sources() if kit == "upright" else harpsichord_sources()
+    ref = RELEASE_REF_LAYER[kit]
+    regions = []
+    for s in srcs:
+        if s.sfz_volume is None or (s.kind == "sustain" and s.layer != ref):
+            continue
+        secs = sustain_seconds(kit, s.root) if s.kind == "sustain" else RELEASE_SECONDS[kit]
+        seg, info = process_sample(audio.decode(s.path), s.kind, secs, start_offset=s.start, instrument=kit)
+        regions.append({"id": len(regions), "kind": s.kind, "stop": s.stop, "layer": s.layer, "root": s.root,
+                        "_sfzDb": sfz_natural_db(seg, s.kind, info["gainDb"]) + s.sfz_volume})
+    report = []
+    release_attack_levels(regions, ref, report)
+    by = {(r["stop"], r["root"]): r["attackRelDb"] for r in regions if r["kind"] == "release"}
+    path = os.path.join(kit_dir, "map.json")
+    with open(path) as f:
+        m = json.load(f)
+    n = 0
+    for R in m["regions"]:
+        if R["kind"] == "release":
+            R["attackRelDb"] = by[(R["stop"], R["root"])]
+            n += 1
+    m["releaseCarriesTail"] = False
+    with open(os.path.join(kit_dir, "env.bin"), "rb") as f:
+        env = f.read()
+    errs = kitmap.validate(m, kit_dir=kit_dir, env=env)
+    if errs:
+        raise KitBuildError("map.json invalid: " + "; ".join(errs[:10]))
+    common.write_text(path, common.json_dumps(m, digits=7))
+    print("%s: attackRelDb on %d release regions; %s" % (kit, n, report[0] if report else ""))
+    return 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--kit", required=True, choices=["grand-hd", "grand-std", "upright", "harpsichord", "stub"])
     ap.add_argument("--out", help="output kit directory (default assets/instruments/<id>)")
+    ap.add_argument("--patch-release-levels", action="store_true",
+                    help="upright/harpsichord: write attackRelDb into the existing map.json only")
     a = ap.parse_args(argv)
+    if a.patch_release_levels:
+        if a.kit not in RELEASE_REF_LAYER:
+            ap.error("--patch-release-levels is for upright and harpsichord")
+        return patch_release_levels(a.kit, a.out or os.path.join(common.INSTRUMENTS, a.kit))
     if a.kit == "stub":
         import make_stub_bank
         return make_stub_bank.main(["--out", a.out] if a.out else [])

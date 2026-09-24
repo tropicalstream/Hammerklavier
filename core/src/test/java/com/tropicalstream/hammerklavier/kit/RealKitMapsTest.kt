@@ -122,4 +122,27 @@ class RealKitMapsTest {
             assertEquals("key $k", r.gainDb - 37f, 20f * kotlin.math.log10(m.releaseGain[k]), 0.01f)
         }
     }
+
+    /**
+     * INTEGRATION.md (VCSL release level): the upright and harpsichord releases no longer hand off at the
+     * note's level; each sits at its SFZ volume under the released note's attack (attackRelDb).
+     */
+    @Test fun vcslReleasesSitAtTheirSfzLevelUnderTheNote() {
+        for (name in listOf("upright", "harpsichord")) {
+            val k = kits().toMap().getValue(name)
+            assertTrue(name, !k.releaseCarriesTail)
+            val rel = k.regions.filter { it.kind == RegionKind.RELEASE }
+            assertTrue(name, rel.isNotEmpty() && rel.all { it.attackRelDb in -60f..-5f })
+            val sorted = rel.map { it.attackRelDb }.sorted()
+            val median = sorted[sorted.size / 2]
+            assertTrue("$name median $median", median in (if (name == "upright") -40f..-28f else -26f..-18f))
+            val m = KeyMapBuilder.build(k, TuningSpec.A440_EQUAL, ALL)
+            assertTrue(name, m.releaseAttackRel)
+            for (i in m.release.indices) if (m.release[i] >= 0) {
+                val r = region(k, m.release[i])
+                var mx = 255; for (t in 0 until r.envCount) mx = minOf(mx, k.envByte(r.id, t))
+                assertEquals("$name $i", r.attackRelDb + mx / 2f, 20f * kotlin.math.log10(m.releaseGain[i]), 0.01f)
+            }
+        }
+    }
 }

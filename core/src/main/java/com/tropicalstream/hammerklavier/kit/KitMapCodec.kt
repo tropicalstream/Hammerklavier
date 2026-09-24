@@ -224,6 +224,7 @@ object KitMapCodec {
                 val pitch = if (needsPitch) q.float("pitchCents") else q.optFloat("pitchCents", 0f)
                 val borrowable = q.optBool("borrowable", false)
                 val seamGainDb = q.optFloat("seamGainDb", 0f); val seamLpHz = q.optFloat("seamLpHz", 0f)
+                val attackRelDb = q.optFloat("attackRelDb", Float.NaN)
                 if (id == null || kind == null || unit == null || start == null || frames == null || stop == null ||
                     layer == null || root == null || lo == null || hi == null || onset == null || thr == null ||
                     gainDb == null || envOff == null || envCount == null || pitch == null) continue
@@ -256,7 +257,7 @@ object KitMapCodec {
                 }
                 if (seamLpHz < 0f) bad += "${w}seamLpHz: negative"
                 regions += RegionDef(id, kind, unit, start, frames, stop, layer, root, lo, hi, rr, onset, thr, pitch, gainDb,
-                    envOff, envCount, borrowable, seamGainDb, seamLpHz)
+                    envOff, envCount, borrowable, seamGainDb, seamLpHz, attackRelDb)
             }
             if (regions.isEmpty()) bad += "regions: empty"
             val ids = regions.map { it.id }

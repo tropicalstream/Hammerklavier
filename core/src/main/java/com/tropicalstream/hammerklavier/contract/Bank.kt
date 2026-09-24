@@ -52,7 +52,9 @@ class KeyMap(
     @JvmField val lpHz: FloatArray,                                   // sk: fixed seam low-pass for borrowed regions, 0 = none
     @JvmField val release: IntArray, @JvmField val releaseRate: FloatArray, @JvmField val releaseGain: FloatArray,  // stop * 128 + key
     @JvmField val pedalDown: IntArray, @JvmField val pedalUp: IntArray, @JvmField val pedalGain: Float,
-    @JvmField val f0Hz: FloatArray, @JvmField val inharmB: FloatArray, @JvmField val strings: ByteArray)   // 128 (main stop)
+    @JvmField val f0Hz: FloatArray, @JvmField val inharmB: FloatArray, @JvmField val strings: ByteArray,   // 128 (main stop)
+    // true: releaseGain is relative to the released note's attack (VCSL kits, map.json attackRelDb)
+    @JvmField val releaseAttackRel: Boolean = false)
 
 sealed class KitState {
     object Missing : KitState()

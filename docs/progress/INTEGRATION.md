@@ -677,3 +677,46 @@ User: "can the colors of the grand be mixed in with standup and harpsichord also
 - **APL** (docs/shots/family_<instrument>_<view>.png): upright 7.86 / 7.46 / 6.90 %, harpsichord 7.78 / 5.79 / 7.89 %
   (Player / Action / Hall), within ≤ 9 % stage, ≤ 12 % Hall. Looked at: charcoal trim reads as the grand's lacquer
   against the walnut, paper walls light again inside the harpsichord.
+
+### VCSL release level: the upright and harpsichord "rubbing" (2026-09-23, integrator)
+User report after e82e7f7: rubbing barely audible on the grand, "a little" on the upright, "a lot" (then "unbearable")
+on the harpsichord.
+- **Method.** NoiseProbeTest now takes `kit=upright|harpsichord`, `map=<dir>` (A/B a patched map) and `tag=` in
+  `build/noise/ENABLE`; units decoded to `build/noise/<kit>/u<N>.s16`. New variants `reg8`, `reg8RelOff`,
+  `rawPassReg8RelOff` (8' only). Analysis `build/noise/ab.py` (100–800 Hz, variant − reference = key-up component),
+  `regions.py`, `tonal.py`; the SFZ-level survey is `kit_build.release_attack_levels`.
+- **Root cause.** Both kits used the §3.7 handoff: at key-up the release started "level-matched" to the sounding
+  sustain (`levelDb(sustain) − envDb(release onset block)`, clamped −30..+6 dB) and the sustain faded out in 30 ms.
+  (1) The VCSL SFZ does not do that: it plays the release takes at a fixed volume, and measured against the same
+  root's sustain attack at the SFZ volumes they sit **median −34 dB (upright, −22..−58) and −22 dB (harpsichord 8′
+  −19..−28, 4′ −9..−29)** under the note. The handoff put them at 0 dB. (2) The onset block is not the release's level:
+  the harpsichord jack-fall click and the upright treble damper thump come 10–280 ms after it, **peak − onset block
+  median +5.2 dB, p90 +23 dB, max +39 dB (harpsichord; 25/54 regions > 6 dB)**, upright median +4.0, p90 +12.3, max
+  +31 dB, so the click/thump landed up to +6 dB (the clamp) plus that rise above the note. In 100–800 Hz the harpsichord
+  release is broadband (non-harmonic share −0..−5 dB). Result, offline mz_311_3: key-up component **+14.2 dB re the
+  music (harpsichord; 8′ alone +15.1, pass-through DSP +14.1: not the 4′ stagger, not the DSP)**, **−1.3 dB (upright)**;
+  mond_1 harpsichord −3.9 dB (upright: pedal down, no handoff fired). Not the cause: the sustains (relOff 10th-pct
+  20 ms floor −68.9 dB, harpsichord mz_311_3), the 4′ (relOff vs 8′-only relOff −7.9 dB = its tone), the DSP chain.
+- **Fix (at the source).** kit_build.py: VCSL sources carry their SFZ `volume`; each release region gets
+  **`attackRelDb`** = its loudest 10 ms block re the attack (loudest of the first 5 env blocks) of the same root's
+  sustain (upright vl1 layer, harpsichord same stop), both at SFZ volume; `releaseCarriesTail` is now false (no
+  handoff; the sustain damps by its fitted damper T60 as with the pedal, as the SFZ's 0.4 s sustain release does).
+  `kit_build.py --kit <k> --patch-release-levels` writes the same values into the built map.json only (units/env.bin
+  untouched: kit sha1 and the device PCM cache stay valid); ledger rows updated. KeyMapBuilder: `releaseGain =
+  10^((attackRelDb − envMaxDb)/20)` and `KeyMap.releaseAttackRel`; EngineCore scales it by the released note's attack
+  level (loudest main voice of key/stop: base × its first-50 ms env peak) instead of VEL07; the upright keeps the age
+  rule (SFZ rt_decay 2 dB/s ≈ the 3 s tau) and the −9 dB rule under the pedal, the harpsichord's quill releases have
+  no age rule (its SFZ has none). The harpsichord jack fall stays a soft click at its recorded level (−22 dB), the
+  upright damper sound at −34 dB. Sound menu Key release noise Off still silences both kits (ReleaseNoiseTest).
+- **After (offline, mz_311_3).** Key-up component re the music: harpsichord **+14.2 → −22.5 dB** (8′ only −24.9),
+  10th-pct floor −43.0 → −55.9 dB; upright **−1.3 → −35.0 dB**, floor −46.2 → −54.2 dB. mond_1: harpsichord
+  −3.9 → −32.7 dB; upright −36.1 dB (releases now also fire under the pedal at −9 dB, as the grand's).
+- **Device (glasses, mozart.k311.3, `--ei wavdump 20`, mono mix of the capture).** Harpsichord before: RMS −20.4 dB,
+  100–800 Hz −20.8, 10th-pct floor −33.1; before with relnoise false −35.0 / −36.8 / −44.8; **after −35.0 / −36.8 /
+  −44.6** (the releases used to add 14.6 dB to the whole output, now < 0.2 dB). Upright before −36.1 / −36.3 / −45.1;
+  relnoise false −38.6 / −38.8 / −51.3; **after −38.6 / −38.8 / −51.4**. Captures from different takes vary ~2 dB
+  (seek alignment). WAVs build/noise/{harpsichord,upright}/device_{before,before_relOff,after,after_relOff}.wav.
+  APK md5 794bf246279bd1c47b03fe355c213aaa (built from the working tree, which also held the other agent's uncommitted
+  render/instrument edits). tools/ci.sh PASS (second run; the first hit the known AudioOutputTest flake).
+- Not done: the upright release takes still open with ~250 ms of the recorded note before the damper (as in the SFZ);
+  at −34 dB it is masked. Listening check on the speakers still needed from the user.
