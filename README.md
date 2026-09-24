@@ -6,6 +6,13 @@ grand, an upright and a Flemish harpsichord), each with a moving action you can 
 player's seat, in a cutaway, from overhead or from the hall. 67 bundled works (197 movements), plus
 your own MIDI files.
 
+## Screenshots
+
+<p>
+  <img src="images/title.png" width="45%" alt="Hammerklavier title card, candlelit Konzertzimmer at Sanssouci">
+  <img src="images/playback.png" width="45%" alt="Harpsichord keys moving during playback of Bach's WTC I No. 1">
+</p>
+
 ## Requirements
 
 - macOS or Linux with JDK 17 and the Android SDK (`local.properties` with `sdk.dir=…`, or `ANDROID_HOME`)
