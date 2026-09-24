@@ -781,3 +781,74 @@ User: "make sure swipe up and swipe down works in menus."
   docs/shots/vswipe_transport{0,1,2}.png (cursor Play → Next → Previous), docs/shots/vswipe_temper7.png.
 - Gate: gradle :core:test (ui.model) and :app:testDebugUnitTest (SwipeClassifierTest) PASS, :app:assembleRelease;
   installed via run.sh --no-ci (the tree also held another agent's uncommitted render/instrument edits).
+
+### Loudness: the same level on every instrument and in every view (2026-09-23, audio)
+User: "volume seems to really shift from one view to another including w piano styles."
+- **Measured (offline, before).** New `LoudnessProbeTest` (skipped unless `build/loudness/ENABLE`; every unit
+  pre-decoded to `build/loudness/<kit>/u<N>.s16`, `ffmpeg -i u/N.opus -ac 2 -ar 48000 -f s16le`): six Krueger pieces
+  (mond_1, mz_311_3, bach_846, bach_847, elise, haydn_35_1; 30 s each) on the REAL grand, upright and harpsichord
+  (8′+4′), full chain (combs, the view's RoomDesign, master −8 dB = the default), BS.1770 integrated loudness
+  (`dsp/Lufs.kt`, K-weighting, gated) and limiter gain reduction per block. Mean LUFS over the six pieces:
+
+  | before | Player | Action cutaway | Action overhead | Hall row 3 | spread | worst piece |
+  |---|---|---|---|---|---|---|
+  | grand | −24.1 | −21.0 | −23.2 | −29.5 | 8.6 | 9.8 |
+  | upright | −33.1 | −29.4 | −34.0 | −36.3 | 6.8 | 8.0 |
+  | harpsichord | −26.8 | −24.8 | −26.0 | −28.4 | 3.5 | 5.6 |
+
+  **Causes.** (1) Views: RoomAcoustics' `directGain = bench / d` (clamped 0.25…1.6) follows the distance law while the
+  late field is the same at every seat, so the Action cutaway (ear 0.5 m from the soundboard) was +3 dB and the Hall
+  (4–5 m, clamp 0.25 = −12 dB direct) −4…−6.6 dB. (2) Instruments: the kits are normalised each on its own; the upright
+  played ~9 dB and the harpsichord ~3 dB under the grand.
+- **Fix, instruments.** `engine/KitLoudness.kt`: a per-kit trim (keyed by map.json `kit`; stub/unknown = 0) applied by
+  EngineCore to the kit's whole output (notes, releases, pedals, combs, soft bus) ahead of the room, ramped over the
+  30 ms bank fade: grand-hd 0, **upright +9.65 dB, harpsichord +4.10 dB** (median over the six pieces of the difference
+  to the grand; the mean is pulled by bach_847, where the upright's and harpsichord's velocity curves put them +4 / +6 dB
+  over the grand). Visual energy lanes and debug thresholds follow (dbgThreshold × kitGain). Re-measure when a kit is
+  rebuilt (LoudnessTableTest's fingerprint names the trims).
+- **Fix, views.** `RoomDesign.levelGain` (contract, default 1; `timesLevel()`): RoomAcoustics computes the seat
+  compensation from its own power model, P = g_d²·(1 + E) + R² (direct, the 12 early taps E = erGain²·mean(ΣgL², ΣgR²),
+  the energy-normalised late field R = reverbGain) brought to the bench reference 1 + R², so a seat keeps its DRR,
+  reflections, air and width, only not its level. What the model misses (the late field's K-weighted loudness, early
+  taps correlated with the direct sound, how a kit's decays fill the gaps) is a small residual per (instrument, view,
+  framing), `ListenerRooms.levelTrimDb`, the mean over the six pieces (grand Action +0.52 / +0.60, Hall +1.19;
+  upright +0.24 / +0.38, −0.67; harpsichord +1.27 / −0.04, −0.74 dB); SessionController.updateRoom sends
+  `ListenerRooms.leveled(design)`. The Player framings share the bench ear (0). The anchors' ears (instrument/Anchors)
+  are the §5.6 table, so the residual applies on the glasses as measured. Reverb modes keep their relative level.
+- **Fix, crossfade.** A view change used to dip or bump the momentary loudness up to ~3 LU (ViewLoudnessTest):
+  RoomChain now puts levelGain into the direct gain (one glide of directGain × levelGain; a separate output glide
+  multiplied with it bumped +2.5 LU mid-way) and applies the late gain (reverbGain × levelGain) to the FDN's OUTPUT (at
+  its input the Hall's extra reverb arrived a tail later: a 2 LU dip on Action → Hall); EarlyReflections switches the
+  FDN feed's pre-delay with a 20 ms crossfade instead of over the 500 ms glide (a linear law dipped, equal power bumped,
+  a gliding read dipped, ±2 LU each in the Hall). Tap sets still crossfade linearly; both gains glide linearly (power-
+  linear glides bumped ~1 LU through the direct–late cross term). Worst view change now **0.62 LU** outside the two
+  views' own momentary loudness (was 1.8–2.8). Pause / resume still gate the room's input, so a paused tail rings on.
+- **After (offline, same six pieces, fitted in-sample).**
+
+  | after | Player | Action cutaway | Action overhead | Hall row 3 | worst piece, views |
+  |---|---|---|---|---|---|
+  | grand | −24.2 | −24.2 | −24.2 | −24.2 | 1.5 (elise: Hall +1.05, cutaway −0.41) |
+  | upright | −23.6 | −23.6 | −23.6 | −23.6 | 1.2 (bach_846 Hall −1.06) |
+  | harpsichord | −23.3 | −23.4 | −23.3 | −23.2 | 3.4 (mond_1 Hall +3.0; elise +1.4) |
+
+  Per piece, grand and upright views are within ±1.15 LU of the Player; the harpsichord Hall is programme-dependent
+  (−1.7…+3.0 LU: in a reverberant seat the room sustains its short plucks, most on sparse pieces), Action within ±0.85.
+  Instruments per piece at the Player re the grand: upright −1.0…+1.8 (bach_847 +3.9), harpsichord −1.4…+1.8
+  (bach_847 +6.4). Table: core/src/test/resources/loudness/table_after.csv; before: build/loudness/table_before6.csv.
+- **Limiter.** At −8 dB it acts only on bach_847 (upright ≤ 3 % of blocks, harpsichord 35–61 %, mean GR ≤ 0.37 dB);
+  between the views of one piece mean GR differs ≤ 0.19 dB. At master 0 dB (`master=0`, table_after_m0.csv) the loud
+  pieces limit alike in every view (bach_847 mean GR grand 0.24–0.49, upright 2.07–2.14, harpsichord 4.1–4.7 dB), where
+  before each view hit it at a different level.
+- **Tests.** `LoudnessTableTest` (CI): the checked-in real-kit table must carry the fingerprint the code computes
+  (kit trims + every seat's final levelGain from the assets' map.json), each view's mean within 0.5 LU of the Player,
+  each piano piece within 1.25 LU (harpsichord 3.5), each instrument's median within 0.5 LU of the grand, limiter mean
+  GR < 0.5 dB and alike (≤ 0.25 dB) across views. `ViewLoudnessTest` (CI, synthetic notes through the real RoomChain):
+  view change ≤ 1 LU outside the two views' momentary loudness; every view within 2.5 LU of the Player (the synthetic
+  notes are flatter and sparser than a piano, so the Hall reads +0.7…+2.3 there). RoomChainTest's DRR rig follows the
+  late gain. Changing a trim or the room model: re-run the probe (`tag=after`, the six pieces) and copy the table.
+- **Device (glasses, mozart.k311.3, `--ei wavdump 20` from the start, LUFS of the capture).** grand −24.2 / −24.2 /
+  −24.5 / −25.2, upright −25.5 / −25.4 / −25.4 / −26.1, harpsichord −24.0 / −24.2 / −24.6 / −25.3 (Player / cutaway /
+  overhead / Hall): views within 1.3 LU, instruments within 1.3 LU; the offline mz_311_3 renders read the same pattern
+  (Hall −0.6…−1.2). No device "before" capture (offline before table above). WAVs build/loudness/device/.
+  Installed via run.sh --no-ci after tools/ci.sh PASS (APK md5 d904f426fa8322c7b04ebecc66bc0b51, built from the working
+  tree, which also held the other agents' uncommitted edits). Listening check on the speakers still needed.

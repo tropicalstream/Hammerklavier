@@ -85,7 +85,7 @@ class DirectPath(sampleRate: Int = HK.SR) {
             sl = xl + ca * (sl - xl); sr = xr + ca * (sr - xr)
             val m = 0.5f * (sl + sr); val s = 0.5f * (sl - sr) * w
             mono[i] = m
-            monoRev[i] = m / gd                   // gd ≥ 0.25 (directGain clamp)
+            monoRev[i] = m / gd                   // gd = directGain (≥ 0.25) × levelGain (≥ 0.5)
             outL[i] = m + s; outR[i] = m - s
         }
         lpL.y1 = if (sl > -1e-20f && sl < 1e-20f) 0f else sl

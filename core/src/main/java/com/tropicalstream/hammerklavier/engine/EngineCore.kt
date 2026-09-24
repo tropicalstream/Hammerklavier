@@ -33,7 +33,9 @@ class PreparedKeyMap internal constructor(
 
 /** The prepared bank token of [EngineCore.prepareBank] (any thread): the bank, its HKAudio reader and its key map. */
 class PreparedBank internal constructor(
-    val bank: LoadedBank, internal val reader: SampleReader, val keyMap: PreparedKeyMap, val profile: InstrumentProfile)
+    val bank: LoadedBank, internal val reader: SampleReader, val keyMap: PreparedKeyMap, val profile: InstrumentProfile,
+    /** The kit's loudness trim ([KitLoudness]), linear. */
+    val kitGain: Float = 1f)
 
 /**
  * WP2's engine (PLAN §2.5, §3.5–§3.10, §3.14, §3.15): the per-block render graph on HKAudio.
@@ -108,6 +110,9 @@ class EngineCore(private val dsp: DspSet, private val cursors: VoiceCursorBoard,
     private var releaseNoises = true
     private var pedalNoises = true
     private var masterLin = 1f
+    private var kitGain = 1f                       // the bank's loudness trim (KitLoudness), ramped over the 30 ms bank fade
+    private var kitTarget = 1f
+    private var kitStep = 0f
     private var duck = 1f
     private var latencySec = 0.14f
     private var roomRestoreBlocks = 0
@@ -148,7 +153,8 @@ class EngineCore(private val dsp: DspSet, private val cursors: VoiceCursorBoard,
     // ═══════════ preparation (any thread) ═══════════
 
     override fun prepareBank(bank: LoadedBank, keyMap: KeyMap, profile: InstrumentProfile): Any =
-        PreparedBank(bank = bank, reader = bank.newReader(), keyMap = prepareKeyMap(keyMap, bank.info, profile) as PreparedKeyMap, profile = profile)
+        PreparedBank(bank = bank, reader = bank.newReader(), keyMap = prepareKeyMap(keyMap, bank.info, profile) as PreparedKeyMap, profile = profile,
+            kitGain = DecayTables.db2lin(KitLoudness.gainDb(bank.info)))
 
     override fun prepareKeyMap(keyMap: KeyMap, info: BankInfo, profile: InstrumentProfile): Any {
         val dm = DamperModel(keyMap, info, profile, sampleRate)
@@ -194,6 +200,7 @@ class EngineCore(private val dsp: DspSet, private val cursors: VoiceCursorBoard,
         dropNotYetHeard()
         pool.fadeAll(ms(30))
         bankTok = tok
+        kitTarget = tok.kitGain; kitStep = (kitTarget - kitGain) / ms(30)
         kmTok = tok.keyMap
         profile = tok.profile
         keys.configure(profile)
@@ -485,6 +492,10 @@ class EngineCore(private val dsp: DspSet, private val cursors: VoiceCursorBoard,
         for (i in 0 until block) mix[i] = 0.5f * (dryL[i] + dryR[i] + softL[i] + softR[i])
         dsp.resonance.process(mix, self, selfRows, keys.gate, keys.softFeed, keys.damping, dryL, dryR, block)
         dsp.soft.process(softL, softR, dryL, dryR, block)
+        if (kitGain != kitTarget || kitGain != 1f) for (i in 0 until block) {
+            if (kitGain != kitTarget) { kitGain += kitStep; if ((kitStep > 0f) == (kitGain >= kitTarget)) kitGain = kitTarget }
+            dryL[i] *= kitGain; dryR[i] *= kitGain
+        }
         val yaw = head.yaw() + head.omega() * latencySec
         dsp.room.process(dryL, dryR, wetL, wetR, block, yaw)
         dsp.master.process(wetL, wetR, block, out)
@@ -728,7 +739,7 @@ class EngineCore(private val dsp: DspSet, private val cursors: VoiceCursorBoard,
         dbgScheduled = outFrame + dsp.master.latencyFrames + (v.onsetAt - pf) + Math.round((bank.thrFrame(r) - bank.onsetFrame(r)) * TWO32 / v.inc)
         dbgArmedOut = outFrame + (v.startAt - pf)
         val peakEnv = DecayTables.ENV_DB[bank.envByte(r, (bank.onsetFrame(r) + 480) / 480)]
-        dbgThreshold = 0.01f * DecayTables.db2lin(peakEnv) * v.base * masterLin * 1.414f
+        dbgThreshold = 0.01f * DecayTables.db2lin(peakEnv) * v.base * kitGain * masterLin * 1.414f
         dbgDetected = -1L
     }
 

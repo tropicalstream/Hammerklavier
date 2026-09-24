@@ -11,7 +11,14 @@ class RoomDesign(
     val reverbGain: Float,                                            // reverberant level re direct at 1 m, incl. ReverbMode and embedded-room compensation
     val erGain: Float,                                                // early-reflection send, incl. embedded-room compensation
     val directGain: Float, val airLpHz: Float, val width: Float,
-    val worldLocked: Boolean, val sourceAzimuthRad: Float)            // azimuth of the source in the room (yaw convention of §2.3)
+    val worldLocked: Boolean, val sourceAzimuthRad: Float,            // azimuth of the source in the room (yaw convention of §2.3)
+    val levelGain: Float = 1f) {                                      // output trim of the whole room: equal loudness at every seat (INTEGRATION.md)
+    /** This design with its [levelGain] multiplied by [g]. */
+    fun timesLevel(g: Float): RoomDesign = RoomDesign(erDelay = erDelay, erGainL = erGainL, erGainR = erGainR, erBright = erBright,
+        brightLpHz = brightLpHz, dullLpHz = dullLpHz, preDelayFrames = preDelayFrames, t60Low = t60Low, t60Mid = t60Mid,
+        t60High = t60High, reverbGain = reverbGain, erGain = erGain, directGain = directGain, airLpHz = airLpHz, width = width,
+        worldLocked = worldLocked, sourceAzimuthRad = sourceAzimuthRad, levelGain = levelGain * g)
+}
 
 /** WP3 RoomAcoustics; pure, main/HKLoader. */
 interface RoomDesigner {

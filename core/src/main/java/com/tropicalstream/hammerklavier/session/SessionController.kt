@@ -555,7 +555,7 @@ class SessionController(
         val source = a?.soundSource ?: ListenerRooms.SOURCE.getValue(id)
         val embedded = (banks[id]?.info ?: kits.info(id))?.embeddedRoomDb ?: 0f
         val d = designer.design(g, placement, source, listener, prefs.reverb, ListenerRooms.benchDistance(id, a), embedded)
-        audio.setRoom(d, ROOM_GLIDE_MS)
+        audio.setRoom(ListenerRooms.leveled(d, id, view, framing), ROOM_GLIDE_MS)
     }
 
     private fun anchorsOf(id: InstrumentId): InstrumentAnchors? = anchors[id]

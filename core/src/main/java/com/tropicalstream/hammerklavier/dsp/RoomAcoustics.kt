@@ -112,17 +112,38 @@ object RoomAcoustics : RoomDesigner {
         val emb = embeddedFactor(rTarget, embeddedRoomDb)
         val modeLin = 10.0.pow(modeDb(mode) / 20.0)
         val ts = modeT60Scale(mode)
+        val reverbGain = bench / rc * modeLin * emb
+        val directGain = (bench / d).coerceIn(0.25, 1.6)
         return RoomDesign(
             erDelay = erDelay, erGainL = erGainL, erGainR = erGainR, erBright = erBright,
             brightLpHz = BRIGHT_LP_HZ, dullLpHz = DULL_LP_HZ, preDelayFrames = pre,
             t60Low = (t60[0] * ts).toFloat(), t60Mid = (t60Mid(t60) * ts).toFloat(), t60High = (t60[6] * ts).toFloat(),
-            reverbGain = (bench / rc * modeLin * emb).toFloat(),
+            reverbGain = reverbGain.toFloat(),
             erGain = emb.toFloat(),
-            directGain = (bench / d).coerceIn(0.25, 1.6).toFloat(),
+            directGain = directGain.toFloat(),
             airLpHz = (18000.0 - 1600.0 * (d - 1.6)).coerceIn(9000.0, 18000.0).toFloat(),
             width = listener.directWidth,
             worldLocked = listener.worldLocked,
-            sourceAzimuthRad = yaw(src[0] - ear[0], src[2] - ear[2]).toFloat())
+            sourceAzimuthRad = yaw(src[0] - ear[0], src[2] - ear[2]).toFloat(),
+            levelGain = levelGain(directGain, emb, erGainL, erGainR, reverbGain).toFloat())
+    }
+
+    /**
+     * Seat loudness compensation (INTEGRATION.md, loudness across views): the output power of the
+     * room per unit input is P = g_d²·(1 + E) + R² (direct, the early taps E = erGain²·mean(ΣgL², ΣgR²)
+     * — both fed through directGain — and the energy-normalised late field R = reverbGain, which is
+     * the same at every seat). The trim brings P to the bench reference 1 + R², so a seat keeps its
+     * DRR, reflections and timbre but not its level. What this power model misses (the late field's
+     * K-weighted loudness, the early taps' correlation with the direct sound, how a kit's decays
+     * fill the gaps) is the small per-seat residual of [com.tropicalstream.hammerklavier.session.ListenerRooms.levelTrimDb],
+     * fitted on real-kit renders.
+     */
+    fun levelGain(directGain: Double, erGain: Double, gl: FloatArray, gr: FloatArray, reverbGain: Double): Double {
+        var sl = 0.0; var sr = 0.0
+        for (i in gl.indices) { sl += gl[i].toDouble() * gl[i]; sr += gr[i].toDouble() * gr[i] }
+        val e = erGain * erGain * 0.5 * (sl + sr)
+        val r2 = reverbGain * reverbGain
+        return sqrt((1.0 + r2) / (directGain * directGain * (1.0 + e) + r2))
     }
 
     private fun dist(a: DoubleArray, b: DoubleArray): Double {

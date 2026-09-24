@@ -207,7 +207,8 @@ class RoomChainTest {
         // Piano-like band (800 Hz low-passed noise), so the shorter 8 kHz T60 does not bias the late power.
         val lp = BiquadCoefs.lowPass(800.0, 0.707, 48000.0)
         val inp = DspTestUtil.filter(DspTestUtil.noise(n, 0.1, 5), lp, lp, lp, lp)
-        val gIn = FloatArray(B) { 1f }; val gRev = FloatArray(B) { d.reverbGain }
+        // RoomChain scales the late field by reverbGain × levelGain (and the direct by directGain × levelGain).
+        val gIn = FloatArray(B) { 1f }; val gRev = FloatArray(B) { d.reverbGain * d.levelGain }
         val x = FloatArray(B); val dL = FloatArray(B); val dR = FloatArray(B)
         val mono = FloatArray(B); val monoRev = FloatArray(B); val fin = FloatArray(B)
         val lL = FloatArray(B); val lR = FloatArray(B); val eL = FloatArray(B); val eR = FloatArray(B)

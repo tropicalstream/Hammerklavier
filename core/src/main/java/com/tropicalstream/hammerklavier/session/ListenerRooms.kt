@@ -5,6 +5,7 @@ import com.tropicalstream.hammerklavier.contract.InstrumentAnchors
 import com.tropicalstream.hammerklavier.contract.InstrumentId
 import com.tropicalstream.hammerklavier.contract.ListenerPose
 import com.tropicalstream.hammerklavier.contract.Placement
+import com.tropicalstream.hammerklavier.contract.RoomDesign
 import com.tropicalstream.hammerklavier.contract.ViewId
 import kotlin.math.sqrt
 
@@ -76,6 +77,29 @@ object ListenerRooms {
             directWidth = directWidth(view))
         return Resolved(pose, if (roomFrame) null else ear)
     }
+
+    /**
+     * Per-seat loudness residual, dB (INTEGRATION.md, loudness across instruments and views): what
+     * [com.tropicalstream.hammerklavier.dsp.RoomAcoustics.levelGain]'s power model leaves between a
+     * view and the Player, measured as BS.1770 integrated loudness on real-kit renders (six pieces,
+     * Room mode, LoudnessProbeTest) and averaged. Player framings share the bench ear.
+     */
+    fun levelTrimDb(id: InstrumentId, view: ViewId, framing: Int): Float = when (view) {
+        ViewId.PLAYER -> 0f
+        ViewId.ACTION -> TRIM_ACTION.getValue(id)[framing.coerceIn(0, 1)]
+        ViewId.HALL -> TRIM_HALL.getValue(id)
+    }
+
+    private val TRIM_ACTION: Map<InstrumentId, FloatArray> = mapOf(
+        InstrumentId.GRAND to floatArrayOf(0.52f, 0.60f),
+        InstrumentId.UPRIGHT to floatArrayOf(0.24f, 0.38f),
+        InstrumentId.HARPSICHORD to floatArrayOf(1.27f, -0.04f))
+    private val TRIM_HALL: Map<InstrumentId, Float> = mapOf(
+        InstrumentId.GRAND to 1.19f, InstrumentId.UPRIGHT to -0.67f, InstrumentId.HARPSICHORD to -0.74f)
+
+    /** [d] with the seat residual of (id, view, framing) applied to its levelGain. */
+    fun leveled(d: RoomDesign, id: InstrumentId, view: ViewId, framing: Int): RoomDesign =
+        d.timesLevel(Math.pow(10.0, levelTrimDb(id, view, framing) / 20.0).toFloat())
 
     /** `benchDistanceM`: the Player listener's distance to the source (piano frame). */
     fun benchDistance(id: InstrumentId, anchors: InstrumentAnchors?): Float {

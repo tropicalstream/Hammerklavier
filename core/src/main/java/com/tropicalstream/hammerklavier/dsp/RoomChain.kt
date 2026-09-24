@@ -7,7 +7,7 @@ import com.tropicalstream.hammerklavier.contract.RoomProcessor
 /**
  * The room (PLAN §3.12): [DirectPath] + [EarlyReflections] + [FdnReverb]. The input gain
  * ([setInputGain], pause / resume / seek) scales everything that enters the room, so a paused
- * tail rings on. Output = balance · (direct + early) + late. [setDesign] glides every parameter
+ * tail rings on. Output = balance · (direct + early) + levelGain · late, levelGain also in the direct gain. [setDesign] glides every parameter
  * over `glideMs` (two tap sets crossfaded, pre-delay crossfaded); the first design applies at
  * once. Writes the output (does not add). Allocation-free.
  */
@@ -18,11 +18,12 @@ class RoomChain(sampleRate: Int = HK.SR) : RoomProcessor {
     val fdn = FdnReverb(sampleRate)
 
     private val inGain = Glide(1f)
-    private val revGain = Glide(0f)
+    private val lateGain = Glide(0f)          // reverbGain × levelGain, on the FDN's output
     private var hasDesign = false
 
     private val gIn = FloatArray(HK.BLOCK)
-    private val gRev = FloatArray(HK.BLOCK)
+    private val ones = FloatArray(HK.BLOCK) { 1f }
+    private val gLate = FloatArray(HK.BLOCK)
     private val dL = FloatArray(HK.BLOCK); private val dR = FloatArray(HK.BLOCK)
     private val mono = FloatArray(HK.BLOCK)
     private val monoRev = FloatArray(HK.BLOCK)
@@ -32,10 +33,17 @@ class RoomChain(sampleRate: Int = HK.SR) : RoomProcessor {
 
     override fun setDesign(d: RoomDesign, glideMs: Int) {
         val frames = if (hasDesign) (glideMs.toLong() * fs / 1000).toInt() else 0
-        direct.setTarget(d.directGain, d.airLpHz, d.width, d.worldLocked, d.sourceAzimuthRad, frames)
+        // levelGain goes into the direct gain (one glide of the product: two glides multiplied bump
+        // mid-way when one falls as the other rises) and the late gain (reverbGain × levelGain),
+        // which scales the FDN's OUTPUT so that on a view change the late level follows the direct
+        // one at once instead of lagging by the tail (a 2 LU dip on Action → Hall). Both glide
+        // linearly in amplitude: of the laws tried this keeps the momentary loudness of a view
+        // change closest to the two views' (ViewLoudnessTest; power-linear glides bump ~1 LU through
+        // the direct–late cross term).
+        direct.setTarget(d.directGain * d.levelGain, d.airLpHz, d.width, d.worldLocked, d.sourceAzimuthRad, frames)
         early.setDesign(d, frames)
         fdn.setT60(d.t60Low, d.t60Mid, d.t60High, frames)
-        revGain.set(d.reverbGain, frames)
+        lateGain.set(d.reverbGain * d.levelGain, frames)
         hasDesign = true
     }
 
@@ -48,7 +56,7 @@ class RoomChain(sampleRate: Int = HK.SR) : RoomProcessor {
         var peak = 0f
         while (off < n) {
             val m = minOf(HK.BLOCK, n - off)
-            for (i in 0 until m) { gIn[i] = inGain.next(); gRev[i] = revGain.next() }
+            for (i in 0 until m) { gIn[i] = inGain.next(); gLate[i] = lateGain.next() }
             if (off == 0) {
                 direct.process(inL, inR, gIn, dL, dR, mono, monoRev, m, headYawRad)
             } else {
@@ -58,13 +66,14 @@ class RoomChain(sampleRate: Int = HK.SR) : RoomProcessor {
             }
             early.process(mono, monoRev, dL, dR, fdnIn, m)
             java.util.Arrays.fill(lateL, 0, m, 0f); java.util.Arrays.fill(lateR, 0, m, 0f)
-            fdn.process(fdnIn, gRev, lateL, lateR, m)
+            fdn.process(fdnIn, ones, lateL, lateR, m)
             val bl = direct.balL; val br = direct.balR
             for (i in 0 until m) {
-                val l = bl[i] * dL[i] + lateL[i]; val r = br[i] * dR[i] + lateR[i]
-                outL[off + i] = l; outR[off + i] = r
-                val a = if (lateL[i] < 0f) -lateL[i] else lateL[i]; if (a > peak) peak = a
-                val b = if (lateR[i] < 0f) -lateR[i] else lateR[i]; if (b > peak) peak = b
+                val gl = gLate[i]
+                val wl = gl * lateL[i]; val wr = gl * lateR[i]
+                outL[off + i] = bl[i] * dL[i] + wl; outR[off + i] = br[i] * dR[i] + wr
+                val a = if (wl < 0f) -wl else wl; if (a > peak) peak = a
+                val b = if (wr < 0f) -wr else wr; if (b > peak) peak = b
             }
             off += m
         }
