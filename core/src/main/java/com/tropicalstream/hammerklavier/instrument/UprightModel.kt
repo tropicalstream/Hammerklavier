@@ -107,25 +107,31 @@ object UprightModel {
         val c = MeshBuilder(VertexLayout.STATIC, 1024)
         c.color(rgb)
         c.box(-hx, 0f, back, -hx + 0.025f, HEIGHT - 0.02f, -0.15f); c.box(hx - 0.025f, 0f, back, hx, HEIGHT - 0.02f, -0.15f)   // sides
-        c.box(-hx + 0.025f, 0.62f, -0.15f, -kw, 0.79f, 0f); c.box(kw, 0.62f, -0.15f, hx - 0.025f, 0.79f, 0f)                 // arms
         c.box(-hx, 0.60f, -0.15f, hx, 0.66f, 0f)                                                                            // key bed
         c.box(-kw, 0.66f, -0.15f, kw, KEY_TOP - 0.02f, -0.13f)
         c.color(side)
         c.box(-hx + 0.025f, 0.10f, -0.20f, hx - 0.025f, 0.60f, -0.18f)                                                       // knee board
-        c.box(-hx, 0f, -0.22f, hx, 0.10f, -0.15f)                                                                            // plinth
         c.box(-hx, 0f, back, hx, HEIGHT - 0.02f, back + 0.03f)                                                               // back
-        c.color(rgb)
-        c.box(-kw, KEY_TOP, -0.17f, kw, 0.80f, -0.148f)                                                                      // fallboard
         out += c.build("upright.case", mat, SkinKind.STATIC, VM.LEVELS_ALL, VM.ALL, true, prog, 7, texture = tex)
+        // Family look (M8): the grand's ebony lacquer on the arms/key cheeks, fallboard, plinth and toe
+        // blocks, and the top lid (below); the wood finishes keep the walnut/mahogany body.
+        val lac = Pal.EBONY_KEY
+        val lq = MeshBuilder(VertexLayout.STATIC, 256)
+        lq.color(lac)
+        lq.box(-hx + 0.025f, 0.62f, -0.15f, -kw, 0.79f, 0f); lq.box(kw, 0.62f, -0.15f, hx - 0.025f, 0.79f, 0f)       // arms (key cheeks)
+        lq.box(-kw, KEY_TOP, -0.17f, kw, 0.80f, -0.148f)                                                                     // fallboard
+        lq.box(-hx, 0f, -0.224f, hx, 0.10f, -0.15f)                                                      // plinth
+        lq.box(-hx, 0f, -0.15f, -hx + 0.07f, 0.06f, -0.03f); lq.box(hx - 0.07f, 0f, -0.15f, hx, 0.06f, -0.03f)                 // toe blocks
+        out += lq.build("upright.lacquer", MaterialId.LACQUER, SkinKind.STATIC, VM.LEVELS_ALL, VM.ALL, true, ProgramId.LACQUER, 7)
         val upper = MeshBuilder(VertexLayout.STATIC, 64)
         upper.color(rgb)
         upper.box(-hx + 0.025f, 0.80f, -0.17f, hx - 0.025f, 1.25f, -0.15f)                                                   // upper front panel
         upper.box(-0.35f, 0.80f, -0.15f, 0.35f, 0.82f, -0.10f)                                                               // desk ledge
         out += upper.build("upright.upperpanel", mat, SkinKind.STATIC, VM.LEVELS_ALL, VM.NO_OVER, true, prog, 7, texture = tex)
         val top = MeshBuilder(VertexLayout.STATIC, 32)
-        top.color(rgb)
-        top.box(-hx, HEIGHT - 0.02f, back, hx, HEIGHT, -0.13f)
-        out += top.build("upright.toplid", mat, SkinKind.STATIC, VM.LEVELS_ALL, VM.NO_OVER, true, prog, 8, texture = tex)
+        top.color(lac)
+        top.box(-hx, HEIGHT - 0.02f, back, hx, HEIGHT, -0.126f)
+        out += top.build("upright.toplid", MaterialId.LACQUER, SkinKind.STATIC, VM.LEVELS_ALL, VM.NO_OVER, true, ProgramId.LACQUER, 8)
         val decal = MeshBuilder(VertexLayout.STATIC, 8)
         decal.color(intArrayOf(255, 255, 255))
         Geo.quadZ(decal, -0.13f, 0.75f, 0.13f, 0.78f, -0.1475f)

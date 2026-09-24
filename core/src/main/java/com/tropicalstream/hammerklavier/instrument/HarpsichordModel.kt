@@ -126,18 +126,26 @@ object HarpsichordModel {
         }
 
         // ── Case (slot 7): walls (papered inside), bottom, front board, cheeks, key bed ──
+        // Family look (M8): walnut case walls, the grand's ebony lacquer on the lid, the moulding bands,
+        // the cheek blocks and the stand; the papered inside walls are their own flat PAPER draw.
         val c = MeshBuilder(VertexLayout.STATIC, 4096)
-        Geo.wall(c, rim, SIDE, CASE_BOTTOM, CASE_TOP, frontEdge, outerRgb = case, innerRgb = paper, topRgb = Geo.mul(case, 0.8f))
+        val pw = MeshBuilder(VertexLayout.STATIC, 1024)
+        Geo.wall(c, rim, SIDE, CASE_BOTTOM, CASE_TOP, frontEdge, outerRgb = case, innerRgb = paper, topRgb = Geo.mul(case, 0.8f), innerMb = pw)
         c.color(case)
         Geo.flat(c, rim, CASE_BOTTOM, up = false)
         c.box(X0, CASE_BOTTOM, -0.012f, -X0, KEY_TOP - 0.035f, 0f)                                  // front board below the keys
-        c.box(-kw - CHEEK, CASE_BOTTOM, -0.30f, -kw, 0.82f, 0f); c.box(kw, CASE_BOTTOM, -0.30f, kw + CHEEK, 0.82f, 0f)   // cheek blocks
         c.box(-kw, KEY_TOP - 0.035f, -0.30f, kw, KEY_TOP - 0.02f, -0.012f)                         // key bed
         out += c.build("harpsichord.case", MaterialId.FLEMISH_CASE, SkinKind.STATIC, VM.LEVELS_ALL, VM.ALL, true, ProgramId.LIT, 7, texture = Wood.NAME)
+        out += pw.build("harpsichord.paperwalls", MaterialId.PAPER, SkinKind.STATIC, VM.LEVELS_ALL, VM.ALL, true, ProgramId.LIT, 7)
 
-        // Stand (slot 7): six turned oak legs and stretchers.
-        val st = MeshBuilder(VertexLayout.STATIC, 2048)
-        st.color(Wood.CASE)
+        // Lacquer (slot 7): cheek blocks, moulding bands round the top and foot of the case, the stand.
+        val st = MeshBuilder(VertexLayout.STATIC, 4096)
+        val lac = Pal.EBONY_KEY
+        st.color(lac)
+        st.box(-kw - CHEEK, CASE_BOTTOM, -0.30f, -kw, 0.82f, 0.004f); st.box(kw, CASE_BOTTOM, -0.30f, kw + CHEEK, 0.82f, 0.004f)   // cheek blocks
+        val band = Geo.inset(rim, -0.004f)                                                           // 4 mm proud of the walls
+        Geo.wall(st, band, 0.0045f, CASE_TOP - 0.022f, CASE_TOP, frontEdge, outerRgb = lac)          // top moulding
+        Geo.wall(st, band, 0.0045f, CASE_BOTTOM, CASE_BOTTOM + 0.030f, frontEdge, outerRgb = lac)    // foot moulding
         val legs = arrayOf(floatArrayOf(-0.40f, -0.10f), floatArrayOf(0.40f, -0.10f), floatArrayOf(-0.40f, -1.00f),
             floatArrayOf(0.25f, -1.00f), floatArrayOf(-0.40f, -2.00f), floatArrayOf(-0.22f, -2.00f))
         for (l in legs) st.lathe(floatArrayOf(0.028f, 0f, 0.028f, 0.05f, 0.020f, 0.12f, 0.034f, 0.26f, 0.018f, 0.40f,
@@ -147,7 +155,7 @@ object HarpsichordModel {
         st.box(0.23f, 0.06f, -1.02f, 0.27f, 0.10f, -0.12f)
         st.box(-0.42f, CASE_BOTTOM - 0.06f, -2.02f, -0.38f, CASE_BOTTOM, -0.08f)
         st.box(-0.42f, CASE_BOTTOM - 0.06f, -0.12f, 0.42f, CASE_BOTTOM, -0.08f)
-        out += st.build("harpsichord.stand", MaterialId.WOOD_CASE, SkinKind.STATIC, VM.LEVELS_ALL, VM.ALL, true, ProgramId.LIT, 7, texture = Wood.NAME)
+        out += st.build("harpsichord.lacquer", MaterialId.LACQUER, SkinKind.STATIC, VM.LEVELS_ALL, VM.ALL, true, ProgramId.LACQUER, 7)
 
         // Nameboard (slot 7): a block-printed paper over the keys.
         val nb = MeshBuilder(VertexLayout.STATIC, 8)
@@ -158,10 +166,10 @@ object HarpsichordModel {
 
         // ── Lid (slot 8, not in Overhead), stick; its inside carries the motto ──
         val lid = MeshBuilder(VertexLayout.STATIC, 512)
-        lid.color(case)
+        lid.color(Pal.EBONY_KEY)
         lid.extrude(rim, CASE_TOP, CASE_TOP + LID_T, capTop = true, capBottom = true)
         lid.rotateZ(X0, CASE_TOP, LID_OPEN_RAD)           // baked open (integrator M7: LIT_VS does not skin LID)
-        out += lid.build("harpsichord.lid", MaterialId.FLEMISH_CASE, SkinKind.LID, VM.LEVELS_ALL, VM.NO_OVER, true, ProgramId.LIT, 8, texture = Wood.NAME)
+        out += lid.build("harpsichord.lid", MaterialId.LACQUER, SkinKind.LID, VM.LEVELS_ALL, VM.NO_OVER, true, ProgramId.LACQUER, 8)
         val motto = MeshBuilder(VertexLayout.STATIC, 8)
         motto.color(intArrayOf(255, 255, 255))
         run {

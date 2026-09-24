@@ -113,7 +113,7 @@ internal object Geo {
      * the CCW outline) is left out (a key-well opening). Inner faces use [innerRgb] when given.
      */
     fun wall(mb: MeshBuilder, outline: FloatArray, thickness: Float, y0: Float, y1: Float, openEdge: Int = -1,
-             outerRgb: IntArray, innerRgb: IntArray = outerRgb, topRgb: IntArray = outerRgb) {
+             outerRgb: IntArray, innerRgb: IntArray = outerRgb, topRgb: IntArray = outerRgb, innerMb: MeshBuilder = mb) {
         val o = ccw(outline); val inner = inset(o, thickness); val n = o.size / 2
         fun normals(p: FloatArray, sign: Float): FloatArray {
             val nn = FloatArray(p.size)
@@ -143,12 +143,12 @@ internal object Geo {
                 val c = mb.vertex(o[2 * j], y1, o[2 * j + 1], no[2 * j], 0f, no[2 * j + 1], arc + len, y1)
                 val d = mb.vertex(o[2 * e], y1, o[2 * e + 1], no[2 * e], 0f, no[2 * e + 1], arc, y1)
                 mb.triOutward(a, b, c); mb.triOutward(a, c, d)
-                mb.color(innerRgb)
-                val ia = mb.vertex(inner[2 * e], y0, inner[2 * e + 1], ni[2 * e], 0f, ni[2 * e + 1], arc, y0)
-                val ib = mb.vertex(inner[2 * j], y0, inner[2 * j + 1], ni[2 * j], 0f, ni[2 * j + 1], arc + len, y0)
-                val ic = mb.vertex(inner[2 * j], y1, inner[2 * j + 1], ni[2 * j], 0f, ni[2 * j + 1], arc + len, y1)
-                val id = mb.vertex(inner[2 * e], y1, inner[2 * e + 1], ni[2 * e], 0f, ni[2 * e + 1], arc, y1)
-                mb.triOutward(ia, ib, ic); mb.triOutward(ia, ic, id)
+                innerMb.color(innerRgb)
+                val ia = innerMb.vertex(inner[2 * e], y0, inner[2 * e + 1], ni[2 * e], 0f, ni[2 * e + 1], arc, y0)
+                val ib = innerMb.vertex(inner[2 * j], y0, inner[2 * j + 1], ni[2 * j], 0f, ni[2 * j + 1], arc + len, y0)
+                val ic = innerMb.vertex(inner[2 * j], y1, inner[2 * j + 1], ni[2 * j], 0f, ni[2 * j + 1], arc + len, y1)
+                val id = innerMb.vertex(inner[2 * e], y1, inner[2 * e + 1], ni[2 * e], 0f, ni[2 * e + 1], arc, y1)
+                innerMb.triOutward(ia, ib, ic); innerMb.triOutward(ia, ic, id)
                 mb.color(topRgb)
                 val ta = mb.vertex(o[2 * e], y1, o[2 * e + 1], 0f, 1f, 0f, o[2 * e], o[2 * e + 1])
                 val tb = mb.vertex(o[2 * j], y1, o[2 * j + 1], 0f, 1f, 0f, o[2 * j], o[2 * j + 1])

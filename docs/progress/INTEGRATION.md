@@ -659,3 +659,21 @@ User: "the wood should be the same wood texture as the tapgem project wood theme
   (Player / Action / Hall): all within ≤ 9 % stage, ≤ 12 % Hall. tools/ci.sh PASS.
 - Not shot: mahogany finish, Overhead framings, Stadtschloss palette. The harpsichord's papered inner walls share the
   case mesh and so take the wood tile at the paper tint (dark brown).
+
+### Family look: the grand's ebony lacquer on the upright and harpsichord (2026-09-23, integrator)
+User: "can the colors of the grand be mixed in with standup and harpsichord also."
+- **Upright** (walnut/mahogany finishes): body, upper panel and knee board keep the TapGem walnut tile; new
+  `upright.lacquer` (LACQUER program, Pal.EBONY_KEY, slot 7) carries the arms/key cheeks, fallboard (gilt
+  lettering stays on it), plinth and two new toe blocks; `upright.toplid` is lacquer too. Ebony finish unchanged.
+- **Harpsichord**: case walls, front board and key bed stay walnut; new `harpsichord.lacquer` (replaces the wood
+  `harpsichord.stand`) holds the stand legs and stretchers, the cheek blocks and two moulding bands (22 mm at the top
+  edge, 30 mm at the foot, 4 mm proud of the walls); the lid is lacquer (motto paper still inside); gilt rose and
+  edges unchanged.
+- **Paper walls fixed**: `Geo.wall` takes an optional `innerMb`; the inner faces go to `harpsichord.paperwalls`
+  (PAPER, flat FLEMISH_PAPER × 0.6, no texture) instead of taking the wood tile.
+- **Draws/eye** (T7.8, instrument part): upright 9/9/17/13/15/15, harpsichord 10/10/17/12/15/15 (Player, follow,
+  cutaway, overhead, Hall, Hall close), each +1 over before: limit 20 (18 follow), ≤ 28 total. New test
+  `InstrumentsTest.familyLacquerAndPaper`. tools/ci.sh PASS; installed via run.sh.
+- **APL** (docs/shots/family_<instrument>_<view>.png): upright 7.86 / 7.46 / 6.90 %, harpsichord 7.78 / 5.79 / 7.89 %
+  (Player / Action / Hall), within ≤ 9 % stage, ≤ 12 % Hall. Looked at: charcoal trim reads as the grand's lacquer
+  against the walnut, paper walls light again inside the harpsichord.

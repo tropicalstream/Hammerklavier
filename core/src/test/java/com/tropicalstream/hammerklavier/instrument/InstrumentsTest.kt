@@ -6,7 +6,9 @@ import com.tropicalstream.hammerklavier.contract.InstrumentId
 import com.tropicalstream.hammerklavier.contract.InstrumentLook
 import com.tropicalstream.hammerklavier.contract.InstrumentProfile
 import com.tropicalstream.hammerklavier.contract.KonzertzimmerAcoustics
+import com.tropicalstream.hammerklavier.contract.MaterialId
 import com.tropicalstream.hammerklavier.contract.MaterialTable
+import com.tropicalstream.hammerklavier.instrument.tex.Wood
 import com.tropicalstream.hammerklavier.contract.MechanismPose
 import com.tropicalstream.hammerklavier.contract.ProgramId
 import com.tropicalstream.hammerklavier.contract.SkinKind
@@ -358,6 +360,24 @@ class InstrumentsTest {
             val case = ms.single { it.name == "upright.case" }
             assertEquals(if (f == UprightFinish.EBONY) ProgramId.LACQUER else ProgramId.LIT, case.program)
         }
+    }
+
+    /** M8 family look: the grand's ebony lacquer trims the upright and harpsichord; the harpsichord's inner walls are paper. */
+    @Test fun familyLacquerAndPaper() {
+        val u = Instruments.create(InstrumentId.UPRIGHT, InstrumentLook(UprightFinish.WALNUT, false), 90).meshes()
+        for (n in listOf("upright.lacquer", "upright.toplid")) {
+            val m = u.single { it.name == n }
+            assertEquals(n, MaterialId.LACQUER, m.material); assertEquals(n, ProgramId.LACQUER, m.program)
+        }
+        assertEquals(Wood.NAME, u.single { it.name == "upright.case" }.texture)
+        val h = meshes.getValue(InstrumentId.HARPSICHORD)
+        for (n in listOf("harpsichord.lacquer", "harpsichord.lid")) assertEquals(n, ProgramId.LACQUER, h.single { it.name == n }.program)
+        assertEquals(Wood.NAME, h.single { it.name == "harpsichord.case" }.texture)
+        val paper = h.single { it.name == "harpsichord.paperwalls" }
+        assertEquals(MaterialId.PAPER, paper.material); assertEquals(null, paper.texture)
+        val pr = Geo.mul(Pal.FLEMISH_PAPER, 0.6f)
+        for (i in 0 until paper.vertexCount) for (ch in 0..2)
+            assertEquals(pr[ch] / 255f, paper.vertices[i * paper.layout.floats + 8 + ch], 0.01f)
     }
 
     @Test fun texturesPaint() {
