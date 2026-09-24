@@ -79,14 +79,14 @@ precision mediump float;
     }
 
     /** RGBA8888 texture, linear, clamped, no mipmaps (NPOT-safe in ES 2.0). */
-    fun makeTexture(width: Int, height: Int, rgba: ByteArray): Int {
+    fun makeTexture(width: Int, height: Int, rgba: ByteArray, repeat: Boolean = false): Int {
         val ids = IntArray(1)
         GLES20.glGenTextures(1, ids, 0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, ids[0])
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, if (repeat) GLES20.GL_REPEAT else GLES20.GL_CLAMP_TO_EDGE)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, if (repeat) GLES20.GL_REPEAT else GLES20.GL_CLAMP_TO_EDGE)
         val buf = ByteBuffer.allocateDirect(rgba.size).order(ByteOrder.nativeOrder())
         buf.put(rgba); buf.position(0)
         GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, width, height, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf)

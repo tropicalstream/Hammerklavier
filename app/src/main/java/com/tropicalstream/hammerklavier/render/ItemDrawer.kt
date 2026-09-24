@@ -8,6 +8,7 @@ import com.tropicalstream.hammerklavier.contract.ProgramId
 import com.tropicalstream.hammerklavier.contract.SkinKind
 import com.tropicalstream.hammerklavier.contract.SkinParams
 import com.tropicalstream.hammerklavier.contract.VertexLayout
+import com.tropicalstream.hammerklavier.instrument.tex.Wood
 import com.tropicalstream.hammerklavier.render.gl.GlProgram
 import com.tropicalstream.hammerklavier.render.gl.Programs
 
@@ -28,6 +29,8 @@ class FrameUniforms {
     @JvmField var viewportH = 480f
     @JvmField var projY = 1f
     @JvmField var probeTex = 0
+    /** 1 / the frame's T-APL cap gain: wood (uHasTex 2) is pre-divided so it lands on glass at TapGem's values. */
+    @JvmField var woodBoost = 1f
     @JvmField val eye = FloatArray(3)
     @JvmField var viewProj = FloatArray(16)
     /** Instrument (piano → room) and venue (identity) model matrices. */
@@ -146,6 +149,15 @@ class ItemDrawer(private val programs: Programs, private val packer: UniformPack
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, t)
                 GLES20.glUniform1i(p.uTex, 0)
                 GLES20.glUniform1f(p.uHasTex, if (t != 0) 1f else 0f)
+            }
+            ProgramId.LIT -> {
+                val t = textures.id(k.texture, gen)
+                GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, t)
+                GLES20.glUniform1i(p.uTex, 0)
+                GLES20.glUniform1f(p.uHasTex, if (t == 0) 0f else if (k.texture == Wood.NAME) 2f else 1f)
+                GLES20.glUniform1f(p.uTexScale, 1f / Wood.TILE_M)
+                GLES20.glUniform1f(p.uWoodBoost, f.woodBoost)
             }
             ProgramId.SKINNED -> {
                 val ki = k.skin.ordinal

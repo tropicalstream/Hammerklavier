@@ -335,6 +335,7 @@ class StereoRenderer(private val loader: ExecutorService?,
         frame.stageFade = level == RoomLevel.STAGE.ordinal
         frame.stringWidthPx = drawer.stringWidth(if (director.view == ViewId.HALL) 2 else if (director.view == ViewId.ACTION) director.framing else 2)
         frame.probeTex = textures.id(TextureUploader.PROBE, gen)
+        frame.woodBoost = 1f / aplGain(director.view, director.framing, level, scn.profile.id).coerceAtLeast(0.1f)
         val pf = (settings?.presenceFloor ?: 22) / 22f * (if (level == RoomLevel.PASSTHROUGH.ordinal) 1.5f else 1f)
         for (i in 0 until 3) frame.floorRgb[i] = Pal.EBONY_FLOOR[i] / 255f * pf
         frame.viewportW = ew.toFloat(); frame.viewportH = height.toFloat()

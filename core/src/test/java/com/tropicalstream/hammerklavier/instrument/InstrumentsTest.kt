@@ -370,7 +370,8 @@ class InstrumentsTest {
             assertTrue("${t.name} painted", lit > 100)
             p.writePng(File(dir, "${t.name}.png"))
         }
-        assertEquals(setOf(InstrumentTextures.HARPSI_PAPER, InstrumentTextures.HARPSI_LID, InstrumentTextures.HARPSI_SOUNDBOARD),
+        assertEquals(setOf(InstrumentTextures.HARPSI_PAPER, InstrumentTextures.HARPSI_LID, InstrumentTextures.HARPSI_SOUNDBOARD,
+            com.tropicalstream.hammerklavier.instrument.tex.Wood.NAME),
             all.getValue(InstrumentId.HARPSICHORD).textures().map { it.name }.toSet())
     }
 

@@ -26,7 +26,7 @@ class GlProgram(val name: String, vs: String, fs: String) {
     val uState = u("uState"); val uPivot = u("uPivot"); val uP0 = u("uP0"); val uP1 = u("uP1"); val uKind = u("uKind")
     val uShiftX = u("uShiftX"); val uRailM = u("uRailM"); val uClipX = u("uClipX"); val uBevel = u("uBevel")
     val uViewport = u("uViewport"); val uWidthPx = u("uWidthPx"); val uSwellPx = u("uSwellPx"); val uProjY = u("uProjY")
-    val uEmissive = u("uEmissive"); val uLight = u("uLight"); val uTex = u("uTex"); val uHasTex = u("uHasTex")
+    val uEmissive = u("uEmissive"); val uLight = u("uLight"); val uTex = u("uTex"); val uHasTex = u("uHasTex"); val uTexScale = u("uTexScale"); val uWoodBoost = u("uWoodBoost")
     val uColor = u("uColor"); val uDisc = u("uDisc")
 
     fun use() = GLES20.glUseProgram(id)

@@ -3,6 +3,7 @@ package com.tropicalstream.hammerklavier.venue.tex
 import com.tropicalstream.hammerklavier.contract.Painter2D
 import com.tropicalstream.hammerklavier.contract.Pal
 import com.tropicalstream.hammerklavier.contract.TextureRecipe
+import com.tropicalstream.hammerklavier.instrument.tex.Wood
 
 /**
  * The venue's texture recipes (PLAN §5.4: zero image assets), painted through [Painter2D] on
@@ -12,9 +13,9 @@ import com.tropicalstream.hammerklavier.contract.TextureRecipe
  *   the four cove cartouches (hound, hare, stag, putto with horn); row 1: the corner crest, the
  *   mirror rocaille crest, a trellis tile, the ceiling rosette. Relief in GILT_LIT on transparent
  *   black, outlines in GILT_SHADE.
- * - [PARQUET] ("venue.parquet", 256 × 256): one 1 m oak panel square with diagonal fillets, a
- *   near-white modulation texture (the vertex colour carries PARQUET_POOL and the baked pool) that
- *   repeats with world-metre UVs.
+ * - [Wood.NAME] (the shared TapGem walnut tile, instrument/tex/Wood.kt): floor, boiserie glow,
+ *   window frames and chairs, world-metre UVs. [paintParquet] (the M5 panel square) is no longer
+ *   drawn (M8: it read washed out); kept for reference.
  *
  * Texture coordinates: u to the right, v = 0 at the painted image's top row (the first row
  * [Painter2D.end] returns).
@@ -42,7 +43,7 @@ object Atlas {
 
     fun recipes(): List<TextureRecipe> = listOf(
         TextureRecipe(ATLAS, ATLAS_SIZE, ATLAS_SIZE) { p -> paintAtlas(p) },
-        TextureRecipe(PARQUET, PARQUET_SIZE, PARQUET_SIZE) { p -> paintParquet(p) })
+        Wood.recipe())                    // M8: the floor, boiserie, frames and chairs (and the instrument cases) sample this tile
 
     private val GILT = argb(Pal.GILT_LIT)
     private val HI = argb(Pal.GILT_HI)

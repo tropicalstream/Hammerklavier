@@ -129,8 +129,9 @@ interface Painter2D {
     fun end(): ByteArray
 }
 
-/** Run on HKLoader. */
-class TextureRecipe(val name: String, val width: Int, val height: Int, val paint: (Painter2D) -> Unit)
+/** Run on HKLoader. [rgba] (when set) supplies the RGBA8888 texels directly instead of [paint]; [repeat] = GL_REPEAT wrap. */
+class TextureRecipe(val name: String, val width: Int, val height: Int, val repeat: Boolean = false,
+    val rgba: (() -> ByteArray)? = null, val paint: (Painter2D) -> Unit)
 
 interface InstrumentScene {
     val id: InstrumentId; val anchors: InstrumentAnchors; val skin: SkinParams

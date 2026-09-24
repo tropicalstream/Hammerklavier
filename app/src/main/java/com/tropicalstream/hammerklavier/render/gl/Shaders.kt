@@ -73,8 +73,15 @@ void main() {
 }
 """
 
+    // uHasTex: 0 untextured; 1 a painted recipe (un-lifted sRGB, uv as built); 2 the shared wood tile (Wood.kt):
+    // its texels are TapGem's final on-glass colours, so they are un-lifted (pow 1/0.85) before the lift below,
+    // uv (metres) is scaled to one tile per Wood.TILE_M, and the vertex colour is a tint with 204 = x 1.0.
     const val LIT_FS = GlKit.FRAG_PRECISION + LIGHTING + """
 uniform float uBaked;
+uniform sampler2D uTex;
+uniform float uHasTex;
+uniform float uTexScale;
+uniform float uWoodBoost;
 varying vec3 vW;
 varying vec3 vN;
 varying vec4 vCol;
@@ -84,10 +91,18 @@ varying float vMX;
 void main() {
     if (vMX > uClipX) discard;
     vec3 N = normalize(vN);
-    vec3 c = mix(shade(vCol.rgb, N, vW, 0.3), vCol.rgb, uBaked);
+    vec3 base = vCol.rgb;
+    if (uHasTex > 1.5) base *= 1.25 * pow(texture2D(uTex, vUv * uTexScale).rgb, vec3(1.17647));
+    else if (uHasTex > 0.5) base *= texture2D(uTex, vUv).rgb;
+    vec3 c = mix(shade(base, N, vW, 0.3), base, uBaked);
+    // wood on an instrument: never below 90 % of the tile itself (TapGem shows it unlit), the lights add sheen on top
+    if (uHasTex > 1.5) c = max(c, base * (1.0 - uBaked));
     c = lift(c);
     c = max(c, uFloor * uUseFloor);
     c *= distanceFade(vW);
+    // the T-APL cap (a black multiply after the surfaces) was tuned for the pale M5 browns; wood is pre-divided by it
+    // so the tile reaches the waveguide at TapGem's own values while keys, lacquer and gilt keep the cap
+    if (uHasTex > 1.5) c *= uWoodBoost;
     gl_FragColor = vec4(c, vCol.a);
 }
 """

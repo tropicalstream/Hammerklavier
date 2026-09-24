@@ -13,6 +13,7 @@ import com.tropicalstream.hammerklavier.contract.SkinKind
 import com.tropicalstream.hammerklavier.contract.SkinParams
 import com.tropicalstream.hammerklavier.contract.VertexLayout
 import com.tropicalstream.hammerklavier.instrument.tex.InstrumentTextures
+import com.tropicalstream.hammerklavier.instrument.tex.Wood
 import com.tropicalstream.hammerklavier.mesh.MeshBuilder
 import kotlin.math.pow
 
@@ -82,7 +83,7 @@ object HarpsichordModel {
             buildMeshes = { meshes(kb, profile, look, rim, inner, sbPoly, rect) },
             buildTextures = {
                 listOf(InstrumentTextures.harpsiPaper(), InstrumentTextures.harpsiLid(),
-                    InstrumentTextures.harpsiSoundboard((ROSE_X - rect[0]) / (rect[2] - rect[0]), (ROSE_Z - rect[1]) / (rect[3] - rect[1])))
+                    InstrumentTextures.harpsiSoundboard((ROSE_X - rect[0]) / (rect[2] - rect[0]), (ROSE_Z - rect[1]) / (rect[3] - rect[1])), Wood.recipe())
             },
             packer = HarpsichordActionPacker(profile, kb.keyX))
     }
@@ -115,7 +116,7 @@ object HarpsichordModel {
                sbPoly: FloatArray, sbRect: FloatArray): List<BakedMesh> {
         val out = ArrayList<BakedMesh>()
         val kw = kb.widthM / 2f
-        val case = Pal.FLEMISH_CASE
+        val case = Wood.CASE                                       // M8: the shared TapGem walnut tile, not a flat token
         val paper = Geo.mul(Pal.FLEMISH_PAPER, 0.6f)
         val frontEdge = run {
             val n = rim.size / 2
@@ -132,11 +133,11 @@ object HarpsichordModel {
         c.box(X0, CASE_BOTTOM, -0.012f, -X0, KEY_TOP - 0.035f, 0f)                                  // front board below the keys
         c.box(-kw - CHEEK, CASE_BOTTOM, -0.30f, -kw, 0.82f, 0f); c.box(kw, CASE_BOTTOM, -0.30f, kw + CHEEK, 0.82f, 0f)   // cheek blocks
         c.box(-kw, KEY_TOP - 0.035f, -0.30f, kw, KEY_TOP - 0.02f, -0.012f)                         // key bed
-        out += c.build("harpsichord.case", MaterialId.FLEMISH_CASE, SkinKind.STATIC, VM.LEVELS_ALL, VM.ALL, true, ProgramId.LIT, 7)
+        out += c.build("harpsichord.case", MaterialId.FLEMISH_CASE, SkinKind.STATIC, VM.LEVELS_ALL, VM.ALL, true, ProgramId.LIT, 7, texture = Wood.NAME)
 
         // Stand (slot 7): six turned oak legs and stretchers.
         val st = MeshBuilder(VertexLayout.STATIC, 2048)
-        st.color(Pal.OAK)
+        st.color(Wood.CASE)
         val legs = arrayOf(floatArrayOf(-0.40f, -0.10f), floatArrayOf(0.40f, -0.10f), floatArrayOf(-0.40f, -1.00f),
             floatArrayOf(0.25f, -1.00f), floatArrayOf(-0.40f, -2.00f), floatArrayOf(-0.22f, -2.00f))
         for (l in legs) st.lathe(floatArrayOf(0.028f, 0f, 0.028f, 0.05f, 0.020f, 0.12f, 0.034f, 0.26f, 0.018f, 0.40f,
@@ -146,7 +147,7 @@ object HarpsichordModel {
         st.box(0.23f, 0.06f, -1.02f, 0.27f, 0.10f, -0.12f)
         st.box(-0.42f, CASE_BOTTOM - 0.06f, -2.02f, -0.38f, CASE_BOTTOM, -0.08f)
         st.box(-0.42f, CASE_BOTTOM - 0.06f, -0.12f, 0.42f, CASE_BOTTOM, -0.08f)
-        out += st.build("harpsichord.stand", MaterialId.WOOD_CASE, SkinKind.STATIC, VM.LEVELS_ALL, VM.ALL, true, ProgramId.LIT, 7)
+        out += st.build("harpsichord.stand", MaterialId.WOOD_CASE, SkinKind.STATIC, VM.LEVELS_ALL, VM.ALL, true, ProgramId.LIT, 7, texture = Wood.NAME)
 
         // Nameboard (slot 7): a block-printed paper over the keys.
         val nb = MeshBuilder(VertexLayout.STATIC, 8)
@@ -160,7 +161,7 @@ object HarpsichordModel {
         lid.color(case)
         lid.extrude(rim, CASE_TOP, CASE_TOP + LID_T, capTop = true, capBottom = true)
         lid.rotateZ(X0, CASE_TOP, LID_OPEN_RAD)           // baked open (integrator M7: LIT_VS does not skin LID)
-        out += lid.build("harpsichord.lid", MaterialId.FLEMISH_CASE, SkinKind.LID, VM.LEVELS_ALL, VM.NO_OVER, true, ProgramId.LIT, 8)
+        out += lid.build("harpsichord.lid", MaterialId.FLEMISH_CASE, SkinKind.LID, VM.LEVELS_ALL, VM.NO_OVER, true, ProgramId.LIT, 8, texture = Wood.NAME)
         val motto = MeshBuilder(VertexLayout.STATIC, 8)
         motto.color(intArrayOf(255, 255, 255))
         run {
@@ -205,9 +206,9 @@ object HarpsichordModel {
         val rail = MeshBuilder(VertexLayout.STATIC, 32)
         rail.color(case)
         rail.box(-kw - CHEEK, 0.95f, -0.345f, kw + CHEEK, 0.97f, -0.295f)
-        rail.color(Pal.OAK)
+        rail.color(Wood.CASE)
         rail.box(0.02f, CASE_TOP, -1.01f, 0.04f, 1.49f, -0.99f)                            // lid stick (static, at the open lid)
-        out += rail.build("harpsichord.jackrail", MaterialId.FLEMISH_CASE, SkinKind.STATIC, VM.LEVELS_ALL, VM.NO_OVER, true, ProgramId.LIT, 7)
+        out += rail.build("harpsichord.jackrail", MaterialId.FLEMISH_CASE, SkinKind.STATIC, VM.LEVELS_ALL, VM.NO_OVER, true, ProgramId.LIT, 7, texture = Wood.NAME)
 
         // ── Keys (slot 10) ──
         out += kb.meshes(clipped = true)

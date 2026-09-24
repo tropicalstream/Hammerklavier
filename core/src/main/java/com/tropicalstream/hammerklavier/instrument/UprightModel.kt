@@ -11,6 +11,7 @@ import com.tropicalstream.hammerklavier.contract.ProgramId
 import com.tropicalstream.hammerklavier.contract.SkinKind
 import com.tropicalstream.hammerklavier.contract.SkinParams
 import com.tropicalstream.hammerklavier.contract.UprightFinish
+import com.tropicalstream.hammerklavier.instrument.tex.Wood
 import com.tropicalstream.hammerklavier.contract.VertexLayout
 import com.tropicalstream.hammerklavier.instrument.tex.InstrumentTextures
 import com.tropicalstream.hammerklavier.mesh.MeshBuilder
@@ -63,14 +64,14 @@ object UprightModel {
             SkinKind.ACTION_SET to ACTION_PIVOTS))
         return InstrumentSceneImpl(InstrumentId.UPRIGHT, kb, skin,
             buildMeshes = { meshes(kb, profile, look, lastDamper) },
-            buildTextures = { listOf(InstrumentTextures.fallboard()) },
+            buildTextures = { listOf(InstrumentTextures.fallboard(), Wood.recipe()) },
             packer = UprightActionPacker(profile, kb.keyX))
     }
 
     /** Case material and colour by finish: walnut (default) and mahogany are wood, ebony is lacquer. */
     fun finish(f: UprightFinish): Pair<MaterialId, IntArray> = when (f) {
-        UprightFinish.WALNUT -> MaterialId.WOOD_CASE to Pal.WALNUT
-        UprightFinish.MAHOGANY -> MaterialId.WOOD_CASE to Pal.MAHOGANY
+        UprightFinish.WALNUT -> MaterialId.WOOD_CASE to Wood.WALNUT          // tints of the shared TapGem wood tile
+        UprightFinish.MAHOGANY -> MaterialId.WOOD_CASE to Wood.MAHOGANY
         UprightFinish.EBONY -> MaterialId.LACQUER to Pal.EBONY_KEY
     }
 
@@ -98,6 +99,7 @@ object UprightModel {
         val out = ArrayList<BakedMesh>()
         val (mat, rgb) = finish(look.finish)
         val prog = if (mat == MaterialId.LACQUER) ProgramId.LACQUER else ProgramId.LIT
+        val tex = if (mat == MaterialId.WOOD_CASE) Wood.NAME else null
         val hx = WIDTH / 2f; val kw = kb.widthM / 2f; val back = -DEPTH
         val side = Geo.mul(rgb, 0.8f)
 
@@ -114,16 +116,16 @@ object UprightModel {
         c.box(-hx, 0f, back, hx, HEIGHT - 0.02f, back + 0.03f)                                                               // back
         c.color(rgb)
         c.box(-kw, KEY_TOP, -0.17f, kw, 0.80f, -0.148f)                                                                      // fallboard
-        out += c.build("upright.case", mat, SkinKind.STATIC, VM.LEVELS_ALL, VM.ALL, true, prog, 7)
+        out += c.build("upright.case", mat, SkinKind.STATIC, VM.LEVELS_ALL, VM.ALL, true, prog, 7, texture = tex)
         val upper = MeshBuilder(VertexLayout.STATIC, 64)
         upper.color(rgb)
         upper.box(-hx + 0.025f, 0.80f, -0.17f, hx - 0.025f, 1.25f, -0.15f)                                                   // upper front panel
         upper.box(-0.35f, 0.80f, -0.15f, 0.35f, 0.82f, -0.10f)                                                               // desk ledge
-        out += upper.build("upright.upperpanel", mat, SkinKind.STATIC, VM.LEVELS_ALL, VM.NO_OVER, true, prog, 7)
+        out += upper.build("upright.upperpanel", mat, SkinKind.STATIC, VM.LEVELS_ALL, VM.NO_OVER, true, prog, 7, texture = tex)
         val top = MeshBuilder(VertexLayout.STATIC, 32)
         top.color(rgb)
         top.box(-hx, HEIGHT - 0.02f, back, hx, HEIGHT, -0.13f)
-        out += top.build("upright.toplid", mat, SkinKind.STATIC, VM.LEVELS_ALL, VM.NO_OVER, true, prog, 8)
+        out += top.build("upright.toplid", mat, SkinKind.STATIC, VM.LEVELS_ALL, VM.NO_OVER, true, prog, 8, texture = tex)
         val decal = MeshBuilder(VertexLayout.STATIC, 8)
         decal.color(intArrayOf(255, 255, 255))
         Geo.quadZ(decal, -0.13f, 0.75f, 0.13f, 0.78f, -0.1475f)

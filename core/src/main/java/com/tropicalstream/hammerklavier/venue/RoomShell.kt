@@ -8,6 +8,7 @@ import com.tropicalstream.hammerklavier.contract.ProgramId
 import com.tropicalstream.hammerklavier.contract.RoomLevel
 import com.tropicalstream.hammerklavier.contract.SkinKind
 import com.tropicalstream.hammerklavier.contract.VertexLayout
+import com.tropicalstream.hammerklavier.instrument.tex.Wood
 import com.tropicalstream.hammerklavier.mesh.MeshBuilder
 import com.tropicalstream.hammerklavier.venue.Konzertzimmer.FeatureKind
 import com.tropicalstream.hammerklavier.venue.tex.Atlas
@@ -141,7 +142,7 @@ object RoomShell {
 
     fun floor(): List<BakedMesh> {
         val b = MeshBuilder(VertexLayout.STATIC, 400)
-        b.color(Pal.PARQUET_POOL)
+        b.color(Wood.NEUTRAL)                     // M8: the shared TapGem walnut tile; the bake and pools scale it
         val nx = (Konzertzimmer.WIDTH / FLOOR_STEP).toInt(); val nz = (Konzertzimmer.DEPTH / FLOOR_STEP).toInt()
         val x0 = -Konzertzimmer.HALF_W; val z0 = -Konzertzimmer.HALF_D
         val sx = Konzertzimmer.WIDTH / nx; val sz = Konzertzimmer.DEPTH / nz
@@ -155,7 +156,7 @@ object RoomShell {
             b.tri(v00, v01, v10); b.tri(v10, v01, v11)
         }
         val m = b.build("venue.floor", MaterialId.PARQUET_POOL, SkinKind.STATIC, Masks.SALON or Masks.STAGE, Masks.ALL_VIEWS,
-            clipped = false, program = ProgramId.LIT, drawSlot = 1, texture = Atlas.PARQUET,
+            clipped = false, program = ProgramId.LIT, drawSlot = 1, texture = Wood.NAME,
             fadeNearM = Konzertzimmer.STAGE_FADE_NEAR, fadeFarM = Konzertzimmer.STAGE_FADE_FAR)
         for (x in m) LightBake.bake(x, useNormal = true, gain = 0.83f, cut = 0.75f)   // pools: full near the candelabra and under the chandelier, black by E ≈ 0.9
         for (x in m) poolFalloff(x)
@@ -192,34 +193,38 @@ object RoomShell {
         val b = MeshBuilder(VertexLayout.STATIC, 64)
         val c = floatArrayOf(Konzertzimmer.STAGE_CENTRE[0], 0.002f, Konzertzimmer.STAGE_CENTRE[2])
         // t × bt must be +y: t = +x, bt = −z
-        Geo.glowDisc(b, c, floatArrayOf(1f, 0f, 0f), floatArrayOf(0f, 0f, -1f), floatArrayOf(0f, 1f, 0f), 1.4f, Pal.PARQUET_POOL)
+        Geo.glowDisc(b, c, floatArrayOf(1f, 0f, 0f), floatArrayOf(0f, 0f, -1f), floatArrayOf(0f, 1f, 0f), 1.4f, Wood.NEUTRAL)
         return b.build("venue.contactpool", MaterialId.PARQUET_POOL, SkinKind.STATIC, Masks.INSTRUMENT, Masks.ALL_VIEWS,
-            clipped = false, program = ProgramId.LIT, drawSlot = 1)
+            clipped = false, program = ProgramId.LIT, drawSlot = 1, texture = Wood.NAME)
     }
 
+    /** Stadtschloss (painted, untextured) frame colours; the Sanssouci palette uses the wood tile tinted by [WOOD_FRAME]/[WOOD_BAR]. */
     val WINDOW_FRAME_RGB = intArrayOf(108, 91, 78)
     val WINDOW_BAR_RGB = intArrayOf(63, 53, 46)
+    val WOOD_FRAME = Wood.NEUTRAL
+    val WOOD_BAR = intArrayOf(150, 150, 150)
 
     /** Window frames and bars (3 × 6 panes) plus the wall glow discs: one LIT merge key. */
     fun framesAndGlow(palette: Palette): List<BakedMesh> {
         val b = MeshBuilder(VertexLayout.STATIC, 2048)
+        val wood = palette != Palette.STADTSCHLOSS_1747          // Stadtschloss panelling is painted celadon, not wood
         for (f in Konzertzimmer.WALL_FEATURES) {
             if (f.kind != FeatureKind.WINDOW) continue
             val zIn = Konzertzimmer.HALF_D - 0.02f; val zOut = Konzertzimmer.HALF_D - 0.10f
             val x0 = f.along - f.w / 2; val x1 = f.along + f.w / 2; val y0 = f.y0; val y1 = f.y0 + f.h
             val fw = 0.07f
-            b.color(WINDOW_FRAME_RGB)
+            b.color(if (wood) WOOD_FRAME else WINDOW_FRAME_RGB)
             b.box(x0, y0, zOut, x0 + fw, y1, zIn); b.box(x1 - fw, y0, zOut, x1, y1, zIn)
             b.box(x0, y1 - fw, zOut, x1, y1, zIn); b.box(x0, y0, zOut, x1, y0 + fw, zIn)
             // segmental head: three short boxes stepping up to the crown
             b.box(x0 + 0.25f, y1, zOut, x1 - 0.25f, y1 + 0.06f, zIn)
-            b.color(WINDOW_BAR_RGB)
+            b.color(if (wood) WOOD_BAR else WINDOW_BAR_RGB)
             val bw = 0.025f
             for (k in 1..2) { val x = x0 + f.w * k / 3; b.box(x - bw, y0 + fw, zOut + 0.02f, x + bw, y1 - fw, zIn - 0.02f) }
             b.box(f.along - bw * 1.6f, y0 + fw, zOut + 0.01f, f.along + bw * 1.6f, y1 - fw, zIn - 0.01f)   // meeting stiles
             for (k in 1..5) { val y = y0 + f.h * k / 6; b.box(x0 + fw, y - bw, zOut + 0.02f, x1 - fw, y + bw, zIn - 0.02f) }
         }
-        val glow = if (palette == Palette.STADTSCHLOSS_1747) Pal.STADTSCHLOSS_GREEN else Pal.BOISERIE_NEAR
+        val glow = if (!wood) Pal.STADTSCHLOSS_GREEN else Wood.NEUTRAL      // wood: boiserie = the wood tile, glow-weighted
         // one disc per girandole (N mirror frames, S pier glasses) and per door candle, 1 cm into the room
         val centres = ArrayList<FloatArray>()          // plane, along, y
         for (cx in floatArrayOf(-3f, 0f, 3f)) for (s in floatArrayOf(-0.8f, 0.8f)) centres.add(floatArrayOf(Konzertzimmer.PLANE_N.toFloat(), cx + s, FlameLayout.SCONCE_Y))
@@ -237,7 +242,7 @@ object RoomShell {
             if (mine.isNotEmpty()) glowGrid(b, plane, mine, glow)
         }
         val m = b.build("venue.frames", MaterialId.WINDOW_FRAME, SkinKind.STATIC, Masks.SALON or Masks.STAGE, Masks.ALL_VIEWS,
-            clipped = false, program = ProgramId.LIT, drawSlot = 1,
+            clipped = false, program = ProgramId.LIT, drawSlot = 1, texture = if (wood) Wood.NAME else null,
             fadeNearM = Konzertzimmer.STAGE_FADE_NEAR, fadeFarM = Konzertzimmer.STAGE_FADE_FAR)
         return m
     }
@@ -266,10 +271,11 @@ object RoomShell {
         fun v(i: Int, j: Int): Int {
             val k = j * (na + 1) + i
             if (idx[k] < 0) {
-                val p = Geo.wallPoint(plane, a0 + (a1 - a0) * i / na, y0 + (y1 - y0) * j / ny, 0.01f)
+                val al = a0 + (a1 - a0) * i / na; val yy = y0 + (y1 - y0) * j / ny
+                val p = Geo.wallPoint(plane, al, yy, 0.01f)
                 val q = w[k]
                 b.color(intArrayOf((rgb[0] * q).toInt(), (rgb[1] * q).toInt(), (rgb[2] * q).toInt()))
-                idx[k] = b.vertex(p[0], p[1], p[2], n[0], n[1], n[2], 0f, 0f)
+                idx[k] = b.vertex(p[0], p[1], p[2], n[0], n[1], n[2], al, yy)      // uv in metres: the wood tile's grain runs along the wall
             }
             return idx[k]
         }

@@ -45,6 +45,10 @@ object Pal {
     @JvmField val FLEMISH_CASE = intArrayOf(128, 93, 77)
     @JvmField val FLEMISH_PAPER = intArrayOf(193, 174, 154)      // used × 0.6
     @JvmField val HARPSI_SOUNDBOARD = intArrayOf(193, 169, 146)  // used × 0.7; flowers 200,70,60 / 90,120,190 / 90,140,70; gilt rose 226,176,86
+    // M8 wood pass: the cases (upright walnut / mahogany, harpsichord case, lid, stand) and the venue's wood (floor,
+    // boiserie glow, window frames, chairs) no longer use OAK / WALNUT / MAHOGANY / FLEMISH_CASE / PARQUET_POOL as flat
+    // colours: they sample the shared TapGem walnut tile (instrument/tex/Wood.kt) with tints from Wood.*. These tokens stay
+    // for the paper inks and the tests.
     @JvmField val OAK = intArrayOf(138, 104, 86)
     @JvmField val WALNUT = intArrayOf(123, 91, 77)
     @JvmField val MAHOGANY = intArrayOf(123, 85, 69)

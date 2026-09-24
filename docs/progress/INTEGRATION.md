@@ -633,3 +633,29 @@ Speaker bass OFF makes no difference (grand; op. 106, Moonlight).
   −44.2 dB after. Output RMS −26.7 → −29.3 dB. After = `relnoise false` within 0.1 dB.
   WAVs: build/noise/device_{before,after,relOff}.wav, build/noise/{mond_1,mz_311_3}_*.wav (before_* = old level).
 - Listening check on the speakers is still needed from the user.
+
+### Wood: the TapGem walnut tile on every wood surface (2026-09-23, integrator)
+User: "the wood should be the same wood texture as the tapgem project wood theme … the wood outside still looks washed."
+- **Tile.** `instrument/tex/Wood.kt` is a pixel-exact port of TapGem `PanelTextures.wood()` (base #2B1A10, grain
+  #4A2E1A, streaks #170D07, same LCG seed, wander/rings/noise/knot maths), 256², GL_REPEAT, one tile per 0.6 m of the
+  meshes' metre UVs. Uploaded from its texels directly (`TextureRecipe.rgba`, new optional field with `repeat`); one
+  shared texture `hk.wood` (deduped by name across instrument + venue recipes). No new merge keys: the wood surfaces
+  were already their own draws, so the ≤ 28 draws/eye budget is unchanged.
+- **Where.** Upright case, upper panel and top (walnut; mahogany = a redder tint; ebony stays LACQUER charcoal);
+  harpsichord case, lid, jack rail and stand; venue floor (replaces the pale parquet tile) and Instrument-level contact
+  pool, boiserie wall glow + window frames (Sanssouci; Stadtschloss keeps its painted celadon), chair frames. The grand
+  case stays black lacquer. Action parts (skinned, their UVs carry slot data) keep their flat tokens.
+- **Gamma.** LIT gains a texture path (`uHasTex` 1 = painted recipe, which also makes the harpsichord paper, motto and
+  soundboard textures show for the first time; 2 = wood). Wood texels are TapGem's final colours: the shader un-lifts
+  them (pow 1/0.85) before the pow 0.85 lift, lit instrument wood never falls below the tile itself, and wood is
+  pre-divided by the frame's T-APL cap gain (`uWoodBoost`), so the tile lands on the waveguide at TapGem's values while
+  keys, lacquer and gilt keep the cap as before. Case tint 96 % (APL: at 100 % the upright Player read 9.09 %).
+- **Pixel comparison** (screencaps `docs/shots/wood_<instrument>_<view>.png`, mean RGB / p5 / p50 / p95):
+  TapGem tile 44.0,26.4,15.6 / 32,19,11 / 43,26,16 / 58,36,21.
+  Upright Player upper panel 42.6,25.6,15.1 / 32,18,11 / 41,25,15 / 55,34,19 (knee board, 0.8 side tint: 36.8,22.1,13.1);
+  harpsichord Player case front 43.6,26.3,15.5 / 31,18,11 / 43,26,16 / 58,36,21; harpsichord Player floor 33.5,20.1,11.7.
+  Before (first build, cap not compensated): upright front 9.7,5.2,2.5 — the old flat WALNUT token path read washed grey-brown.
+- **APL** (same shots): grand 6.87 / 7.97 / 8.16 %, harpsichord 8.80 / 6.59 / 7.70 %, upright 8.80 / 7.50 / 7.73 %
+  (Player / Action / Hall): all within ≤ 9 % stage, ≤ 12 % Hall. tools/ci.sh PASS.
+- Not shot: mahogany finish, Overhead framings, Stadtschloss palette. The harpsichord's papered inner walls share the
+  case mesh and so take the wood tile at the paper tint (dark brown).

@@ -6,6 +6,7 @@ import com.tropicalstream.hammerklavier.contract.Pal
 import com.tropicalstream.hammerklavier.contract.ProgramId
 import com.tropicalstream.hammerklavier.contract.SkinKind
 import com.tropicalstream.hammerklavier.contract.VertexLayout
+import com.tropicalstream.hammerklavier.instrument.tex.Wood
 import com.tropicalstream.hammerklavier.mesh.MeshBuilder
 
 /**
@@ -15,7 +16,8 @@ import com.tropicalstream.hammerklavier.mesh.MeshBuilder
  * itself is never drawn (black is transparent); only the flames it reflects (FlameFieldImpl).
  */
 object Fixtures {
-    val CHAIR_FRAME_RGB = intArrayOf(139, 109, 84)
+    /** M8: a tint of the shared TapGem wood tile (Wood.NEUTRAL = the tile as is). */
+    val CHAIR_FRAME_RGB = Wood.NEUTRAL
     val DAMASK_RGB = intArrayOf(80, 30, 26)
     val CANDLE_RGB = intArrayOf(150, 142, 128)          // M5: was (214,204,184), brighter than the flames it carries
 
@@ -46,7 +48,7 @@ object Fixtures {
             dm.box(x - hw + 0.05f, 0.54f, z + hd - 0.04f, x + hw - 0.05f, 0.90f, z + hd - 0.02f)   // back panel
         }
         val a = fr.build("venue.chairs.frame", MaterialId.CHAIR_FRAME, SkinKind.STATIC, Masks.SALON, Masks.HALL_VIEWS,
-            clipped = false, program = ProgramId.LIT, drawSlot = 4)
+            clipped = false, program = ProgramId.LIT, drawSlot = 4, texture = Wood.NAME)
         val b = dm.build("venue.chairs.damask", MaterialId.DAMASK, SkinKind.STATIC, Masks.SALON, Masks.HALL_VIEWS,
             clipped = false, program = ProgramId.LIT, drawSlot = 4)
         for (m in a + b) LightBake.bake(m, useNormal = true, gain = 1.4f, floor = 0.1f)

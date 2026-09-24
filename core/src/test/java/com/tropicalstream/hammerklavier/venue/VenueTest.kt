@@ -338,7 +338,7 @@ class VenueTest {
     @Test fun texturesNamedByMeshesExist() {
         val names = scene.textures().map { it.name }.toSet()
         for (m in scene.meshes(Palette.SANSSOUCI_1747)) m.texture?.let { assertTrue(it in names) }
-        assertTrue(Atlas.ATLAS in names && Atlas.PARQUET in names)
+        assertTrue(Atlas.ATLAS in names && com.tropicalstream.hammerklavier.instrument.tex.Wood.NAME in names)
     }
 
     private fun meshArea(m: BakedMesh): Float {

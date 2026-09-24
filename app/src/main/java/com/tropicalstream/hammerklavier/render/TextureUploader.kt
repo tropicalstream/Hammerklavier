@@ -5,7 +5,7 @@ import com.tropicalstream.hammerklavier.contract.TextureRecipe
 import com.tropicalstream.hammerklavier.render.gl.GlKit
 
 /** One painted texture, its RGBA kept resident on the heap for context loss (PLAN §5.1, §3.17). */
-class ResidentTexture(val name: String, val width: Int, val height: Int, val rgba: ByteArray) {
+class ResidentTexture(val name: String, val width: Int, val height: Int, val rgba: ByteArray, val repeat: Boolean = false) {
     @JvmField var id = 0
     @JvmField var glGeneration = -1
 }
@@ -19,10 +19,14 @@ class TextureUploader {
     private val byName = HashMap<String, ResidentTexture>()
 
     /** HKLoader. */
-    fun paint(recipes: List<TextureRecipe>, painter: Painter2D): List<ResidentTexture> = recipes.map { r ->
-        painter.begin(r.width, r.height)
-        r.paint(painter)
-        ResidentTexture(r.name, r.width, r.height, painter.end())
+    fun paint(recipes: List<TextureRecipe>, painter: Painter2D): List<ResidentTexture> = recipes.distinctBy { it.name }.map { r ->
+        val direct = r.rgba
+        if (direct != null) ResidentTexture(r.name, r.width, r.height, direct(), r.repeat)
+        else {
+            painter.begin(r.width, r.height)
+            r.paint(painter)
+            ResidentTexture(r.name, r.width, r.height, painter.end(), r.repeat)
+        }
     }
 
     /** GLThread: take a newly built set (replaces the previous set's entries). */
@@ -34,7 +38,7 @@ class TextureUploader {
     fun id(name: String?, gen: Int): Int {
         if (name == null) return 0
         val t = byName[name] ?: return 0
-        if (t.glGeneration != gen) { t.id = GlKit.makeTexture(t.width, t.height, t.rgba); t.glGeneration = gen }
+        if (t.glGeneration != gen) { t.id = GlKit.makeTexture(t.width, t.height, t.rgba, t.repeat); t.glGeneration = gen }
         return t.id
     }
 
