@@ -580,3 +580,16 @@ Gate (plugged in; `stay_on_while_plugged_in=7` on this device, so the display ne
 - M0 first-launch-after-install FRAME HITCH (~130 ms once per install, on the first menu open). Next step: a
   perfetto trace of that first open (RenderThread + GL thread) to find the compile/upload.
 - WP10 request 5 waits on T-SYNC-BT; WP8 upright contact pool deferred; M7 carry-overs unchanged.
+
+### M8 fourth pass (2026-09-23, integrator) — verifier findings
+- **M0 first-after-install FRAME HITCH fixed.** Two changes: (1) HkGlView's Choreographer pacing runs on an
+  `HKPacer` HandlerThread, so a stalled main thread cannot delay requestRender; (2) `ui.OverlayPrewarm` draws a
+  throw-away overlay (title, HUD, menu with the underlined gilt row, panel) into an offscreen HardwareRenderer in
+  MainActivity.onCreate, before the GL view exists, so HWUI's per-install shader compile happens there
+  (`overlay prewarm 176–322 ms` logged once per launch). Pacer alone: M0 still hitched 1 of 5 first-after-install
+  runs (146 ms). With the prewarm: M0 PASS on 5/5 fresh installs (uninstall + install + smoke M0).
+- Side effect of that test (my mistake, recorded): the uninstalls wiped the on-device PCM cache and app data, so the
+  next smoke all ran while HKVoicer re-voiced the kits; M0 then hitched at the idle 10 fps (not at the menu), and
+  M6/M7 had one-off failures (adb push EOF, T-LEAVE asleep, upright remap) that passed on standalone re-runs.
+- versionName is **1.0-rc1** (About shows `Hammerklavier 1.0-rc1 <commit>`; screenshot build/smoke/M6/t5_11_about.png).
+- tools/device/lock.sh is re-entrant (HK_DEVICE_LOCK_HELD); `lock.sh -- tools/device/smoke.sh M0` no longer deadlocks.

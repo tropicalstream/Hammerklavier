@@ -44,9 +44,13 @@ class HkGlView(ctx: Context, loader: ExecutorService?, private val msaa: Boolean
     val renderer = StereoRenderer(loader)
     val gaze = GazeCamera(ctx, head)
     private val chooser = Chooser(msaa)
-    private var paced = false
+    @Volatile private var paced = false
     private var resumed = false
-    private var vsyncs = 0
+    private var vsyncs = 0            // pacer thread only
+    // M8: pacing runs on its own looper's Choreographer, so a stalled main thread (HWUI's first-install
+    // shader compile on the first menu open blocked the next UI traversal ~130 ms) no longer delays requestRender.
+    private val pacerThread = android.os.HandlerThread("HKPacer", android.os.Process.THREAD_PRIORITY_DISPLAY).also { it.start() }
+    private val pacer = android.os.Handler(pacerThread.looper)
     private var resting = false
     @Volatile private var restFrameDone = false
 
@@ -61,7 +65,7 @@ class HkGlView(ctx: Context, loader: ExecutorService?, private val msaa: Boolean
         if (com.tropicalstream.hammerklavier.BuildConfig.DEBUG) renderer.debugAlloc = true
     }
 
-    // ── Choreographer pacing (main) ──
+    // ── Choreographer pacing (HKPacer thread) ──
     override fun doFrame(frameTimeNanos: Long) {
         if (!paced) return
         renderer.desired.vsyncNanos = frameTimeNanos
@@ -87,13 +91,15 @@ class HkGlView(ctx: Context, loader: ExecutorService?, private val msaa: Boolean
     }
 
     private fun startPacing() {
-        val c = Choreographer.getInstance()
-        c.removeFrameCallback(this)          // WanderQuest: never two callbacks after a resume
         paced = true
-        c.postFrameCallback(this)
+        pacer.post {
+            val c = Choreographer.getInstance()
+            c.removeFrameCallback(this)          // WanderQuest: never two callbacks after a resume
+            if (paced) c.postFrameCallback(this)
+        }
     }
 
-    private fun stopPacing() { paced = false; Choreographer.getInstance().removeFrameCallback(this) }
+    private fun stopPacing() { paced = false; pacer.post { Choreographer.getInstance().removeFrameCallback(this) } }
 
     // ── RenderControl (main): fields only ──
     override fun bind(clock: SongClock, energy: EnergyRing, mech: MechanicsEvaluator, scenes: SceneFactory) {

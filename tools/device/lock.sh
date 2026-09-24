@@ -3,12 +3,15 @@
 # Waits for an exclusive fcntl.flock on $HK_DEVICE_LOCK (/tmp/hk-device.lock; the Mac has no
 # flock(1)), runs the command, and before releasing the lock restores `device_wearing 0` on the
 # glasses (bench scripts set it to 1), also when the command fails or is interrupted.
+# Re-entrant via HK_DEVICE_LOCK_HELD (set for the child), so wrapping smoke.sh in lock.sh is safe.
 # HK_LOCK_NO_ADB=1 skips the restore (for testing the lock without a device).
 set -euo pipefail
 ROOT=$(git rev-parse --show-toplevel); . "$ROOT/tools/env.sh"
 
 [ "${1:-}" = "--" ] && shift
 if [ $# -eq 0 ]; then echo "usage: tools/device/lock.sh -- <command> [args…]" >&2; exit 2; fi
+# Re-entrant: a command already running under this lock (smoke.sh, run.sh inside an outer lock.sh) runs directly.
+if [ "${HK_DEVICE_LOCK_HELD:-}" = "$HK_DEVICE_LOCK" ]; then exec "$@"; fi
 
 # The locker runs from -c (not a heredoc on stdin), so the command keeps this script's stdin.
 LOCKER=$(cat <<'PY'
@@ -42,7 +45,7 @@ for s in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
 
 code = 1
 try:
-    child = subprocess.Popen(cmd)
+    child = subprocess.Popen(cmd, env=dict(os.environ, HK_DEVICE_LOCK_HELD=lock_path))
     code = child.wait()
 except KeyboardInterrupt:
     code = 130

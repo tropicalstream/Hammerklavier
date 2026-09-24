@@ -319,3 +319,10 @@ Recorded by the integrator while merging WP1, WP2, WP3, WP4 and WP11 for M1 (doc
   Fixtures chair frame); new **EBONY_KEY 34,34,38** (sharps, grand/upright-ebony lacquer); EBONY_FLOOR (presence floor)
   22,18,15 → 22,22,25; EBONY_RIM 120,78,40 → 112,118,132 (the lacquer Fresnel rim now reads Pal, no copy);
   EBONY_SPEC → 228,234,246; IVORY/IVORY_SIDE/BONE slightly less yellow. Gilt, brass, flames unchanged (the only saturated warm).
+
+### M8 fourth pass (integrator)
+- HkGlView: Choreographer pacing moved off the main thread onto an `HKPacer` HandlerThread (THREAD_PRIORITY_DISPLAY).
+  `paced` is volatile; start/stop post to the pacer. RenderControl surface unchanged.
+- tools/device/lock.sh is re-entrant: the child gets `HK_DEVICE_LOCK_HELD=<lock path>`, and a nested lock.sh with the
+  same lock path runs its command directly (wrapping smoke.sh/run.sh in lock.sh no longer deadlocks).
+- versionName 0.1-alpha → 1.0-rc1.

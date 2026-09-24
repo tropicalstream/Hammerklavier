@@ -46,6 +46,7 @@ class MainActivity : Activity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         volumeControlStream = AudioManager.STREAM_MUSIC
 
+        com.tropicalstream.hammerklavier.ui.OverlayPrewarm.run(this)   // M8: first-install HWUI shader compile, before GL runs
         gl = app.wiring.glHost(this, msaa = app.wiring.settings.getBool("msaa", true))
         overlay = app.wiring.overlay(this)
         val glView = gl.view
