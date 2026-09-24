@@ -62,6 +62,11 @@ def sustain_seconds(instrument, key):
 
 
 RELEASE_SECONDS = {"grand": 0.4, "upright": 1.0, "harpsichord": 0.6}
+# Release level under the notes (releaseRule.relGainDb). The Salamander rel<n> are damper/key noises
+# recorded near note level and played by its SFZ at volume=-37 (hammer.txt); at 0 dB they sounded as a
+# per-note "rubbing" as loud as the music (INTEGRATION.md, release-noise level). The tail-carrying
+# upright/harpsichord releases are level-matched at the handoff, so their value is unused.
+RELEASE_GAIN_DB = {"grand": -37.0, "upright": 0.0, "harpsichord": 0.0}
 PEDAL_SECONDS = {"pedalDown": 4.5, "pedalUp": 0.5}
 
 
@@ -755,7 +760,7 @@ def build_real_kit(kit, out_dir, report_path):
             "releaseCarriesTail": release_carries, "embeddedRoomDb": embedded_db, "embeddedEdtS": embedded_edt,
             "layers": layers, "stops": stops, "levelCurve": level, "stretchCents": stretch, "inharmB": inharm,
             "damperT60": damper, "freeT60": free_arr,
-            "releaseRule": {"relGainDb": 0.0, "velExp": 0.7, "ageTauS": 3.0, "floor": 0.25, "heldDb": -9.0},
+            "releaseRule": {"relGainDb": RELEASE_GAIN_DB[instrument], "velExp": 0.7, "ageTauS": 3.0, "floor": 0.25, "heldDb": -9.0},
             "credit": credit, "source": source}
     m = assemble_kit(out_dir, meta, regions, units, report)
     report.append("onset jitter: max %d frames (onsets placed at frame %d by construction)" % (max(onset_jitter or [0]), PRE_ROLL))

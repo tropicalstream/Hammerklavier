@@ -186,6 +186,9 @@ object MenuTree {
         out.add(MenuRow("Resonance ›", Choice.Open(MenuLevel(MenuId.RESONANCE))))
         out.add(MenuRow("Reverb ›", Choice.Open(MenuLevel(MenuId.REVERB))))
         out.add(MenuRow("Speaker bass ›", Choice.Open(MenuLevel(MenuId.SPEAKER_BASS))))
+        val s = f.settings
+        out.add(MenuRow("Key release noise: " + UiText.onOff(s.releaseNoises), Choice.Do(listOf(UiAction.SetMix(releaseNoises = !s.releaseNoises)), After.STAY)))
+        out.add(MenuRow("Pedal noise: " + UiText.onOff(s.pedalNoises), Choice.Do(listOf(UiAction.SetMix(pedalNoises = !s.pedalNoises)), After.STAY)))
         return out
     }
 

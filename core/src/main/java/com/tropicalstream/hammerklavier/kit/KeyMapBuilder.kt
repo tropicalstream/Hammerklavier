@@ -117,6 +117,9 @@ object KeyMapBuilder {
         // ---- releases per (stop, key) ----
         val release = IntArray(stops * HK.KEYS) { -1 }; val releaseRate = FloatArray(stops * HK.KEYS) { 1f }
         val releaseGain = FloatArray(stops * HK.KEYS)
+        // releaseRule.relGainDb: the kit's release level under its notes (the grand's Salamander rel<n>
+        // are key-release noises recorded near note level; the SFZ plays them at volume=-37).
+        val relTrim = index.releaseRule.relGainDb
         if (ready(KitIndex.UNIT_RELEASES)) for (stop in 0 until stops) {
             val octave = index.stops[stop].octaveSemis
             val rel = index.regions.filter { it.kind == RegionKind.RELEASE && it.stop == stop }
@@ -131,7 +134,7 @@ object KeyMapBuilder {
                 val best = own ?: nearest(rel, target, k)
                 val r = 2.0.pow((target - best.nativeCents) / 1200.0)
                 val i = stop * HK.KEYS + k
-                release[i] = best.id; releaseRate[i] = r.toFloat(); releaseGain[i] = db(best.gainDb)
+                release[i] = best.id; releaseRate[i] = r.toFloat(); releaseGain[i] = db(best.gainDb + relTrim)
             }
         }
 

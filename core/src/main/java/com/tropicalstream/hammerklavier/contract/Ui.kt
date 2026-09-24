@@ -6,7 +6,8 @@ enum class UiEvent { KIT_PLAYABLE, ENTERED, MOVEMENT_STARTED, VIEW_CHANGED, PAUS
 class SettingsSnapshot(val tuning: Map<InstrumentId, TuningSpec>, val registration: Int, val reverb: ReverbMode,
     val resonance: ResonanceMode, val speakerBass: SpeakerBass, val roomOverride: RoomLevel?, val palette: Palette,
     val finish: UprightFinish, val stereoDepth: Float, val lookAround: Boolean, val edgeOverlay: Boolean?,
-    val reverseSwipe: Boolean, val presenceFloor: Int, val avLeadMs: Map<String, Int> /* route key → ms */, val tempoPct: Int, val msaa: Boolean)
+    val reverseSwipe: Boolean, val presenceFloor: Int, val avLeadMs: Map<String, Int> /* route key → ms */, val tempoPct: Int, val msaa: Boolean,
+    val releaseNoises: Boolean = true, val pedalNoises: Boolean = true)
 
 class UiFacts(val playing: Boolean, val positionUs: Long, val durationUs: Long, val movementId: String?, val bar: Int,
     val instrument: InstrumentId, val view: ViewId, val framing: Int, val kitStates: Map<InstrumentId, KitState>,
@@ -27,7 +28,8 @@ sealed interface UiAction {
     data class SetTempo(val pct: Int) : UiAction
     data class SetTuning(val instrument: InstrumentId, val tuning: TuningSpec) : UiAction
     data class SetRegistration(val mask: Int) : UiAction
-    data class SetMix(val reverb: ReverbMode? = null, val resonance: ResonanceMode? = null, val speakerBass: SpeakerBass? = null) : UiAction
+    data class SetMix(val reverb: ReverbMode? = null, val resonance: ResonanceMode? = null, val speakerBass: SpeakerBass? = null,
+        val releaseNoises: Boolean? = null, val pedalNoises: Boolean? = null) : UiAction
     data class SetSight(val room: RoomLevel? = null, val autoRoom: Boolean = false, val palette: Palette? = null,
         val finish: UprightFinish? = null, val stereoDepth: Float? = null, val lookAround: Boolean? = null,
         val edgeOverlay: Boolean? = null, val reverseSwipe: Boolean? = null, val msaa: Boolean? = null,

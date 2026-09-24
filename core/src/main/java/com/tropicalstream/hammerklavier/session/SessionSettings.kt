@@ -29,6 +29,7 @@ object SessionKeys {
     const val REGISTRATION = "harpsi.registration"; const val TEMPO = "tempo.pct"
     const val REVERB = "mix.reverb"; const val RESONANCE = "mix.resonance"; const val SPEAKER_BASS = "mix.speakerBass"
     const val MASTER_DB = "mix.masterDb"
+    const val RELEASE_NOISES = "mix.releaseNoises"; const val PEDAL_NOISES = "mix.pedalNoises"
     const val ROOM_OVERRIDE = "sight.room"; const val PALETTE = "sight.palette"; const val FINISH = "sight.finish"
     const val STEREO_DEPTH = "sight.stereoDepth"; const val LOOK_AROUND = "sight.lookAround"; const val EDGE_OVERLAY = "sight.edge"
     const val REVERSE_SWIPE = "input.reverseSwipe"; const val PRESENCE_FLOOR = "sight.presenceFloor"; const val MSAA = "sight.msaa"
@@ -106,6 +107,12 @@ class SessionSettings(private val s: SettingsStore) {
     var speakerBass: SpeakerBass
         get() = enumOr(s.getString(SessionKeys.SPEAKER_BASS, ""), SpeakerBass.AUTO)
         set(v) = s.putString(SessionKeys.SPEAKER_BASS, v.name)
+    var releaseNoises: Boolean
+        get() = s.getBool(SessionKeys.RELEASE_NOISES, true)
+        set(v) = s.putBool(SessionKeys.RELEASE_NOISES, v)
+    var pedalNoises: Boolean
+        get() = s.getBool(SessionKeys.PEDAL_NOISES, true)
+        set(v) = s.putBool(SessionKeys.PEDAL_NOISES, v)
     var masterDb: Float
         get() = s.getFloat(SessionKeys.MASTER_DB, SessionKeys.DEFAULT_MASTER_DB)
         set(v) = s.putFloat(SessionKeys.MASTER_DB, v)
@@ -150,14 +157,16 @@ class SessionSettings(private val s: SettingsStore) {
         get() = SessionKeys.splitIds(s.getString(SessionKeys.RECENT, "")).take(RECENT_MAX)
         set(v) = s.putString(SessionKeys.RECENT, SessionKeys.joinIds(v.take(RECENT_MAX)))
 
-    fun mix(): MixSettings = MixSettings(reverb = reverb, resonance = resonance, speakerBass = speakerBass, masterDb = masterDb)
+    fun mix(): MixSettings = MixSettings(reverb = reverb, resonance = resonance, speakerBass = speakerBass, masterDb = masterDb,
+        releaseNoises = releaseNoises, pedalNoises = pedalNoises)
 
     /** Route keys with a stored lead, for the snapshot. */
     fun snapshot(routeKeys: Collection<String>): SettingsSnapshot = SettingsSnapshot(
         tuning = InstrumentId.entries.associateWith { tuning(it) }, registration = registration, reverb = reverb,
         resonance = resonance, speakerBass = speakerBass, roomOverride = roomOverride, palette = palette, finish = finish,
         stereoDepth = stereoDepth, lookAround = lookAround, edgeOverlay = edgeOverlay, reverseSwipe = reverseSwipe,
-        presenceFloor = presenceFloor, avLeadMs = routeKeys.associateWith { avLead(it) }, tempoPct = tempoPct, msaa = msaa)
+        presenceFloor = presenceFloor, avLeadMs = routeKeys.associateWith { avLead(it) }, tempoPct = tempoPct, msaa = msaa,
+        releaseNoises = releaseNoises, pedalNoises = pedalNoises)
 
     companion object {
         const val RECENT_MAX = 15

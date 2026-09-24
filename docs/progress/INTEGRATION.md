@@ -607,3 +607,29 @@ Gate (plugged in; `stay_on_while_plugged_in=7` on this device, so the display ne
   T-UND-BT, T-SYNC-BT; listening L-1..L-8; the palette on the waveguide.
 - WP10 request 5 waits on T-SYNC-BT; WP8 upright contact pool deferred; M7 carry-overs unchanged.
 - Occasional adb USB drop during long smoke runs (host/transport, not the app); re-run the milestone when it happens.
+
+### Release-noise level: the per-note "mic rubbing" (2026-09-23, integrator)
+User report: a muffled "someone rubbing the microphone" sound on the glasses' speakers, in step with each note,
+Speaker bass OFF makes no difference (grand; op. 106, Moonlight).
+- **Method.** `NoiseProbeTest` (core/src/test/.../engine, skipped unless `build/noise/ENABLE` exists) renders
+  Krueger `mond_1` (40 s, 3.3 notes/s) and `mz_311_3` (25 s, 9 notes/s) on the REAL grand kit (units 5/8/11/62/63
+  decoded with ffmpeg to `build/noise/u<N>.s16`) with one stage toggled per variant: all on, release noises off,
+  pedal noises off, combs off, room off, and the pass-through DSP (no soft bus, combs, room, limiter). Analysis:
+  `build/noise/analyse.py`, 100–800 Hz band, variant − (release off) = the key-up component.
+- **Root cause.** The key-up component in 100–800 Hz was **−0.4 dB re the music** in the Mozart (0.0 dB in the
+  120 ms after key-ups) and −16.4 dB in the Moonlight. Pedal off, combs off, room off and the whole DSP chain bypassed
+  each moved it < 1 dB, so the cause was the release level and nothing downstream. The Salamander `rel1..88` are
+  damper/key noises recorded at close to note level (raw RMS −16..−21 dBFS, like a v11 note). Its SFZ plays them at
+  **`volume=-37`** (grand-docs/hammer.txt). kit_build.py wrote `releaseRule.relGainDb 0.0`, and KeyMapBuilder never
+  read `relGainDb` anyway, so every key-up fired a note-loud broadband thump.
+- **Fix.** KeyMapBuilder now applies `releaseRule.relGainDb` to `releaseGain`. The grand's map.json is set to −37 dB
+  (kit_build.py `RELEASE_GAIN_DB`; ledger row updated; the PCM cache sha1 only covers units + env.bin, so it stays
+  valid). The upright and harpsichord carry the tail and are level-matched at the handoff, so they're unchanged.
+  Sound menu: new **Key release noise: On/Off** and **Pedal noise: On/Off** rows (persisted `mix.releaseNoises`,
+  `mix.pedalNoises`). CONTROL extras: `--ez relnoise`, `--ez pednoise`.
+- **After (offline).** Key-up component re the music: Mozart −0.4 → **−38.7 dB**, Moonlight −16.4 → **−60.2 dB**. A
+  faint damper release remains in dry passages.
+- **After (glasses).** `--ei wavdump 20` during mz_311_3: 100–800 Hz 10th-percentile 20 ms floor −37.0 dB before →
+  −44.2 dB after. Output RMS −26.7 → −29.3 dB. After = `relnoise false` within 0.1 dB.
+  WAVs: build/noise/device_{before,after,relOff}.wav, build/noise/{mond_1,mz_311_3}_*.wav (before_* = old level).
+- Listening check on the speakers is still needed from the user.

@@ -566,6 +566,8 @@ class SessionController(
         a.reverb?.let { prefs.reverb = it }
         a.resonance?.let { prefs.resonance = it }
         a.speakerBass?.let { prefs.speakerBass = it }
+        a.releaseNoises?.let { prefs.releaseNoises = it }
+        a.pedalNoises?.let { prefs.pedalNoises = it }
         audio.setMix(prefs.mix())
         if (reverbChanged) updateRoom()
     }

@@ -399,6 +399,8 @@ class AppController(private val ctx: Context, private val w: Wiring) {
                 "stats" -> if (b.getBoolean(k)) playback.logStats()
                 "align" -> if (b.getBoolean(k)) playback.align()
                 "wavdump" -> playback.captureWav(b.getInt(k, 20).coerceIn(1, 60))
+                "relnoise" -> session.onAction(UiAction.SetMix(releaseNoises = b.getBoolean(k, true)))
+                "pednoise" -> session.onAction(UiAction.SetMix(pedalNoises = b.getBoolean(k, true)))
                 "selftest" -> if (b.getBoolean(k)) selfTest.run(gl, b.getInt("selftestsecs", 60).coerceIn(1, 600))
                 "lead" -> session.onAction(UiAction.SetAvLead(b.getInt(k, 30).coerceIn(0, 400)))
                 "sync" -> session.onAction(UiAction.SyncTest(b.getBoolean(k)))

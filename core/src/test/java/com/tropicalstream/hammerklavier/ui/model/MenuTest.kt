@@ -161,6 +161,16 @@ class MenuTest {
         assertEquals(listOf<UiAction>(UiAction.SetSight(autoRoom = true)), (room[0].choice as Choice.Do).actions)
     }
 
+    @Test fun soundNoiseTogglesStay() {
+        val rows = MenuTree.rows(MenuLevel(MenuId.SOUND), facts())
+        val rel = rows.first { it.label.startsWith("Key release noise") }
+        val ped = rows.first { it.label.startsWith("Pedal noise") }
+        assertEquals("Key release noise: On", rel.label); assertEquals("Pedal noise: On", ped.label)
+        assertEquals(listOf<UiAction>(UiAction.SetMix(releaseNoises = false)), (rel.choice as Choice.Do).actions)
+        assertEquals(listOf<UiAction>(UiAction.SetMix(pedalNoises = false)), (ped.choice as Choice.Do).actions)
+        assertEquals(After.STAY, (rel.choice as Choice.Do).after)
+    }
+
     @Test fun panelsPageBySevenAndImportRotatesOnlyWhenArmed() {
         val f = facts()
         val ui = UiFixtures.entered(f)

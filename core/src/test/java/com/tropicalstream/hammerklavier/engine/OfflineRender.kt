@@ -29,8 +29,12 @@ object OfflineRender {
     fun dir(): File = File("build/renders").also { it.mkdirs() }
 
     /** Writes [interleaved] (stereo, ±1 full scale, clipped) as 16-bit PCM; returns the file. */
-    fun writeWav(name: String, interleaved: FloatArray, sampleRate: Int = HK.SR, frames: Int = interleaved.size / 2): File {
-        val f = File(dir(), "$name.wav")
+    fun writeWav(name: String, interleaved: FloatArray, sampleRate: Int = HK.SR, frames: Int = interleaved.size / 2): File =
+        writeWavTo(File(dir(), "$name.wav"), interleaved, sampleRate, frames)
+
+    /** [writeWav] to an explicit file. */
+    fun writeWavTo(f: File, interleaved: FloatArray, sampleRate: Int = HK.SR, frames: Int = interleaved.size / 2): File {
+        f.parentFile?.mkdirs()
         val n = frames.coerceAtMost(interleaved.size / 2)
         val data = 4 * n
         val bb = ByteBuffer.allocate(44 + data).order(ByteOrder.LITTLE_ENDIAN)

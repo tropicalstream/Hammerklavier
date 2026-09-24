@@ -111,4 +111,15 @@ class RealKitMapsTest {
         // standard −101.27 c (= −1.27 + one semitone), Werckmeister III A = 0, shape 0 at A4
         assertEquals(6900.0 - 101.27 + h.stretchCents[69], target.toDouble(), 0.02)
     }
+
+    /** INTEGRATION.md (release-noise level): the grand's rel<n> key noises play at the Salamander SFZ's −37 dB, not note level. */
+    @Test fun grandReleaseNoisesSitFarBelowTheNotes() {
+        val g = kits().toMap().getValue("grand")
+        assertEquals(-37f, g.releaseRule.relGainDb, 0.01f)
+        val m = KeyMapBuilder.build(g, TuningSpec.A440_EQUAL, ALL)
+        for (k in 21..108) {
+            val r = region(g, m.release[k])
+            assertEquals("key $k", r.gainDb - 37f, 20f * kotlin.math.log10(m.releaseGain[k]), 0.01f)
+        }
+    }
 }
