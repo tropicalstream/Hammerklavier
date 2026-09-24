@@ -69,7 +69,7 @@ class StereoRenderer(private val loader: ExecutorService?,
         @Volatile var mech: MechanicsEvaluator? = null
         @Volatile var scenes: SceneFactory? = null
         @Volatile var instrument = InstrumentId.GRAND
-        @Volatile var look = InstrumentLook(UprightFinish.WALNUT, false)
+        @Volatile var look = InstrumentLook(UprightFinish.EBONY, false)
         @Volatile var lastDamper = 88
         @Volatile var instrumentSerial = 0L
         @Volatile var view = ViewId.PLAYER
@@ -336,6 +336,8 @@ class StereoRenderer(private val loader: ExecutorService?,
         frame.stringWidthPx = drawer.stringWidth(if (director.view == ViewId.HALL) 2 else if (director.view == ViewId.ACTION) director.framing else 2)
         frame.probeTex = textures.id(TextureUploader.PROBE, gen)
         frame.woodBoost = 1f / aplGain(director.view, director.framing, level, scn.profile.id).coerceAtLeast(0.1f)
+        frame.actionBoost = if (director.view != ViewId.ACTION || level == RoomLevel.PASSTHROUGH.ordinal || aplOff) 1f
+            else ACTION_BOOST_MAX.coerceAtMost(1f / instrumentApl(scn.profile.id, 1 + director.framing).coerceAtLeast(0.1f))
         val pf = (settings?.presenceFloor ?: 22) / 22f * (if (level == RoomLevel.PASSTHROUGH.ordinal) 1.5f else 1f)
         for (i in 0 until 3) frame.floorRgb[i] = Pal.EBONY_FLOOR[i] / 255f * pf
         frame.viewportW = ew.toFloat(); frame.viewportH = height.toFloat()
@@ -394,7 +396,8 @@ class StereoRenderer(private val loader: ExecutorService?,
      *  black lacquer; per-instrument trims of the cap (Player, cutaway, overhead, Hall), measured with apl.sh. */
     private fun instrumentApl(id: com.tropicalstream.hammerklavier.contract.InstrumentId, v: Int): Float = when (id) {
         com.tropicalstream.hammerklavier.contract.InstrumentId.HARPSICHORD -> APL_TRIM_HARPSICHORD[v]
-        com.tropicalstream.hammerklavier.contract.InstrumentId.UPRIGHT -> APL_TRIM_UPRIGHT[v]
+        // an ebony upright is the grand's black lacquer: the grand's cap, untrimmed; the wood finishes keep their trims
+        com.tropicalstream.hammerklavier.contract.InstrumentId.UPRIGHT -> if (desired.look.finish == UprightFinish.EBONY) 1f else APL_TRIM_UPRIGHT[v]
         else -> 1f
     }
 
@@ -651,7 +654,9 @@ class StereoRenderer(private val loader: ExecutorService?,
         const val APL_GAIN_PLAYER = 0.35f; const val APL_GAIN_CUTAWAY = 0.28f   // M6: -5% for the HUD (credit, pills) now live
         const val APL_GAIN_OVERHEAD = 0.245f; const val APL_GAIN_HALL = 0.70f
         private val APL_TRIM_HARPSICHORD = floatArrayOf(0.74f, 0.70f, 0.85f, 0.80f)
-        private val APL_TRIM_UPRIGHT = floatArrayOf(0.94f, 1f, 1f, 0.93f)
+        /** Ceiling of the Action-view moving-parts boost (1 / trim). */
+        const val ACTION_BOOST_MAX = 1.5f
+        private val APL_TRIM_UPRIGHT = floatArrayOf(0.94f, 1f, 0.94f, 0.93f)   // overhead 0.94: frontal, the treble strings fill more of it
         private val NOTE = arrayOf("C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B")
         /** §5.9: the thermal cap overrides Auto; an explicit user choice overrides both. */
         internal fun levelFor(userOverride: RoomLevel?, view: ViewId, cap: RoomLevel): Int {

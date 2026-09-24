@@ -24,12 +24,12 @@ object StringsMesh {
     const val SEGMENTS = 10
     const val VERTS_PER_STRING = 2 * (SEGMENTS + 1)
 
-    fun build(spans: List<StringSpan>, lowKey: Int, name: String, viewMask: Int, clipped: Boolean): List<BakedMesh> {
+    fun build(spans: List<StringSpan>, lowKey: Int, name: String, viewMask: Int, clipped: Boolean, steel: IntArray = Pal.STEEL_HI): List<BakedMesh> {
         val mb = MeshBuilder(VertexLayout.STRING, spans.size * VERTS_PER_STRING)
         for (s in spans) {
             val part = s.key - lowKey
             mb.part(part / 4, part % 4)
-            mb.spindle(s.a, s.b, SEGMENTS, if (s.wound) Pal.COPPER else Pal.STEEL_HI)
+            mb.spindle(s.a, s.b, SEGMENTS, if (s.wound) Pal.COPPER else steel)
         }
         return mb.build(name, MaterialId.STEEL, SkinKind.STRING, VM.LEVELS_ALL, viewMask, clipped, ProgramId.STRING, 14)
     }

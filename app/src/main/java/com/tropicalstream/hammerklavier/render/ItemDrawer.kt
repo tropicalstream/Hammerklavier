@@ -31,6 +31,8 @@ class FrameUniforms {
     @JvmField var probeTex = 0
     /** 1 / the frame's T-APL cap gain: wood (uHasTex 2) is pre-divided so it lands on glass at TapGem's values. */
     @JvmField var woodBoost = 1f
+    /** Action view only: 1 / the instrument's cap trim, for the skinned moving parts (1 elsewhere). */
+    @JvmField var actionBoost = 1f
     @JvmField val eye = FloatArray(3)
     @JvmField var viewProj = FloatArray(16)
     /** Instrument (piano → room) and venue (identity) model matrices. */
@@ -178,6 +180,7 @@ class ItemDrawer(private val programs: Programs, private val packer: UniformPack
                 GLES20.glUniform1f(p.uShiftX, shiftFor(k.skin, packer.shiftXM))
                 GLES20.glUniform1f(p.uRailM, packer.railM)
                 GLES20.glUniform1f(p.uBevel, if (k.skin == SkinKind.KEY_ROT) 1f else 0f)
+                GLES20.glUniform1f(p.uActBoost, f.actionBoost)
             }
             ProgramId.STRING -> {
                 sendBlock(p, pi, SkinKind.STRING)

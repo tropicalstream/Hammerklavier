@@ -3,6 +3,7 @@ package com.tropicalstream.hammerklavier.session
 import com.tropicalstream.hammerklavier.contract.InstrumentId
 import com.tropicalstream.hammerklavier.contract.InstrumentProfile
 import com.tropicalstream.hammerklavier.contract.ReverbMode
+import com.tropicalstream.hammerklavier.contract.UprightFinish
 import com.tropicalstream.hammerklavier.contract.stub.MemSettings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -31,5 +32,14 @@ class SessionSettingsTest {
         p.setAvLead("speaker", 999); assertEquals(400, p.avLead("speaker"))
         p.recent = (0 until 30).map { "m$it" }; assertEquals(15, p.recent.size)
         p.edgeOverlay = false; assertEquals(false, p.edgeOverlay); p.edgeOverlay = null; assertNull(p.edgeOverlay)
+    }
+
+    @Test fun uprightFinishSwitchesToEbonyOnce() {
+        assertEquals(UprightFinish.EBONY, SessionSettings(MemSettings()).finish)
+        val m = MemSettings(); m.putString(SessionKeys.FINISH, UprightFinish.WALNUT.name)   // saved before the switch
+        val p = SessionSettings(m)
+        assertEquals(UprightFinish.EBONY, p.finish)
+        p.finish = UprightFinish.WALNUT
+        assertEquals(UprightFinish.WALNUT, SessionSettings(m).finish)                        // a later choice sticks
     }
 }

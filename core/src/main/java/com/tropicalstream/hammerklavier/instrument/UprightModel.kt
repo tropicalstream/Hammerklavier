@@ -68,7 +68,7 @@ object UprightModel {
             packer = UprightActionPacker(profile, kb.keyX))
     }
 
-    /** Case material and colour by finish: walnut (default) and mahogany are wood, ebony is lacquer. */
+    /** Case material and colour by finish: ebony (default, the grand's lacquer), walnut and mahogany are wood. */
     fun finish(f: UprightFinish): Pair<MaterialId, IntArray> = when (f) {
         UprightFinish.WALNUT -> MaterialId.WOOD_CASE to Wood.WALNUT          // tints of the shared TapGem wood tile
         UprightFinish.MAHOGANY -> MaterialId.WOOD_CASE to Wood.MAHOGANY
@@ -101,7 +101,7 @@ object UprightModel {
         val prog = if (mat == MaterialId.LACQUER) ProgramId.LACQUER else ProgramId.LIT
         val tex = if (mat == MaterialId.WOOD_CASE) Wood.NAME else null
         val hx = WIDTH / 2f; val kw = kb.widthM / 2f; val back = -DEPTH
-        val side = Geo.mul(rgb, 0.8f)
+        val side = if (mat == MaterialId.LACQUER) rgb else Geo.mul(rgb, 0.8f)   // ebony: one lacquer, as the grand's case
 
         // ── Case (slot 7) ──
         val c = MeshBuilder(VertexLayout.STATIC, 1024)
@@ -127,7 +127,8 @@ object UprightModel {
         upper.color(rgb)
         upper.box(-hx + 0.025f, 0.80f, -0.17f, hx - 0.025f, 1.25f, -0.15f)                                                   // upper front panel
         upper.box(-0.35f, 0.80f, -0.15f, 0.35f, 0.82f, -0.10f)                                                               // desk ledge
-        out += upper.build("upright.upperpanel", mat, SkinKind.STATIC, VM.LEVELS_ALL, VM.NO_OVER, true, prog, 7, texture = tex)
+        out += upper.build("upright.upperpanel", mat, SkinKind.STATIC, VM.LEVELS_ALL, VM.PLAYER_HALL,   // off in Action: the frontal view looks at the hammers
+            true, prog, 7, texture = tex)
         val top = MeshBuilder(VertexLayout.STATIC, 32)
         top.color(lac)
         top.box(-hx, HEIGHT - 0.02f, back, hx, HEIGHT, -0.126f)
@@ -204,7 +205,8 @@ object UprightModel {
         out += dm.build("upright.dampers", MaterialId.DAMPER_TOP, SkinKind.DAMPER_LIFT, VM.LEVELS_ALL, VM.ACTION, true, ProgramId.SKINNED, 13)
 
         // ── Strings (slot 14), pedals (slot 15), action set (slot 16), caps (17), edges (18) ──
-        out += StringsMesh.build(spans, profile.lowKey, "upright.strings", VM.ACTION_HALL, true)
+        out += StringsMesh.build(spans, profile.lowKey, "upright.strings", VM.ACTION_HALL, true,
+            steel = Geo.mul(Pal.STEEL_HI, 0.6f))   // seen face-on the treble reads as a grey wall behind the hammers
         out += GrandCase.pedals("upright.pedals", PEDAL_PIVOT_Y, PEDAL_PIVOT_Z, PEDAL_TIP_Z)
         out += actionSet()
         val cap = MeshBuilder(VertexLayout.STATIC, 16)

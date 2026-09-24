@@ -720,3 +720,34 @@ on the harpsichord.
   render/instrument edits). tools/ci.sh PASS (second run; the first hit the known AudioOutputTest flake).
 - Not done: the upright release takes still open with ~250 ms of the recorded note before the damper (as in the SFZ);
   at −34 dB it is masked. Listening check on the speakers still needed from the user.
+
+### Action view: frontal cameras and richer colours for the upright and harpsichord; the upright defaults to ebony (2026-09-23, integrator)
+User: "hammer view in grand is good, but hammer view on standup and harpsichord colors are washed out and would like more
+of forward view", then "can you have the standup match the same colors as the grand?"
+- **Cause of the wash.** The action tokens are the grand's (ACTION_WOOD, FELT, KEYLEVER …); the difference was the
+  per-instrument T-APL trims (harpsichord cutaway 0.70, overhead 0.85) dimming the moving parts below the grand's cap,
+  the side-on cameras (flat-lit faces, pale case walls filling the frame), and the upright's plain strings read face-on
+  as a grey wall behind the hammers.
+- **Cap.** New `uActBoost` in SKINNED_FS (`FrameUniforms.actionBoost`): in the Action view the skinned parts are
+  pre-divided by the instrument's trim (≤ 1.5×), so the action reaches the glass at the grand's cap, as `uWoodBoost`
+  does for the wood. The trims still dim cases and strings. Upright overhead trim 1 → 0.94 (frontal = more treble).
+  An ebony upright uses no trim at all (the grand's cap, `desired.look.finish`).
+- **Cameras** (Anchors, piano frame, x = the focus key): upright cutaway (x+0.26, 1.16, 0.70) → (x−0.14, 0.96, −0.30)
+  28° zp 1.1 (was x+1.05, 1.00, 0.10, side-on); harpsichord cutaway (x+0.20, 1.04, 0.28) → (x, 0.86, −0.32) 24° zp 0.65
+  (jacks, red dampers and plectra face-on); upright overhead (0.15, 1.42, 0.95) → (0, 1.02, −0.36) 36° zp 1.4;
+  harpsichord overhead (0, 1.50, 0.50) → (0, 0.84, −0.62) 42° zp 1.3. Zero parallax ≈ the target distance each time.
+- **Upright meshes.** `upright.upperpanel` off in both Action framings (VM.PLAYER_HALL, as the grand's fallboard):
+  the frontal camera looks at the hammers the way a technician sees them. Plain strings 0.6 × STEEL_HI
+  (`StringsMesh.build(steel =)`, upright only).
+- **Ebony default.** `SessionSettings.finish` defaults to EBONY; `sight.finish.ebony1` switches a saved finish to
+  Ebony once, after which Walnut/Mahogany from the menu stick (`SessionSettingsTest.uprightFinishSwitchesToEbonyOnce`).
+  Ebony = the grand's LACQUER program and Pal.EBONY_KEY on every case part (the knee board and back no longer take
+  0.8×), brass pedals (GrandCase.pedals, as before), gilt fallboard lettering.
+- **Shots** (`tools/device/shots_action.sh`, docs/shots/action_{before,after}_<instrument>_<cutaway|overhead>.png;
+  upright vs grand: docs/shots/ebony_<instrument>_<player|action|hall>.png). APL after: grand 7.85 / 7.69,
+  harpsichord 6.70 / 7.28, upright 7.98 / 8.14 % (cutaway / overhead); ebony Player / Action / Hall: upright
+  4.85 / 8.56 / 7.48, grand 6.87 / 8.00 / 8.15 % (≤ 9 % stage, ≤ 12 % Hall). Draws unchanged (one mesh fewer in the
+  upright's Action framings). Looked at: the harpsichord cutaway shows jack rows face-on; the upright hammer row, rail
+  and dampers face-on against gilt plate and dark strings; the ebony upright reads as the grand's lacquer.
+- Gate: gradle :core:test :app:testDebugUnitTest :app:assembleRelease PASS; tools/ci.sh's pipeline step fails only on the
+  audio agent's uncommitted instruments/*/map.json (ledger) and test_kit_build, not touched here. Installed via run.sh --no-ci.

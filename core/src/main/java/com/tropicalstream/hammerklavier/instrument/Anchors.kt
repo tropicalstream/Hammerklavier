@@ -43,15 +43,15 @@ class Anchors(val id: InstrumentId, private val keyboard: Keyboard) : Instrument
                 val x = keyboard.xOf(focusKey)
                 when (id) {
                     InstrumentId.GRAND -> set(out, x + 0.95f, 0.95f, 0.30f, x, 0.76f, -0.24f, 22f, 0.35f, 1.1f)
-                    InstrumentId.UPRIGHT -> set(out, x + 1.05f, 1.00f, 0.10f, x, 0.93f, -0.20f, 26f, 0.35f, 1.1f)
-                    InstrumentId.HARPSICHORD -> set(out, x + 0.60f, 0.93f, -0.02f, x, 0.86f, -0.42f, 24f, 0.3f, 0.73f)
+                    InstrumentId.UPRIGHT -> set(out, x + 0.26f, 1.16f, 0.70f, x - 0.14f, 0.96f, -0.30f, 28f, 0.35f, 1.1f)   // frontal: the hammer faces
+                    InstrumentId.HARPSICHORD -> set(out, x + 0.20f, 1.04f, 0.28f, x, 0.86f, -0.32f, 24f, 0.3f, 0.65f)   // frontal: jacks and plectra
                 }
                 out.clipX = x
             } else {
                 when (id) {
                     InstrumentId.GRAND -> set(out, 0f, 1.95f, 0.55f, 0f, 0.84f, -0.90f, 44f, 0.5f, 1.8f)
-                    InstrumentId.UPRIGHT -> set(out, 1.05f, 1.40f, 0.75f, 0f, 1.06f, -0.28f, 36f, 0.5f, 1.5f)
-                    InstrumentId.HARPSICHORD -> set(out, 0f, 1.85f, 0.45f, 0f, 0.80f, -0.95f, 44f, 0.5f, 1.8f)
+                    InstrumentId.UPRIGHT -> set(out, 0.15f, 1.42f, 0.95f, 0f, 1.02f, -0.36f, 36f, 0.5f, 1.4f)
+                    InstrumentId.HARPSICHORD -> set(out, 0f, 1.50f, 0.50f, 0f, 0.84f, -0.62f, 42f, 0.5f, 1.3f)
                 }
                 out.lidLift = 1f
             }

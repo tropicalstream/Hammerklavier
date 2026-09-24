@@ -31,6 +31,8 @@ object SessionKeys {
     const val MASTER_DB = "mix.masterDb"
     const val RELEASE_NOISES = "mix.releaseNoises"; const val PEDAL_NOISES = "mix.pedalNoises"
     const val ROOM_OVERRIDE = "sight.room"; const val PALETTE = "sight.palette"; const val FINISH = "sight.finish"
+    /** One-time switch of a saved finish to Ebony (M8: the upright takes the grand's colours by default). */
+    const val FINISH_EBONY_MIGRATED = "sight.finish.ebony1"
     const val STEREO_DEPTH = "sight.stereoDepth"; const val LOOK_AROUND = "sight.lookAround"; const val EDGE_OVERLAY = "sight.edge"
     const val REVERSE_SWIPE = "input.reverseSwipe"; const val PRESENCE_FLOOR = "sight.presenceFloor"; const val MSAA = "sight.msaa"
     const val AV_LEAD = "av.lead."                                 // + route key
@@ -80,6 +82,15 @@ class ResumePoint(val movementId: String, val instrument: InstrumentId, val song
 
 /** Typed reads and writes of the user settings SessionController applies. Main thread. */
 class SessionSettings(private val s: SettingsStore) {
+    init {
+        // M8: Ebony (the grand's look) became the upright default; a finish saved before that switches once,
+        // after which Walnut / Mahogany chosen in the menu stick.
+        if (!s.getBool(SessionKeys.FINISH_EBONY_MIGRATED, false)) {
+            s.putString(SessionKeys.FINISH, UprightFinish.EBONY.name)
+            s.putBool(SessionKeys.FINISH_EBONY_MIGRATED, true)
+        }
+    }
+
 
     fun tuning(id: InstrumentId): TuningSpec {
         val d = InstrumentProfile.of(id).defaultTuning
@@ -124,7 +135,7 @@ class SessionSettings(private val s: SettingsStore) {
         get() = enumOr(s.getString(SessionKeys.PALETTE, ""), Palette.SANSSOUCI_1747)
         set(v) = s.putString(SessionKeys.PALETTE, v.name)
     var finish: UprightFinish
-        get() = enumOr(s.getString(SessionKeys.FINISH, ""), UprightFinish.WALNUT)
+        get() = enumOr(s.getString(SessionKeys.FINISH, ""), UprightFinish.EBONY)
         set(v) = s.putString(SessionKeys.FINISH, v.name)
     var stereoDepth: Float
         get() = s.getFloat(SessionKeys.STEREO_DEPTH, 1f)

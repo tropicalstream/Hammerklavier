@@ -237,6 +237,7 @@ void main() {
     const val SKINNED_FS = GlKit.FRAG_PRECISION + LIGHTING + """
 uniform float uClipX;
 uniform float uBevel;
+uniform float uActBoost;
 varying vec3 vW;
 varying vec3 vN;
 varying vec4 vCol;
@@ -251,6 +252,9 @@ void main() {
     c *= mix(1.0, mix(0.72, 1.0, e), uBevel);
     c = lift(c) * vDim;
     c = max(c, uFloor * uUseFloor * vDim);
+    // Action view: the moving parts are pre-divided by the instrument's T-APL trim, so the upright's and
+    // harpsichord's actions reach the glass at the grand's cap (the trim still dims their cases)
+    c *= uActBoost;
     gl_FragColor = vec4(c, vCol.a);
 }
 """
