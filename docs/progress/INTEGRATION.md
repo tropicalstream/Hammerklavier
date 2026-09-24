@@ -751,3 +751,33 @@ of forward view", then "can you have the standup match the same colors as the gr
   and dampers face-on against gilt plate and dark strings; the ebony upright reads as the grand's lacquer.
 - Gate: gradle :core:test :app:testDebugUnitTest :app:assembleRelease PASS; tools/ci.sh's pipeline step fails only on the
   audio agent's uncommitted instruments/*/map.json (ledger) and test_kit_build, not touched here. Installed via run.sh --no-ci.
+
+### Menus: swipe up / swipe down move one row in every menu (2026-09-23, integrator)
+User: "make sure swipe up and swipe down works in menus."
+- **Traced.** Right pad `cyttsp5_mt` (raw X 0..638, Y 0..196; InputReader scales to the 1280×480 display, so the
+  window sees 0..1279 × 0..479) → `TrackpadGestureEngine` (vertical at ≥ 6 % of the short side = 28.8 px and 1.3× the
+  horizontal travel; horizontal 1.6× that; latched per gesture, re-armed on ACTION_UP/CANCEL) → `Gesture.UP/DOWN` →
+  `UiStateMachineImpl.menu` → `MenuLevel.cursor`. The engine did produce vertical swipes on the device (logcat
+  `HKInput down/up gesture=… src=touch`, recognised 5–16 ms after the event).
+- **What was broken.** In the MENU context UP/DOWN jumped the cursor by a page of 7 (PLAN §1.3 had "page up/down"):
+  every menu with ≤ 7 rows (Transport, More, Sound, Sight, Calibrate, the option lists, shelves, works) snapped to the
+  first or last row, so a vertical swipe never moved "one row". Fixed: UP = previous row, DOWN = next row (clamped;
+  the 7-row page follows the cursor, as with forward/back). Forward/back keep next/previous row; Reverse swipe still
+  flips only forward/back. Adjust (±60 s / ±20 %), cards (±1 step) and the Credits/About/Import pagers (page) keep
+  their vertical meaning. Menu footer now `⇄ ⇅ move · tap choose · double-tap back`; PLAN §1.3 table updated.
+- **Engine.** The swipe decision is now the pure `SwipeClassifier` (same thresholds, JVM-tested); the engine gets
+  the real `displayMetrics` at onCreate (it defaulted to 640×480 until the first layout); a tap after a swipe no
+  longer logs the old swipe's timing. `AppController` logs `HKInput menu <MENU> cursor=<n>` after each gesture in a menu.
+- **Tests.** `VerticalSwipeMenuTest` (T10.1, parameterised, 38 cases): Transport, Instrument, Library, Start-here
+  shelf, a work's movements, More, Sound, Temperament (2 pages), Pitch, Resonance, Reverb, Speaker bass, Sight, Room,
+  Palette, Upright finish, Stereo depth, Edge overlay, Calibrate, each with Reverse swipe off and on: reached by swipe
+  down + tap only, down/up move exactly one row with page and highlight following, clamp at both ends, never change
+  level. `VerticalSwipeOverlayTest`: Credits/About page, Position/Tempo coarse steps. `SwipeClassifierTest`: raw-pad
+  traces scaled like InputReader (full-strip and 20-unit flicks, drifting diagonals, adb traces, jitter, threshold).
+  MenuTest.pagingBySeven and the back-key test now step by rows.
+- **Device.** `adb shell input swipe 320 150 320 350 150` / `320 350 320 150 150` walked Transport → Library → Start
+  here, More → Sound → Tempo adjust → Temperament (row 7 = page 2/2) → Sight, About, and back: every swipe logged one
+  gesture and moved the cursor exactly one row (`menu TRANSPORT cursor=1, 2, 1 …`, clamped at More = 6). Shots:
+  docs/shots/vswipe_transport{0,1,2}.png (cursor Play → Next → Previous), docs/shots/vswipe_temper7.png.
+- Gate: gradle :core:test (ui.model) and :app:testDebugUnitTest (SwipeClassifierTest) PASS, :app:assembleRelease;
+  installed via run.sh --no-ci (the tree also held another agent's uncommitted render/instrument edits).

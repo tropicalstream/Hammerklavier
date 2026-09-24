@@ -151,7 +151,7 @@ class GestureRulesTest {
     @Test fun backKeyAtRootLeavesAndInMenusActsAsDoubleTap() {
         val f = facts()
         val ui = UiFixtures.entered(f)
-        ui.onGesture(Gesture.DOUBLE, f, 0); ui.onGesture(Gesture.DOWN, f, 0); ui.onGesture(Gesture.TAP, f, 0)  // → More
+        ui.onGesture(Gesture.DOUBLE, f, 0); repeat(6) { ui.onGesture(Gesture.DOWN, f, 0) }; ui.onGesture(Gesture.TAP, f, 0)  // → More
         assertEquals(listOf(MenuId.TRANSPORT, MenuId.MORE), ui.menuPath)
         assertEquals(emptyList<UiAction>(), ui.onGesture(Gesture.SYSTEM_BACK, f, 0))
         assertEquals(listOf(MenuId.TRANSPORT), ui.menuPath)

@@ -35,7 +35,7 @@ import com.tropicalstream.hammerklavier.contract.OutputRoute
 object UiText {
     const val APP_TITLE = "HAMMERKLAVIER"
     const val SUBTITLE = "Konzertzimmer · Sanssouci 1747"
-    const val MENU_FOOTER = "⇄ move · tap choose · double-tap back"
+    const val MENU_FOOTER = "⇄ ⇅ move · tap choose · double-tap back"
     const val HINT = "⇄ views · tap pause · double-tap menu"
     const val NO_WIFI = "no Wi-Fi: use push_scores.sh"
     const val HEADPHONES = "Headphones recommended for the bass"

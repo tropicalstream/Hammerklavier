@@ -94,8 +94,8 @@ The gesture engine is WanderQuest's `TrackpadGestureEngine`, copied verbatim [R:
 |---|---|---|---|---|---|---|---|
 | Swipe forward | – | next view (dip) | next row | +10 s / +5 % | brighter swatch / +5 ms | next page | queue next view; toast "display resting" |
 | Swipe back | – | previous view | previous row | −10 s / −5 % | dimmer swatch / −5 ms | previous page | queue previous view |
-| Swipe up | – | toggle second framing | page up (7 rows) | +60 s / +20 % | brighter / +5 ms | page up | – |
-| Swipe down | – | toggle second framing | page down | −60 s / −20 % | dimmer / −5 ms | page down | – |
+| Swipe up | – | toggle second framing | previous row (the 7-row page follows) | +60 s / +20 % | brighter / +5 ms | page up | – |
+| Swipe down | – | toggle second framing | next row | −60 s / −20 % | dimmer / −5 ms | page down | – |
 | Tap | enter (once the grand is playable; before that, shows the voicing pill) | play / pause | select | confirm | accept and store | close | play / pause |
 | Double-tap | – | open the Transport menu | back one level; closes at the root | cancel and restore | cancel | close | open the Transport menu (text only) |
 | Triple-tap | recentre gaze | recentre gaze and show the HUD | recentre gaze | – | – | – | recentre gaze |

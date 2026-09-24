@@ -44,10 +44,11 @@ class MenuTest {
         val p1 = ui.render(f, 0).menu!!
         assertEquals(7, p1.rows.size); assertEquals(0, p1.page); assertEquals(2, p1.pages)
         assertTrue(p1.rows[0].endsWith("✓"))                    // Equal is current and highlighted
-        ui.go(f, Gesture.DOWN)
+        repeat(7) { ui.go(f, Gesture.DOWN) }                    // one row per swipe; the eighth row is on page 2
         val p2 = ui.render(f, 0).menu!!
         assertEquals(1, p2.page); assertEquals(listOf(Temperament.MEANTONE_QUARTER.label), p2.rows); assertEquals(0, p2.highlight)
-        ui.go(f, Gesture.UP); assertEquals(0, ui.cursor)
+        ui.go(f, Gesture.UP); assertEquals(6, ui.cursor); assertEquals(0, ui.render(f, 0).menu!!.page)
+        repeat(6) { ui.go(f, Gesture.UP) }; assertEquals(0, ui.cursor)
         ui.go(f, Gesture.FORWARD)
         val acts = ui.go(f, Gesture.TAP)
         assertEquals(listOf<UiAction>(UiAction.SetTuning(InstrumentId.GRAND, TuningSpec(440f, Temperament.WERCKMEISTER_III))), acts)

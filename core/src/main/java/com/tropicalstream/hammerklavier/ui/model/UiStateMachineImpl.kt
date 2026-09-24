@@ -132,8 +132,9 @@ class UiStateMachineImpl : UiStateMachine {
         return when (g) {
             Gesture.FORWARD -> { level.cursor = (level.cursor + 1).coerceAtMost(last); emptyList() }
             Gesture.BACK -> { level.cursor = (level.cursor - 1).coerceAtLeast(0); emptyList() }
-            Gesture.UP -> { level.cursor = (level.cursor - MenuTree.PAGE).coerceAtLeast(0); emptyList() }
-            Gesture.DOWN -> { level.cursor = (level.cursor + MenuTree.PAGE).coerceAtMost(last); emptyList() }
+            // Vertical swipes move one row, like the ring swipes (the pages of 7 follow the cursor).
+            Gesture.UP -> { level.cursor = (level.cursor - 1).coerceAtLeast(0); emptyList() }
+            Gesture.DOWN -> { level.cursor = (level.cursor + 1).coerceAtMost(last); emptyList() }
             Gesture.TAP -> if (rows.isEmpty()) emptyList() else select(rows[level.cursor].choice, f)
             Gesture.DOUBLE, Gesture.SYSTEM_BACK -> { menus.removeAt(menus.size - 1); emptyList() }
             Gesture.TRIPLE -> listOf(UiAction.Recenter)

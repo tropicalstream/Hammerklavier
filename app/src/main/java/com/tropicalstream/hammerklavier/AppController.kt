@@ -330,6 +330,7 @@ class AppController(private val ctx: Context, private val w: Wiring) {
             (gl as? com.tropicalstream.hammerklavier.render.HkGlView)?.pendingInputNanos = eventUptimeMs * 1_000_000L
         } else Log.i(HK.TAG_INPUT, "${g.name.lowercase()} gesture=${g.name} src=$source")
         applyAll(w.ui.onGesture(g, facts(), SystemClock.uptimeMillis()))
+        uiImpl?.let { u -> if (u.context == UiContext.MENU) Log.i(HK.TAG_INPUT, "menu ${u.menuPath.last()} cursor=${u.cursor}") }
     }
 
     private fun applyAll(actions: List<UiAction>) {

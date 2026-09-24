@@ -50,7 +50,7 @@ class TrackpadGestureEngine {
         const val GENERIC_SCROLL_SCALE = 22f
         private const val TAP_MOVE_TOLERANCE_MIN_PX = 18f
         private const val TAP_MOVE_TOLERANCE_RATIO = 0.04f
-        private const val SWIPE_MIN_PX = 26f
+        internal const val SWIPE_MIN_PX = 26f
 
         const val LEFT_ARM_DEVICE = "cyttsp6"
 
@@ -175,6 +175,7 @@ class TrackpadGestureEngine {
             MotionEvent.ACTION_DOWN -> {
                 debugSink?.invoke("touch DOWN ${deviceName(event.deviceId)}")
                 touchDownMs = SystemClock.uptimeMillis()
+                lastSwipeEventMs = 0L   // a tap after a swipe must not be logged with the old swipe's timing
                 touchStartX = event.x
                 touchStartY = event.y
                 touchAccumX = 0f
@@ -215,23 +216,22 @@ class TrackpadGestureEngine {
     private fun maybeFireSwipe(event: MotionEvent) {
         if (swipeFiredForGesture) return
         lastSwipeDownMs = event.downTime; lastSwipeEventMs = event.eventTime
-        // Raw pad coords are not always screen-normalized; use generous
-        // absolute thresholds scaled against whatever metrics we were fed.
-        val minSwipe = max(SWIPE_MIN_PX, 0.06f * minOf(screenW, screenH))
-        val ax = abs(touchAccumX)
-        val ay = abs(touchAccumY)
-        if (ay >= minSwipe && ay > ax * 1.3f) {
-            swipeFiredForGesture = true
-            handler.removeCallbacks(touchLongCheck)
-            debugSink?.invoke("swipe ${if (touchAccumY > 0) "down" else "up"}")
-            onSwipeVertical?.invoke(if (touchAccumY > 0) 1 else -1)
-            onGesture?.invoke(if (touchAccumY > 0) Gesture.DOWN else Gesture.UP, "touch")
-        } else if (ax >= minSwipe * 1.6f && ax > ay * 1.3f) {
-            swipeFiredForGesture = true
-            handler.removeCallbacks(touchLongCheck)
-            debugSink?.invoke("swipe ${if (touchAccumX > 0) "fwd" else "back"}")
-            onSwipeHorizontal?.invoke(if (touchAccumX > 0) 1 else -1)
-            onGesture?.invoke(if (touchAccumX > 0) Gesture.FORWARD else Gesture.BACK, "touch")
+        when (SwipeClassifier.classify(touchAccumX, touchAccumY, screenW, screenH)) {
+            Gesture.DOWN, Gesture.UP -> {
+                swipeFiredForGesture = true
+                handler.removeCallbacks(touchLongCheck)
+                debugSink?.invoke("swipe ${if (touchAccumY > 0) "down" else "up"}")
+                onSwipeVertical?.invoke(if (touchAccumY > 0) 1 else -1)
+                onGesture?.invoke(if (touchAccumY > 0) Gesture.DOWN else Gesture.UP, "touch")
+            }
+            Gesture.FORWARD, Gesture.BACK -> {
+                swipeFiredForGesture = true
+                handler.removeCallbacks(touchLongCheck)
+                debugSink?.invoke("swipe ${if (touchAccumX > 0) "fwd" else "back"}")
+                onSwipeHorizontal?.invoke(if (touchAccumX > 0) 1 else -1)
+                onGesture?.invoke(if (touchAccumX > 0) Gesture.FORWARD else Gesture.BACK, "touch")
+            }
+            else -> {}
         }
     }
 
@@ -309,5 +309,28 @@ class TrackpadGestureEngine {
 
     fun release() {
         handler.removeCallbacksAndMessages(null)
+    }
+}
+
+/**
+ * The pure swipe decision of [TrackpadGestureEngine] (JVM-testable): the finger's accumulated
+ * displacement since ACTION_DOWN, in the window coordinates the pad reports (cyttsp5_mt raw
+ * 0..638 × 0..196 scaled by InputReader to the 1280×480 display), against the display size.
+ * Vertical wins at ≥ 6 % of the short side and 1.3× the horizontal travel; horizontal needs 1.6×
+ * that distance. Returns null until a direction is decided. The engine latches the first result
+ * per gesture and re-arms on ACTION_UP / ACTION_CANCEL (starter-guide gotcha #25).
+ */
+object SwipeClassifier {
+    fun minSwipe(screenW: Int, screenH: Int): Float =
+        max(TrackpadGestureEngine.SWIPE_MIN_PX, 0.06f * minOf(screenW, screenH))
+
+    fun classify(dx: Float, dy: Float, screenW: Int, screenH: Int): Gesture? {
+        val min = minSwipe(screenW, screenH)
+        val ax = abs(dx); val ay = abs(dy)
+        return when {
+            ay >= min && ay > ax * 1.3f -> if (dy > 0) Gesture.DOWN else Gesture.UP
+            ax >= min * 1.6f && ax > ay * 1.3f -> if (dx > 0) Gesture.FORWARD else Gesture.BACK
+            else -> null
+        }
     }
 }

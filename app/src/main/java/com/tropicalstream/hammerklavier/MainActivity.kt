@@ -63,6 +63,7 @@ class MainActivity : Activity() {
             if (src == "touch" && gestures.lastSwipeEventMs != 0L) controller.onGesture(g, src, gestures.lastSwipeDownMs, gestures.lastSwipeEventMs)
             else controller.onGesture(g, src)
         }
+        resources.displayMetrics.let { gestures.setScreenSize(it.widthPixels, it.heightPixels) }   // real metrics before the first layout
         root.addOnLayoutChangeListener { _, l, t, r, b, _, _, _, _ -> gestures.setScreenSize(r - l, b - t) }
         controller.onLeave = { finish() }
         controller.onBrightness = { b -> window.attributes = window.attributes.apply { screenBrightness = b } }
