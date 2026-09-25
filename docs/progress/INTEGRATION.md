@@ -852,3 +852,37 @@ User: "volume seems to really shift from one view to another including w piano s
   (Hall −0.6…−1.2). No device "before" capture (offline before table above). WAVs build/loudness/device/.
   Installed via run.sh --no-ci after tools/ci.sh PASS (APK md5 d904f426fa8322c7b04ebecc66bc0b51, built from the working
   tree, which also held the other agents' uncommitted edits). Listening check on the speakers still needed.
+
+## YouTube demo recording (2026-09-24)
+
+Driven entirely over adb CONTROL/`input` on the glasses (`A06B4A96A733283`) — no finger, the app is designed to be
+driven this way (PLAN §8.2). `tools/device/record_demo.sh` (`dry`/`record`/`restore`) does the timed sequence:
+grand · Beethoven op.106 iv (the fugue, seeked to its densest passage, ~19.9 notes/s by a MIDI note-density scan) in
+Action cutaway; harpsichord · Bach BWV 903 Chromatic Fantasia and Fugue (seeked to its densest stretch, ~15 nps) in
+the Hall, plus the About panel's Bach/Silbermann history line; a temperament + pitch change (Equal/A440 →
+Werckmeister III/A415, the harpsichord's real saved tuning) shown live in Player · follow (the HUD tuning line);
+upright · Scarlatti K.141 with a Player → Player·follow framing swap. `scrcpy --audio-source=output` gives real
+device audio (confirmed non-silent, Android 12/SDK 32 ≥ 11 so output forwarding works) muxed with the video by
+scrcpy itself; cropped to the left eye only (640×480) rather than full SBS (1280×480) — the two eyes render
+identically, so SBS just looks doubled to a non-stereo YouTube viewer. Approved final take: ~95 s including the
+restore phase's own wind-down (switch back to the resume piece, retune it, real HOME back to the title/launcher) —
+kept in rather than cut to a bare ~70 s, since it reads as a natural close rather than as cut content.
+
+Bug found and fixed while building the driver script: `SessionController.playMovement` resolves the instrument as
+`inst ?: prefs.workInstrument(work) ?: work.defaultInstrument ?: session.instrument`, and any CONTROL `instrument`
+broadcast persists `workInstrument(CURRENTLY LOADED work)` whenever a movement is loaded (SessionController.kt:460).
+Sending `instrument` *before* `play` therefore risks silently overwriting the *previous* movement's remembered
+instrument instead of doing anything for the one about to load — caught live (`beethoven.op106` already carried a
+stale per-work mapping that won out over an explicit `instrument grand` sent right before `play beethoven.op106.4`).
+Not an app bug (the per-work memory is intentional, PLAN §4.9), just a footgun for anything driving CONTROL from
+outside the menu: always play, then force the instrument, never the other way round.
+
+Settings touched and restored (before → during → after, read via CONTROL `dump` and the Sound/Sight menus, since the
+release build isn't debuggable so `shared_prefs` can't be read directly): view PLAYER framing 0, instrument
+HARPSICHORD, resume `bach.bwv846.krueger.1`@135778936 µs (display 135379 ms) unchanged throughout; harpsichord tuning
+Werckmeister III/A415 → deliberately set to Equal/A440 during setup → switched back live on camera → Werckmeister
+III/A415 (restored exactly, matching the original). Registration (8′+4′) and every Sound/Sight menu default (tempo
+100 %, release/pedal noise on, look-around on, reverse swipe off, MSAA on) were never touched. The three demo
+pieces' own per-work instrument memory (op.106, BWV 903, K.141 — not the user's resume piece) was left as this
+session's real use set it. Ended on the RayNeo launcher home screen, app process not running — matches the exact
+screen this session found at the start (confirmed by screenshot).

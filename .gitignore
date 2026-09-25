@@ -25,3 +25,6 @@ tools/cache/
 # --- OS -------------------------------------------------------------------
 .DS_Store
 __pycache__/
+
+# --- generated media (large; not part of the app) --------------------------
+docs/demo/*.mp4
