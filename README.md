@@ -14,6 +14,10 @@ MIDI file you bring in yourself.
   <img src="images/playback.png" width="45%" alt="Harpsichord keys moving during playback of Bach's WTC I No. 1">
 </p>
 
+## Demo
+
+[![Hammerklavier demo](https://i.ytimg.com/vi/yvPH6oJ1d74/hqdefault.jpg)](https://youtu.be/yvPH6oJ1d74)
+
 ## Controls
 
 - Tap the temple to start playback ("Start here" opens the first piece)
